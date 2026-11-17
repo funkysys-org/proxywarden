@@ -66,3 +66,12 @@ COPY --from=fe-builder /build/npm/backend/routes/logs.js /app/routes/logs.js
 # Image-level overlay files: the global hardening conf lands in
 # /etc/nginx/conf.d/, which the stock nginx.conf already includes.
 COPY rootfs/ /
+
+# Build-time config gate: the whole image config must parse — including our
+# conf.d hardening file (duplicate directives are fatal and only nginx -t
+# catches them). Transient npm user like the overlay build; never shipped.
+RUN set -eu; \
+    useradd -r -M npm; \
+    nginx -t; \
+    userdel npm; \
+    groupdel npm 2>/dev/null || true
