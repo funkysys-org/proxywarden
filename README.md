@@ -61,9 +61,36 @@ docker compose -f docker-compose.test.yml down -v
 
 The smoke verifies the layering, not just the UI: our frontend is the one
 served, the API is alive, the module still loads (`nginx -t` at a real boot),
-`/data/modsec` is seeded, and the WAF still blocks attacks (payload matrix →
-403). If someone points `OVERLAY_IMAGE` at a wrong base, this test fails
-loudly.
+`/data/modsec` is seeded, the WAF still blocks attacks (payload matrix →
+403), the global hardening is active (no `Server` header, `nosniff` on the
+UI), and a non-admin login is denied the WAF audit source server-side.
+If someone points `OVERLAY_IMAGE` at a wrong base, this test fails loudly.
+
+## Global hardening (image-level)
+
+`rootfs/etc/nginx/conf.d/proxywarden-hardening.conf` is baked into the image
+and picked up by the stock `include /etc/nginx/conf.d/*.conf;` — no stock
+file is modified; per-server config can still override.
+
+Defaults applied at http level:
+- TLS: `TLSv1.2 TLSv1.3` only, strong ECDHE suite,
+  `ssl_prefer_server_ciphers off`, shared session cache, tickets off
+- Slow-client resistance: header/body timeouts 10s, send 15s,
+  `large_client_header_buffers 4 16k`
+- Headers: `Server` cleared entirely (stock already sets `server_tokens off`),
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy`
+- `proxy_hide_header X-Powered-By` on proxied responses
+- Connection guard: `limit_conn` 256 per client IP (generous; tune per host
+  if you ever hit it behind a huge NAT)
+
+Deliberately NOT baked in: request rate limiting (`limit_req`) — it can
+throttle real users invisibly. The recipe: `limit_req_zone` in
+`/data/nginx/custom/http_top.conf` + per-host `limit_req` in the Advanced
+tab; per-host visibility to tune it comes from the vts module (repo 1).
+
+Node-runtime note: the base image's Node must stay above the current
+security fix line (Broccoli2Shell / CVE-2026-111497 was fixed in Node
+26.12.1; the pinned base ships 26.13.1) — verified at every NPM pin bump.
 
 ## Frontend fork conventions
 
@@ -90,7 +117,9 @@ loudly.
   `modsec_audit.log` JSON lines into readable text (`time ip "METHOD uri"
   host=… -> code INTERRUPTED rules [...]`), riding the existing `logs:list`
   access and UI (tail/search/download). No new service, no new auth surface.
-- **F5** — hardening, UI smoke for non-admin login, docs, `v1`
+- **F5** ✅ (branch `f5-hardening`) — hardening: image-level global nginx
+  defaults (`rootfs/etc/nginx/conf.d/proxywarden-hardening.conf`), brand
+  favicon set, non-admin access-control smoke, docs
 
 Users: NPM native model — admin + users with granular capabilities/visibility
 (untouched by this fork, restyled). Multi-tenant is explicitly out of scope.

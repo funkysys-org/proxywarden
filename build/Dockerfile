@@ -62,3 +62,7 @@ COPY --from=fe-builder /build/npm/frontend/dist/ /app/frontend/
 # NOTE: extend this list when a backend patch touches new files.
 COPY --from=fe-builder /build/npm/backend/internal/log-viewer.js /app/internal/log-viewer.js
 COPY --from=fe-builder /build/npm/backend/routes/logs.js /app/routes/logs.js
+
+# Image-level overlay files: the global hardening conf lands in
+# /etc/nginx/conf.d/, which the stock nginx.conf already includes.
+COPY rootfs/ /

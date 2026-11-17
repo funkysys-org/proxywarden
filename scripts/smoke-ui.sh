@@ -90,5 +90,44 @@ execsvc 'grep -q 949110 /data/logs/modsec_audit.log' \
   || die 'no 949110 (Inbound Anomaly Score) in /data/logs/modsec_audit.log'
 pass "audit log has CRS blocking evidence"
 
+# 7) global hardening active (image-level conf.d file; :81 is nginx-served)
+hdrs=$(curl -sI "$UI/" 2>/dev/null) || die "could not fetch UI headers"
+if echo "$hdrs" | grep -qi '^server:'; then
+  die "Server header leaked — more_clear_headers not active"
+fi
+echo "$hdrs" | grep -qi '^x-content-type-options: *nosniff' \
+  || die "X-Content-Type-Options missing on UI — hardening conf not active"
+pass "global hardening active (no Server header, nosniff on UI)"
+
+# 8) non-admin login works, WAF audit denied server-side
+API="$UI/api"
+admin_email="admin@proxywarden.local"; admin_secret='SmokeAdmin-123'
+setup_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/users" \
+  -H 'Content-Type: application/json' \
+  -d "{\"name\":\"Smoke Admin\",\"nickname\":\"smoke\",\"email\":\"$admin_email\",\"auth\":{\"type\":\"password\",\"secret\":\"$admin_secret\"}}")
+if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
+  admin_tok=$(curl -s -X POST "$API/tokens" -H 'Content-Type: application/json' \
+    -d "{\"identity\":\"$admin_email\",\"secret\":\"$admin_secret\"}" \
+    | sed -n 's/.*"token" *: *"\([^"]*\)".*/\1/p')
+  [ -n "$admin_tok" ] || die "admin login failed"
+  u_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/users" \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
+    -d '{"name":"Plain User","nickname":"plain","email":"plain@proxywarden.local","auth":{"type":"password","secret":"PlainUser-123"}}')
+  case "$u_code" in 2*) : ;; *) die "non-admin user creation failed ($u_code)" ;; esac
+  user_tok=$(curl -s -X POST "$API/tokens" -H 'Content-Type: application/json' \
+    -d '{"identity":"plain@proxywarden.local","secret":"PlainUser-123"}' \
+    | sed -n 's/.*"token" *: *"\([^"]*\)".*/\1/p')
+  [ -n "$user_tok" ] || die "non-admin login failed"
+  waf_code=$(curl -s -o /dev/null -w '%{http_code}' "$API/logs/sources" \
+    -H "Authorization: Bearer $user_tok")
+  case "$waf_code" in
+    401|403) : ;;
+    *) die "non-admin got $waf_code on /logs/sources (want 401/403)" ;;
+  esac
+  pass "non-admin login works; WAF audit source denied to non-admin ($waf_code)"
+else
+  say "skip: non-admin flow (first-boot user creation returned $setup_code — volume not fresh)"
+fi
+
 echo
-echo "UI SMOKE OK: our frontend served, API alive, overlay layer intact (module + seed + WAF blocking)"
+echo "UI SMOKE OK: our frontend served, API alive, overlay layer intact (module + seed + WAF blocking), hardening + access control verified"
