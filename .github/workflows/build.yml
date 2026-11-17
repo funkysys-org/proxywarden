@@ -18,9 +18,8 @@ on:
 env:
   NPM_FRONTEND_REF: v2.17.0
   OVERLAY_TAG: 2.17.0-modsec3.0.17-crs4.30.0
-  # TODO(owner): point at the PUBLISHED overlay image (repo 1 CI output).
-  # REPLACE-ME fails pins-sync in seconds, on purpose — no wasted builds.
-  OVERLAY_IMAGE: ghcr.io/REPLACE-ME/npm-modsec:2.17.0-modsec3.0.17-crs4.30.0
+  # The published overlay image (repo 1 CI output: funkysys-org/npm-modsec).
+  OVERLAY_IMAGE: ghcr.io/funkysys-org/npm-modsec:2.17.0-modsec3.0.17-crs4.30.0
   IMAGE: ghcr.io/funkysys-org/proxywarden
 
 permissions:
