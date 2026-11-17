@@ -25,11 +25,12 @@ ARG NPM_FRONTEND_REF=v2.17.0
 RUN git clone --depth 1 --branch "$NPM_FRONTEND_REF" \
       https://github.com/NginxProxyManager/nginx-proxy-manager.git /build/npm
 
-COPY patches/frontend/ /patches/
-# Apply our patch set in lexical order; empty set = proven stock build.
+COPY patches/ /patches/
+# Apply our patch sets — backend first, then frontend — in lexical order;
+# empty sets = proven stock build.
 RUN set -eu; cd /build/npm; \
     found=0; \
-    for p in /patches/*.patch; do \
+    for p in /patches/backend/*.patch /patches/frontend/*.patch; do \
       [ -e "$p" ] || continue; \
       found=1; echo "applying $(basename "$p")"; \
       git apply --check "$p" && git apply "$p"; \
@@ -55,5 +56,9 @@ FROM ${OVERLAY_IMAGE}
 RUN rm -rf /app/frontend
 COPY --from=fe-builder /build/npm/frontend/dist/ /app/frontend/
 
-# NOTE (F4): the audit-log sidecar and its wiring land in a later phase;
-# this stage stays a pure frontend swap until then.
+# Backend overlay: the files touched by patches/backend/. Same assembly as
+# upstream (its docker/Dockerfile does `COPY backend /app`), so overlaying the
+# patched files is equivalent — the module runs from source, no rebuild.
+# NOTE: extend this list when a backend patch touches new files.
+COPY --from=fe-builder /build/npm/backend/internal/log-viewer.js /app/internal/log-viewer.js
+COPY --from=fe-builder /build/npm/backend/routes/logs.js /app/routes/logs.js

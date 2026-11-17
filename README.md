@@ -17,10 +17,12 @@ repo 2  proxywarden (this repo)
             → ghcr.io/funkysys-org/proxywarden:<overlay-tag>-fe<npm-tag>
 ```
 
-The same overlay philosophy as repo 1: **no stock file is edited** — the
-backend Node app and its API are unmodified; we replace only the built
-frontend (`/app/frontend`). The product image therefore inherits every
-guarantee of the overlay (module ABI, CRS blocking, smoke-tested boot).
+The same overlay philosophy as repo 1, now applied to both trees: the
+upstream tag is cloned at build time, our numbered patches are applied
+(frontend: `patches/frontend/`, backend: `patches/backend/`), and only the
+patched artifacts overlay the image — `/app/frontend`, plus the specific
+backend files the backend patch set touches (equivalent to upstream's own
+`COPY backend /app`). No stock file is edited at runtime.
 
 ## Pins
 
@@ -82,7 +84,12 @@ loudly.
   mutually exclusive, persisted as a marked `# BEGIN/END PROXYWARDEN WAF`
   block in `advanced_config`; hand-written directives are recognized and
   rewritten safely (never duplicated)
-- **F4** — audit-log viewer (sidecar API, JWT-verified, admin-only)
+- **F4** ✅ (branch `f4-audit-viewer`, patches `backend/001-waf-log-source` +
+  `frontend/003-waf-log-viewer`) — WAF Audit as a 4th source in the native
+  `/logs` viewer: the log-viewer gains a `waf` source that parses
+  `modsec_audit.log` JSON lines into readable text (`time ip "METHOD uri"
+  host=… -> code INTERRUPTED rules [...]`), riding the existing `logs:list`
+  access and UI (tail/search/download). No new service, no new auth surface.
 - **F5** — hardening, UI smoke for non-admin login, docs, `v1`
 
 Users: NPM native model — admin + users with granular capabilities/visibility

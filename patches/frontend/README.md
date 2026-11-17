@@ -4,6 +4,11 @@ Our fork of the NPM frontend is expressed ONLY as numbered unified diffs
 against the pinned upstream tag (`NPM_FRONTEND_REF` in `build/Dockerfile`).
 Upstream source is never committed to this repo.
 
+**Backend patches** live in `patches/backend/` under the SAME rules. The
+Dockerfile applies backend patches before frontend ones, then overlays each
+touched backend file into `/app` via explicit COPY lines — extend that list
+in `build/Dockerfile` when a backend patch touches new files.
+
 ## Rules
 
 1. **Numbered, lexical order**: `001-<topic>.patch`, `002-…` — applied by the
