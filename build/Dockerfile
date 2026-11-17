@@ -32,9 +32,15 @@ RUN set -eu; cd /build/npm; \
     done; \
     if [ "$found" = 1 ]; then echo "PATCH SET APPLIED"; else echo "STOCK BUILD (no patches)"; fi
 
+# Upstream CI chain (scripts/ci/frontend-build) is:
+#   yarn install && yarn lint && yarn locale-compile && yarn vitest run && yarn build
+# We run the build-required subset — our functional gate is scripts/smoke-ui.sh.
+# locale-compile is NOT optional: src/locale/lang/*.json is generated (gitignored)
+# and `tsc` fails without it.
 RUN set -eu; cd /build/npm/frontend; \
     npm i -g yarn@1.22.22; \
     yarn install --frozen-lockfile; \
+    yarn locale-compile; \
     yarn build; \
     test -f dist/index.html
 
