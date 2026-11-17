@@ -73,8 +73,10 @@ loudly.
 
 ## Roadmap
 
-- **F1** ✅ (this scaffold) — frontend stock build proven, image pipeline
-- **F2** — branding: name, logo, Tabler theme, login page
+- **F1** ✅ — frontend stock build proven, image pipeline
+- **F2** ✅ (branch `f2-branding`, patch `001-branding.patch`) — branding:
+  name, shield mark, horizontal brand, login/setup pages, teal accent,
+  product name across all 25 locales; smoke marker flipped with it
 - **F3** — WAF toggle per host (admin panel; writes marked directives into
   `advanced_config`)
 - **F4** — audit-log viewer (sidecar API, JWT-verified, admin-only)

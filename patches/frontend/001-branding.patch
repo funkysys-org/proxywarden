@@ -1,0 +1,580 @@
+From 9a79782a472d250e73081809219f815fef58c89c Mon Sep 17 00:00:00 2001
+From: Hermes Agent <hermes-agent@users.noreply.github.com>
+Date: Tue, 17 Nov 2026 21:34:15 +0000
+Subject: [PATCH] branding: Proxywarden name, shield mark, horizontal brand,
+ teal accent (25-locale product-name)
+
+---
+ frontend/index.html                         |   4 +-
+ frontend/public/images/brand-horizontal.svg |  16 ++++
+ frontend/public/images/logo-no-text.svg     | 101 ++------------------
+ frontend/src/App.css                        |   7 ++
+ frontend/src/components/SiteHeader.tsx      |   2 +-
+ frontend/src/locale/src/az.json             |   2 +-
+ frontend/src/locale/src/bg.json             |   2 +-
+ frontend/src/locale/src/cs.json             |   2 +-
+ frontend/src/locale/src/de.json             |   2 +-
+ frontend/src/locale/src/en.json             |   2 +-
+ frontend/src/locale/src/es.json             |   2 +-
+ frontend/src/locale/src/et.json             |   2 +-
+ frontend/src/locale/src/fa.json             |   4 +-
+ frontend/src/locale/src/fr.json             |   2 +-
+ frontend/src/locale/src/hu.json             |   2 +-
+ frontend/src/locale/src/id.json             |   2 +-
+ frontend/src/locale/src/it.json             |   2 +-
+ frontend/src/locale/src/ja.json             |   2 +-
+ frontend/src/locale/src/ko.json             |   2 +-
+ frontend/src/locale/src/nl.json             |   2 +-
+ frontend/src/locale/src/no.json             |   2 +-
+ frontend/src/locale/src/pl.json             |   2 +-
+ frontend/src/locale/src/pt.json             |   2 +-
+ frontend/src/locale/src/ru.json             |   2 +-
+ frontend/src/locale/src/sk.json             |   2 +-
+ frontend/src/locale/src/tr.json             |   2 +-
+ frontend/src/locale/src/uk.json             |   2 +-
+ frontend/src/locale/src/vi.json             |   2 +-
+ frontend/src/locale/src/zh-tw.json          |   4 +-
+ frontend/src/pages/Login/index.tsx          |   4 +-
+ frontend/src/pages/Setup/index.tsx          |   4 +-
+ 31 files changed, 66 insertions(+), 124 deletions(-)
+ create mode 100644 frontend/public/images/brand-horizontal.svg
+
+diff --git a/frontend/index.html b/frontend/index.html
+index 08c7609..2cbeb4c 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -3,8 +3,8 @@
+ 	<head>
+ 		<meta charset="utf-8" />
+ 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+-		<title>Nginx Proxy Manager</title>
+-		<meta name="description" content="Manage Nginx hosts with a simple, powerful interface" />
++		<title>Proxywarden</title>
++		<meta name="description" content="Proxywarden — managed reverse proxy with WAF" />
+ 		<link rel="preload" href="/images/logo-no-text.svg" as="image" type="image/svg+xml" fetchPriority="high">
+ 		<link
+ 			rel="apple-touch-icon"
+diff --git a/frontend/public/images/brand-horizontal.svg b/frontend/public/images/brand-horizontal.svg
+new file mode 100644
+index 0000000..d055c5b
+--- /dev/null
++++ b/frontend/public/images/brand-horizontal.svg
+@@ -0,0 +1,16 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64">
++  <defs>
++    <linearGradient id="pwg" x1="0" y1="0" x2="1" y2="1">
++      <stop offset="0" stop-color="#14b8a6"/>
++      <stop offset="1" stop-color="#0f766e"/>
++    </linearGradient>
++  </defs>
++  <style>
++    .wordmark { fill: #1e293b; }
++    @media (prefers-color-scheme: dark) { .wordmark { fill: #e2e8f0; } }
++  </style>
++  <path d="M24 6l16 5.4v13.2c0 9.5-6.7 16.1-16 18.8-9.3-2.7-16-9.3-16-18.8V11.4z" fill="url(#pwg)"/>
++  <circle cx="24" cy="20" r="4" fill="#fff"/>
++  <path d="M22 23h4l2.2 9.5h-8.4z" fill="#fff"/>
++  <text class="wordmark" x="52" y="43" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="700">Proxywarden</text>
++</svg>
+diff --git a/frontend/public/images/logo-no-text.svg b/frontend/public/images/logo-no-text.svg
+index dc3c116..5e719e7 100644
+--- a/frontend/public/images/logo-no-text.svg
++++ b/frontend/public/images/logo-no-text.svg
+@@ -1,93 +1,12 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+-<svg width="520" height="600" version="1.1" viewBox="0 0 520 600" xmlns="http://www.w3.org/2000/svg">
+- <defs>
+-  <style>.a{isolation:isolate;}.b{fill:#545454;}.c{fill:#faa42f;}.aa,.ab,.ac,.ad,.ae,.af,.ag,.ah,.aj,.ak,.am,.an,.ao,.c,.d,.e,.f,.g,.h,.i,.j,.k,.l,.m,.n,.o,.p,.q,.r,.s,.t,.u,.v,.w,.x,.y,.z{fill-rule:evenodd;}.d{fill:#ddb02a;}.e{fill:#c47728;}.f{fill:#f15933;}.g{fill:#f37132;}.h{fill:#d6e042;}.i{fill:#fcea3b;}.j{fill:#e22574;}.k{fill:#ef3839;}.l{fill:#bbd64b;}.m{fill:#ffcf29;}.n{fill:#ee438d;}.o{fill:#cc3192;}.p{fill:#bd2025;}.q{fill:#9b3995;}.r{fill:#f1eb59;}.s{fill:#f7975f;}.t{fill:#d31f26;}.u{fill:#73206a;}.ai,.v{fill:#853a96;}.w{fill:#d98a26;}.x{fill:#8f4f9f;}.y{fill:#d24b9b;}.z{fill:#b263a7;}.aa{fill:#6b297a;}.ab{fill:#782a8f;}.ac{fill:#a01664;}.ad{fill:#c02026;}.ae{fill:#9051a0;}.af{fill:#b01b4a;}.ag{fill:#c54627;}.ah{fill:#a41768;}.aj{fill:#d1499a;}.ak{fill:#85459a;}.al{fill:#341144;}.am{fill:#ee3f8a;}.an{fill:#f4805f;}.ao{fill:#552263;}</style>
+- </defs>
+- <polygon class="c" points="2.14 451 2.14 449 0 448 0 450"/>
+- <polygon class="d" points="0 375 2.14 374 2.14 337 0 336"/>
+- <polygon class="e" points="27.9 434 27.9 389 2.14 374 0 375 0 448 2.14 449"/>
+- <polygon class="f" points="64.7 487 66.9 486 99 505 99 507"/>
+- <polygon class="g" points="66.9 456 27.9 434 2.14 449 2.14 451 64.7 487 66.9 486"/>
+- <polygon class="h" points="0 263 2.14 262 2.14 225 0 223"/>
+- <path class="i" d="m0 336 2.14 1.07 22.5-12.8a177 177 0 0 1-1.44-23.9c0-8.22 0.71-16.8 1.43-25l-22.5-12.8-2.14 1.08z"/>
+- <path class="c" d="m2.14 374 25.8 14.6 39-22.1v-30l-19-11.1a126 126 0 0 0 2.5 16.1l-20.7 12.1a174 174 0 0 1-5-30l-22.5 12.9z"/>
+- <path class="f" d="m66.9 486v-29.6l10.4-6.07-0.36-0.36c5 6.07 10.4 11.8 15.7 17.1a241 241 0 0 0 29 24.6l-22.5 13.2zm38.6-52.1 26.1 15v21.8a170 170 0 0 1-22.5-19.6 130 130 0 0 1-11.8-12.5z"/>
+- <polygon class="j" points="196 563 196 560 164 542 162 543"/>
+- <path class="k" d="m162 543 1.79-1.07v-26.1a226 226 0 0 1-42.2-24.3l-22.6 13.2v2.15z"/>
+- <polygon class="l" points="0 151 2.14 150 2.14 149 0 150"/>
+- <polygon class="h" points="34.3 206 34.3 168 2.14 150 0 151 0 223 2.14 225"/>
+- <path class="m" d="m2.14 262 22.5 12.8a244 244 0 0 1 16.4-65l-6.79-3.91-32.2 18.6zm45.8 10.7 19-10.7v-37.5l-5.72-3.22a209 209 0 0 0-13.3 51.4z"/>
+- <path class="c" d="m47.9 326 19 11.1 32.1-18.6v-37.4l-32.1-18.6-19 10.7a226 226 0 0 0-1.78 27.1 203 203 0 0 0 1.78 25.7z"/>
+- <polygon class="f" points="128 376 164 397 164 430 132 449 105 434 105 389"/>
+- <path class="n" d="m164 542 32.5 18.6 32.5-18.6v-7.5a235 235 0 0 1-65.1-18.6zm65.1-30.7v-6.42l-32.5-18.9-19 11.1a203 203 0 0 0 51.5 14.3z"/>
+- <polygon class="g" points="128 334 99 318 66.9 337 66.9 367 105 389 128 376"/>
+- <polygon class="o" points="261 560 229 542 196 560 196 563 259 599 261 598"/>
+- <path class="p" d="m177 497 19-11.1v-37.1l-32.5-18.9-32.2 18.9v21.8a201 201 0 0 0 45.8 26.4z"/>
+- <polygon class="q" points="262 599 261 598 259 599 260 600"/>
+- <polygon class="r" points="66.9 150 66.9 112 65.8 112 2.14 149 2.14 150 34.3 168"/>
+- <path class="i" d="m34.3 206 6.79 3.91a236 236 0 0 1 32.5-56l-6.8-3.94-32.5 18.5zm26.8 15.3 5.72 3.22 32.1-18.5v-37.5l-5.36-2.87a221 221 0 0 0-32.5 55.7z"/>
+- <polygon class="c" points="99 206 66.9 225 66.9 262 99 281 128 264 128 224 129 223"/>
+- <polygon class="j" points="225 432 196 449 196 486 229 505 261 486 261 452 260 452"/>
+- <polygon class="s" points="99 318 128 334 128 264 99 281"/>
+- <path class="o" d="m229 542 32.2 18.6 32.5-18.6v-7.86a260 260 0 0 1-33.3 2.13 298 298 0 0 1-31.5-1.78zm64.7-31.1v-6.07l-32.6-18.9-32.2 18.9v6.42a225 225 0 0 0 31.5 2.15 209 209 0 0 0 33.3-2.5z"/>
+- <polygon class="t" points="164 430 196 449 225 432 164 397"/>
+- <polygon class="u" points="326 562 326 560 294 542 261 560 261 598 262 599"/>
+- <polygon class="h" points="65.8 112 66.9 112 99 93.9 99 92.8"/>
+- <path class="m" d="m66.9 150 6.8 3.94c6.07-7.5 12.5-14.3 18.9-21.1a226 226 0 0 1 30-25.4l-23.6-13.6-32.2 18.6zm26.8 15.7 5.32 2.85 32.5-18.6v-20.7a170 170 0 0 0-22.5 19.6c-5.36 5.35-10.4 10.7-15.4 16.8z"/>
+- <polygon class="c" points="164 203 164 168 132 150 99 168 99 206 129 223"/>
+- <polygon class="v" points="359 543 358 542 326 560 326 562"/>
+- <polygon class="o" points="326 486 326 449 296 431 261 452 261 486 294 505"/>
+- <path class="q" d="m294 542 32.2 18.6 32.5-18.6v-26.8a238 238 0 0 1-64.7 18.9zm50.4-45.3-18.2-10.7-32.2 18.9v6.07a216 216 0 0 0 50.4-14.3z"/>
+- <path class="m" d="m99 93.9 23.6 13.6a235 235 0 0 1 41.1-23.6v-27.5l-0.72-0.39-64 36.8z"/>
+- <path class="w" d="m132 150 32.2 18.6 32.5-18.6v-37.5l-17.5-10a204 204 0 0 0-47.2 26.8z"/>
+- <path class="x" d="m358 542 1.07 0.7 63.7-36.8v-1.07l-23.6-13.6a248 248 0 0 1-41.1 23.9z"/>
+- <polygon class="g" points="226 167 196 150 164 168 164 203"/>
+- <polygon class="y" points="296 431 326 449 358 430 358 396"/>
+- <path class="z" d="m326 486 18.3 10.7a202 202 0 0 0 46.4-27.5v-20.3l-32.2-18.9-32.5 18.9z"/>
+- <polygon class="m" points="163 56 164 56.4 196 37.8 196 36.8"/>
+- <path class="c" d="m179 102 17.5 10 26.1-14.6v-8.19l1.44-0.35a212 212 0 0 0-45 13.2zm43.6-49.6-26.1-15-32.5 18.6v27.5a247 247 0 0 1 58.6-17.5z"/>
+- <path class="aa" d="m399 491 23.6 13.6 32.5-18.9v-29.6l-39-22.5-26.1 15v20.3c4.3-2.86 7.86-6.07 11.8-9.28l20.8 11.8a243 243 0 0 1-23.6 19.6z"/>
+- <polygon class="ab" points="457 487 456 486 423 505 423 506"/>
+- <polygon class="g" points="222 97.8 196 112 196 150 226 167 260 148 261 148 261 120"/>
+- <polygon class="q" points="392 376 358 396 358 430 390 449 417 434 417 389 392 375"/>
+- <polygon class="c" points="222 52.8 261 30.3 261 0.71 260 0 196 36.8 196 37.8"/>
+- <polygon class="f" points="261 148 261 120 300 97.8 326 112 326 150 295 168"/>
+- <polygon class="ab" points="520 450 520 449 494 434 456 456 456 486 457 487"/>
+- <polygon class="ac" points="392 336 423 318 423 281 392 263"/>
+- <polygon class="ad" points="358 204 358 168 326 150 295 168"/>
+- <polygon class="q" points="417 389 456 367 456 337 423 318 392 336 392 375"/>
+- <path class="f" d="m300 52.8 25.7-15 32.5 18.6v28.2a215 215 0 0 0-30-11.1v23.9a119 119 0 0 1 14.7 5.35l-17.2 9.63-25.7-14.6v-45z"/>
+- <path class="ae" d="m460 376a11.2 11.2 0 0 0 1.42-3.62 11 11 0 0 1-1.43 3.58zm2.14-5a203 203 0 0 0 10.4-44.6l-16.8 10v30l6.8 3.93zm32.2 17.5 26.1-15v-37.1l-24.3-13.9a239 239 0 0 1-13.9 60l0.37-0.72z"/>
+- <polygon class="af" points="423 168 390 150 358 168 358 204 392 224 423 206"/>
+- <polygon class="ag" points="300 52.8 326 37.8 261 0.71 261 30.3"/>
+- <polygon class="ah" points="392 224 392 224 392 263 423 281 456 262 456 225 423 206"/>
+- <path class="k" d="m326 150 32.5 18.6 32.2-18.6v-19.3a197 197 0 0 0-47.6-27.8l-17.2 9.63z"/>
+- <path class="q" d="m423 318 32.5 18.6 16.8-10a218 218 0 0 0 1.78-26.8 247 247 0 0 0-1.78-28.2l-16.8-9.57-32.5 18.6z"/>
+- <path class="aa" d="m496 323 24.3 13.9v-74.6l-24.7 13.9a175 175 0 0 1 1.44 23.9c0 7.85-0.36 15.4-1.08 22.8z"/>
+- <path class="j" d="m390 150 32.6 18.6 3.93-2.14a179 179 0 0 0-15.4-17.5 256 256 0 0 0-21.1-18.2zm56.5 4.7 8.58-4.66v-37.5l-32.5-18.6-24.3 14.3a234 234 0 0 1 29 24.6 281 281 0 0 1 19.2 21.8z"/>
+- <polygon class="ab" points="520 374 520 337 520 374"/>
+- <path class="o" d="m423 206 32.5 18.6 3.93-2.15a203 203 0 0 0-32.5-56l-3.93 2.11zm56.5 4.64 8.21-4.64v-37.5l-32.2-18.6-8.58 4.7a243 243 0 0 1 32.5 56z"/>
+- <path class="k" d="m399 108 24.3-14.3-64.8-37.5v28.2a229 229 0 0 1 40.4 23.6z"/>
+- <path class="z" d="m456 262 16.8 9.61a222 222 0 0 0-12.9-49.3l-3.93 2.15zm40 13.9 24.7-13.9v-37.5l-32.5-18.5-8.23 4.64a236 236 0 0 1 16.1 65.3z"/>
+- <rect class="ai" x="520" y="225" width="0" height="37.5"/>
+- <polygon class="aj" points="456 150 488 168 520 150 456 112"/>
+- <polygon class="q" points="520 150 488 168 488 206 520 225"/>
+- <polygon class="ak" points="520 374 520 374 494 389 494 434 520 449"/>
+- <rect class="al" x="520" y="449" width="0" height="1.07"/>
+- <polygon class="f" points="193 335 196 337 196 340 193 338"/>
+- <polygon class="f" points="229 281 229 318 196 337 193 335 193 264 196 262"/>
+- <polygon class="j" points="264 375 261 374 258 376 260 377"/>
+- <polygon class="k" points="261 337 229 318 196 337 196 340 258 376 261 374"/>
+- <polygon class="am" points="326 339 326 337 294 318 261 337 261 374 264 375"/>
+- <polygon class="k" points="294 318 294 281 261 262 229 281 229 318 261 337"/>
+- <polygon class="j" points="327 336 327 263 326 262 294 281 294 318 326 337"/>
+- <polygon class="o" points="327 336 326 337 326 339 327 338"/>
+- <polygon class="g" points="193 264 196 262 196 260 193 261"/>
+- <polygon class="f" points="259 223 261 225 261 262 229 281 196 262 196 260"/>
+- <polygon class="an" points="262 224 261 225 259 223 260 223"/>
+- <polygon class="k" points="326 262 326 261 262 224 261 225 261 262 294 281"/>
+- <polygon class="j" points="326 262 327 263 327 261 326 261"/>
+- <polygon class="g" points="283 88.2 283 62.5 261 49.6 239 62.5 239 88.2 261 101"/>
+- <polygon class="ao" points="478 424 478 398 456 386 433 398 433 424 456 437"/>
+- <polygon class="g" points="89 424 89 398 66.9 386 44.7 398 44.7 424 66.9 437"/>
++<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
++  <defs>
++    <linearGradient id="pwg" x1="0" y1="0" x2="1" y2="1">
++      <stop offset="0" stop-color="#14b8a6"/>
++      <stop offset="1" stop-color="#0f766e"/>
++    </linearGradient>
++  </defs>
++  <path d="M32 4l24 8v20c0 14-10 24-24 28C18 56 8 46 8 32V12z" fill="url(#pwg)"/>
++  <circle cx="32" cy="27" r="6" fill="#fff"/>
++  <path d="M29 31h6l3 14H26z" fill="#fff"/>
+ </svg>
+diff --git a/frontend/src/App.css b/frontend/src/App.css
+index 894f70c..85cf600 100644
+--- a/frontend/src/App.css
++++ b/frontend/src/App.css
+@@ -13,6 +13,13 @@
+ 	--tblr-backdrop-opacity: 0.8 !important;
+ }
+ 
++/* proxywarden brand accent — :root:root outspecifies tabler's :root even
++   though tabler.min.css is dynamically imported after App.css */
++:root:root {
++	--tblr-primary: oklch(60% 0.105 174deg);
++	--tblr-primary-rgb: 13, 148, 136;
++}
++
+ [data-bs-theme="dark"] .modal-content {
+ 	--tblr-modal-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+ }
+diff --git a/frontend/src/components/SiteHeader.tsx b/frontend/src/components/SiteHeader.tsx
+index bf28640..3723cb3 100644
+--- a/frontend/src/components/SiteHeader.tsx
++++ b/frontend/src/components/SiteHeader.tsx
+@@ -36,7 +36,7 @@ export function SiteHeader() {
+ 								alt="Logo"
+ 							/>
+ 						</div>
+-						Nginx Proxy Manager
++						Proxywarden
+ 					</NavLink>
+ 				</div>
+ 				<div className="navbar-nav flex-row order-md-last">
+diff --git a/frontend/src/locale/src/az.json b/frontend/src/locale/src/az.json
+index f767864..21000fe 100644
+--- a/frontend/src/locale/src/az.json
++++ b/frontend/src/locale/src/az.json
+@@ -207,7 +207,7 @@
+ 		"defaultMessage": "Bu bölmə Certbot və onun DNS plaginləri haqqında müəyyən bilik tələb edir. Zəhmət olmasa müvafiq plaginlərin sənədləri ilə tanış olun."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Bu domendə server tapıldı, lakin bu Nginx Proxy Manager kimi görünmür. Zəhmət olmasa domeninizin NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
++		"defaultMessage": "Bu domendə server tapıldı, lakin bu Proxywarden kimi görünmür. Zəhmət olmasa domeninizin NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.com ilə əlaqə xətası səbəbindən əlçatanlığı yoxlamaq mümkün olmadı."
+diff --git a/frontend/src/locale/src/bg.json b/frontend/src/locale/src/bg.json
+index 5183fe3..d9e6911 100644
+--- a/frontend/src/locale/src/bg.json
++++ b/frontend/src/locale/src/bg.json
+@@ -147,7 +147,7 @@
+ 		"defaultMessage": "Този раздел изисква познания за Certbot и неговите DNS плъгини. Моля, консултирайте се с документацията."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Сървър е намерен на този домейн, но не изглежда да е Nginx Proxy Manager. Уверете се, че домейнът сочи към IP адреса, където работи NPM."
++		"defaultMessage": "Сървър е намерен на този домейн, но не изглежда да е Proxywarden. Уверете се, че домейнът сочи към IP адреса, където работи NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Неуспешна проверка поради грешка в комуникацията със site24x7.com."
+diff --git a/frontend/src/locale/src/cs.json b/frontend/src/locale/src/cs.json
+index cd86b67..54770b9 100644
+--- a/frontend/src/locale/src/cs.json
++++ b/frontend/src/locale/src/cs.json
+@@ -204,7 +204,7 @@
+ 		"defaultMessage": "Tato sekce vyžaduje znalost Certbotu a jeho DNS doplňků. Prosím, podívejte se do dokumentace příslušného doplňku."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Na této doméně byl nalezen server, ale nezdá se, že jde o Nginx Proxy Manager. Ujistěte se, že vaše doména směřuje na IP, kde běží vaše instance NPM."
++		"defaultMessage": "Na této doméně byl nalezen server, ale nezdá se, že jde o Proxywarden. Ujistěte se, že vaše doména směřuje na IP, kde běží vaše instance NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nepodařilo se ověřit dostupnost kvůli chybě komunikace se službou site24x7.com."
+diff --git a/frontend/src/locale/src/de.json b/frontend/src/locale/src/de.json
+index e5ce535..d13142f 100644
+--- a/frontend/src/locale/src/de.json
++++ b/frontend/src/locale/src/de.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Dieser Abschnitt erfordert einige Kenntnisse über Certbot und seine DNS-Plugins. Bitte konsultieren Sie die jeweilige Plugin-Dokumentation."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, aber es scheint sich nicht um Nginx Proxy Manager zu handeln. Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre NPM-Instanz ausgeführt wird."
++		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, aber es scheint sich nicht um Proxywarden zu handeln. Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre NPM-Instanz ausgeführt wird."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Die Erreichbarkeit konnte aufgrund eines Kommunikationsfehlers mit site24x7.com nicht überprüft werden."
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index 8f7150a..139c22f 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "This section requires some knowledge about Certbot and its DNS plugins. Please consult the respective plugins documentation."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "There is a server found at this domain but it does not seem to be Nginx Proxy Manager. Please make sure your domain points to the IP where your NPM instance is running."
++		"defaultMessage": "There is a server found at this domain but it does not seem to be Proxywarden. Please make sure your domain points to the IP where your NPM instance is running."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Failed to check the reachability due to a communication error with site24x7.com."
+diff --git a/frontend/src/locale/src/es.json b/frontend/src/locale/src/es.json
+index c8b1edb..762bbee 100644
+--- a/frontend/src/locale/src/es.json
++++ b/frontend/src/locale/src/es.json
+@@ -147,7 +147,7 @@
+ 		"defaultMessage": "Esta sección requiere algunos conocimientos sobre Certbot y sus plugins DNS. Consulta la documentación de los plugins respectivos."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Se encontró un servidor en este dominio pero no parece ser Nginx Proxy Manager. Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de NPM."
++		"defaultMessage": "Se encontró un servidor en este dominio pero no parece ser Proxywarden. Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "No se pudo verificar la accesibilidad debido a un error de comunicación con site24x7.com."
+diff --git a/frontend/src/locale/src/et.json b/frontend/src/locale/src/et.json
+index 380fcec..d0029e9 100644
+--- a/frontend/src/locale/src/et.json
++++ b/frontend/src/locale/src/et.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "See osa eeldab Certboti ja selle DNS-pluginate tundmist. Vaata vastava plugina juhendit."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Sellel domeenil on küll server, aga see ei tundu olevat Nginx Proxy Manager. Vaata, et domeen osutaks IP-le, kus NPM tegelikult töötab."
++		"defaultMessage": "Sellel domeenil on küll server, aga see ei tundu olevat Proxywarden. Vaata, et domeen osutaks IP-le, kus NPM tegelikult töötab."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Kättesaadavust ei saanud kontrollida, sest side site24x7.com-iga katkes."
+diff --git a/frontend/src/locale/src/fa.json b/frontend/src/locale/src/fa.json
+index 2819bbc..ad5f866 100644
+--- a/frontend/src/locale/src/fa.json
++++ b/frontend/src/locale/src/fa.json
+@@ -207,7 +207,7 @@
+ 		"defaultMessage": "این بخش نیازمند آشنایی با Certbot و افزونه‌های DNS آن است. لطفاً مستندات افزونهٔ مربوطه را بررسی کنید."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما به نظر نمی‌رسد Nginx Proxy Manager باشد. مطمئن شوید دامنه به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود."
++		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما به نظر نمی‌رسد Proxywarden باشد. مطمئن شوید دامنه به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "بررسی دسترسی‌پذیری به‌دلیل خطای ارتباط با site24x7.com انجام نشد."
+@@ -228,7 +228,7 @@
+ 		"defaultMessage": "نتایج تست"
+ 	},
+ 	"certificates.http.warning": {
+-		"defaultMessage": "این دامنه‌ها باید از قبل طوری تنظیم شده باشند که به این Nginx Proxy Manager اشاره کنند."
++		"defaultMessage": "این دامنه‌ها باید از قبل طوری تنظیم شده باشند که به این Proxywarden اشاره کنند."
+ 	},
+ 	"certificates.key-type": {
+ 		"defaultMessage": "نوع کلید"
+diff --git a/frontend/src/locale/src/fr.json b/frontend/src/locale/src/fr.json
+index 88add74..22dfb46 100644
+--- a/frontend/src/locale/src/fr.json
++++ b/frontend/src/locale/src/fr.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Cette section requiert une certaine connaissance de Certbot et de ses plugins DNS. Veuillez consulter la documentation des plugins correspondants."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il ne semble pas s'agir de Nginx Proxy Manager. Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance NPM est exécutée."
++		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il ne semble pas s'agir de Proxywarden. Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance NPM est exécutée."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Impossible de vérifier l'accessibilité en raison d'une erreur de communication avec site24x7.com."
+diff --git a/frontend/src/locale/src/hu.json b/frontend/src/locale/src/hu.json
+index 4caf058..83aef21 100644
+--- a/frontend/src/locale/src/hu.json
++++ b/frontend/src/locale/src/hu.json
+@@ -204,7 +204,7 @@
+ 		"defaultMessage": "Ez a szakasz némi ismeretet igényel a Certbot-ról és a DNS plugin-jeiről. Kérjük, olvassa el a megfelelő plugin dokumentációját."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Található szerver ezen a domain-en, de nem úgy tűnik, hogy Nginx Proxy Manager lenne. Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az NPM példánya fut."
++		"defaultMessage": "Található szerver ezen a domain-en, de nem úgy tűnik, hogy Proxywarden lenne. Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az NPM példánya fut."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Az elérhetőség ellenőrzése sikertelen a site24x7.com kommunikációs hiba miatt."
+diff --git a/frontend/src/locale/src/id.json b/frontend/src/locale/src/id.json
+index cb498f0..19eed93 100644
+--- a/frontend/src/locale/src/id.json
++++ b/frontend/src/locale/src/id.json
+@@ -147,7 +147,7 @@
+ 		"defaultMessage": "Bagian ini memerlukan pengetahuan tentang Certbot dan plugin DNS-nya. Silakan merujuk dokumentasi plugin terkait."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi tampaknya bukan Nginx Proxy Manager. Pastikan domain Anda mengarah ke IP tempat instance NPM berjalan."
++		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi tampaknya bukan Proxywarden. Pastikan domain Anda mengarah ke IP tempat instance NPM berjalan."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Gagal memeriksa keterjangkauan karena kesalahan komunikasi dengan site24x7.com."
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index d8506bd..6ab9500 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Questa sezione richiede conoscenze su Certbot e i relativi plugin DNS. Consulta la documentazione del plugin."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "È stato trovato un server su questo dominio, ma non sembra essere Nginx Proxy Manager. Assicurati che il dominio punti all'IP dove è in esecuzione NPM."
++		"defaultMessage": "È stato trovato un server su questo dominio, ma non sembra essere Proxywarden. Assicurati che il dominio punti all'IP dove è in esecuzione NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Verifica di raggiungibilità fallita per errore di comunicazione con site24x7.com."
+diff --git a/frontend/src/locale/src/ja.json b/frontend/src/locale/src/ja.json
+index 438dc21..4d5be8c 100644
+--- a/frontend/src/locale/src/ja.json
++++ b/frontend/src/locale/src/ja.json
+@@ -132,7 +132,7 @@
+ 		"defaultMessage": "このセクションはCertbotとそのDNSプラグインの知識が必要です。各プラグインのドキュメントを参照してください。"
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "このドメインはNginx Proxy Managerではないサーバーを指しているようです。ドメインがこのNPMインスタンスを指していることを確認してください。"
++		"defaultMessage": "このドメインはProxywardenではないサーバーを指しているようです。ドメインがこのNPMインスタンスを指していることを確認してください。"
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.comへの接続でエラーが発生し、到達性チェックに失敗しました"
+diff --git a/frontend/src/locale/src/ko.json b/frontend/src/locale/src/ko.json
+index fc54b52..ef4b1c7 100644
+--- a/frontend/src/locale/src/ko.json
++++ b/frontend/src/locale/src/ko.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "이 항목을 사용하려면 Certbot과 DNS 플러그인에 대한 지식이 어느 정도 필요합니다. 각 플러그인의 문서를 참고하세요."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 Nginx Proxy Manager가 아닌 것으로 보입니다. 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
++		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 Proxywarden가 아닌 것으로 보입니다. 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.com과 통신하는 중 오류가 발생해 접근 가능 여부를 확인하지 못했습니다."
+diff --git a/frontend/src/locale/src/nl.json b/frontend/src/locale/src/nl.json
+index 140255d..9ac3bdf 100644
+--- a/frontend/src/locale/src/nl.json
++++ b/frontend/src/locale/src/nl.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Deze sectie vereist wat informatie over Certbot en zijn DNS plugins. Gebruik de documentatie van de bijbehorende plugins."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar dat lijkt niet Nginx Proxy Manager te zijn. Zorg ervoor dat je domein verwijst naar het IP waar je NPM-instantie draait."
++		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar dat lijkt niet Proxywarden te zijn. Zorg ervoor dat je domein verwijst naar het IP waar je NPM-instantie draait."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Bereikbaarheid kan niet worden bepaald door een communicatiefout met site24x7.com."
+diff --git a/frontend/src/locale/src/no.json b/frontend/src/locale/src/no.json
+index f14ea54..0007c12 100644
+--- a/frontend/src/locale/src/no.json
++++ b/frontend/src/locale/src/no.json
+@@ -204,7 +204,7 @@
+ 		"defaultMessage": "Denne seksjonen krever noe kunnskap om Certbot og dets DNS-plugins. Vennligst konsulter dokumentasjonen for de respektive pluginene."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Det finnes en server på dette domenet, men det ser ikke ut til å være Nginx Proxy Manager. Vennligst sørg for at domenet ditt peker til IP-en der NPM-instansen kjører."
++		"defaultMessage": "Det finnes en server på dette domenet, men det ser ikke ut til å være Proxywarden. Vennligst sørg for at domenet ditt peker til IP-en der NPM-instansen kjører."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Kunne ikke sjekke tilgjengeligheten på grunn av en kommunikasjonsfeil med site24x7.com."
+diff --git a/frontend/src/locale/src/pl.json b/frontend/src/locale/src/pl.json
+index a5fb2ad..6c8435a 100644
+--- a/frontend/src/locale/src/pl.json
++++ b/frontend/src/locale/src/pl.json
+@@ -138,7 +138,7 @@
+ 		"defaultMessage": "Ta sekcja wymaga pewnej wiedzy na temat Certbot i jego wtyczek DNS. Zapoznaj się z dokumentacją odpowiednich wtyczek."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Znaleziono serwer pod tą domeną, ale nie wygląda na to, że jest to Nginx Proxy Manager. Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja NPM."
++		"defaultMessage": "Znaleziono serwer pod tą domeną, ale nie wygląda na to, że jest to Proxywarden. Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nie udało się sprawdzić dostępności z powodu błędu komunikacji z site24x7.com."
+diff --git a/frontend/src/locale/src/pt.json b/frontend/src/locale/src/pt.json
+index 0a789f4..890673d 100644
+--- a/frontend/src/locale/src/pt.json
++++ b/frontend/src/locale/src/pt.json
+@@ -147,7 +147,7 @@
+ 		"defaultMessage": "Esta secção requer conhecimentos sobre o Certbot e os seus plugins DNS. Consulte a documentação dos plugins."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Foi encontrado um servidor neste domínio, mas não parece ser o Nginx Proxy Manager. Certifique-se de que o domínio aponta para o IP onde a sua instância está a correr."
++		"defaultMessage": "Foi encontrado um servidor neste domínio, mas não parece ser o Proxywarden. Certifique-se de que o domínio aponta para o IP onde a sua instância está a correr."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Falha ao verificar acessibilidade devido a um erro de comunicação com site24x7.com."
+diff --git a/frontend/src/locale/src/ru.json b/frontend/src/locale/src/ru.json
+index c18be99..eafb43b 100644
+--- a/frontend/src/locale/src/ru.json
++++ b/frontend/src/locale/src/ru.json
+@@ -204,7 +204,7 @@
+ 		"defaultMessage": "Этот раздел требует знаний о Certbot и его DNS-плагинах. Пожалуйста, обратитесь к документации соответствующих плагинов."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "На этом домене найден сервер, но, похоже, это не Nginx Proxy Manager. Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр NPM."
++		"defaultMessage": "На этом домене найден сервер, но, похоже, это не Proxywarden. Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Не удалось проверить доступность из‑за ошибки связи с site24x7.com."
+diff --git a/frontend/src/locale/src/sk.json b/frontend/src/locale/src/sk.json
+index 8d48cf8..58a75b6 100644
+--- a/frontend/src/locale/src/sk.json
++++ b/frontend/src/locale/src/sk.json
+@@ -204,7 +204,7 @@
+ 		"defaultMessage": "Táto sekcia vyžaduje znalosť Certbotu a jeho DNS doplnkov. Prosím, pozrite si dokumentáciu príslušného doplnku."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Na tejto doméne bol nájdený server, ale nezdá sa, že ide o Nginx Proxy Manager. Uistite sa, že vaša doména smeruje na IP, kde beží vaša inštancia NPM."
++		"defaultMessage": "Na tejto doméne bol nájdený server, ale nezdá sa, že ide o Proxywarden. Uistite sa, že vaša doména smeruje na IP, kde beží vaša inštancia NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nepodarilo sa overiť dostupnosť kvôli chybe komunikácie so službou site24x7.com."
+diff --git a/frontend/src/locale/src/tr.json b/frontend/src/locale/src/tr.json
+index 6b9091f..bf5d731 100644
+--- a/frontend/src/locale/src/tr.json
++++ b/frontend/src/locale/src/tr.json
+@@ -207,7 +207,7 @@
+ 		"defaultMessage": "Bu bölüm Certbot ve DNS eklentileri hakkında bazı bilgiler gerektirir. Lütfen ilgili eklenti dokümantasyonuna bakın."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak Nginx Proxy Manager gibi görünmüyor. Lütfen alan adınızın NPM örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
++		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak Proxywarden gibi görünmüyor. Lütfen alan adınızın NPM örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.com ile iletişim hatası nedeniyle erişilebilirlik kontrolü başarısız oldu."
+diff --git a/frontend/src/locale/src/uk.json b/frontend/src/locale/src/uk.json
+index 3508ebb..38c8065 100644
+--- a/frontend/src/locale/src/uk.json
++++ b/frontend/src/locale/src/uk.json
+@@ -207,7 +207,7 @@
+ 		"defaultMessage": "Цей розділ потребує знань про Certbot та його DNS-плагіни. Будь ласка, зверніться до документації відповідних плагінів."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "На цьому домені знайдено сервер, але, схоже, це не Nginx Proxy Manager. Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр NPM."
++		"defaultMessage": "На цьому домені знайдено сервер, але, схоже, це не Proxywarden. Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Не вдалося перевірити доступність через помилку зв'язку з site24x7.com."
+diff --git a/frontend/src/locale/src/vi.json b/frontend/src/locale/src/vi.json
+index 53ee2e6..e2b9c5b 100644
+--- a/frontend/src/locale/src/vi.json
++++ b/frontend/src/locale/src/vi.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Phần này yêu cầu một số kiến thức về Certbot và các plugin DNS của nó. Vui lòng tham khảo tài liệu plugin tương ứng."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng có vẻ không phải Nginx Proxy Manager. Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy NPM."
++		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng có vẻ không phải Proxywarden. Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy NPM."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Không thể kiểm tra khả năng truy cập do lỗi giao tiếp với site24x7.com."
+diff --git a/frontend/src/locale/src/zh-tw.json b/frontend/src/locale/src/zh-tw.json
+index fb4c795..2fb186d 100644
+--- a/frontend/src/locale/src/zh-tw.json
++++ b/frontend/src/locale/src/zh-tw.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "這部分需要具備一些 Certbot 與 DNS 外掛的相關知識。請參閱對應外掛的官方文件。"
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "此網域有伺服器回應，但似乎不是 Nginx Proxy Manager。請確認網域已指向執行 NPM 的 IP 位址。"
++		"defaultMessage": "此網域有伺服器回應，但似乎不是 Proxywarden。請確認網域已指向執行 NPM 的 IP 位址。"
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "由於與 site24x7.com 通訊時發生錯誤，無法檢查是否可連線。"
+@@ -237,7 +237,7 @@
+ 		"defaultMessage": "測試結果"
+ 	},
+ 	"certificates.http.warning": {
+-		"defaultMessage": "這些網域必須已設定為指向目前這套 Nginx Proxy Manager。"
++		"defaultMessage": "這些網域必須已設定為指向目前這套 Proxywarden。"
+ 	},
+ 	"certificates.key-type": {
+ 		"defaultMessage": "金鑰類型"
+diff --git a/frontend/src/pages/Login/index.tsx b/frontend/src/pages/Login/index.tsx
+index d65b2dc..f4c825a 100644
+--- a/frontend/src/pages/Login/index.tsx
++++ b/frontend/src/pages/Login/index.tsx
+@@ -184,8 +184,8 @@ export default function Login() {
+ 				<div className="d-flex justify-content-between align-items-center mb-4 ps-4 pe-3">
+ 					<img
+ 						className={styles.logo}
+-						src="/images/logo-text-horizontal-grey.png"
+-						alt="Nginx Proxy Manager"
++						src="/images/brand-horizontal.svg"
++						alt="Proxywarden"
+ 					/>
+ 					<div className="d-flex align-items-center gap-1">
+ 						<LocalePicker />
+diff --git a/frontend/src/pages/Setup/index.tsx b/frontend/src/pages/Setup/index.tsx
+index 4becf5f..0fe910b 100644
+--- a/frontend/src/pages/Setup/index.tsx
++++ b/frontend/src/pages/Setup/index.tsx
+@@ -68,8 +68,8 @@ export default function Setup() {
+ 				<div className="text-center mb-4">
+ 					<img
+ 						className={styles.logo}
+-						src="/images/logo-text-horizontal-grey.png"
+-						alt="Nginx Proxy Manager"
++						src="/images/brand-horizontal.svg"
++						alt="Proxywarden"
+ 					/>
+ 				</div>
+ 				<div className="card card-md">
+-- 
+2.47.3
+

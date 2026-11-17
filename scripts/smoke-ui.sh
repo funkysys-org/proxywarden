@@ -12,8 +12,8 @@ SVC=${COMPOSE_SERVICE:-proxywarden}
 UI=${UI_URL:-http://127.0.0.1:8181}
 WAF=${WAF_URL:-http://127.0.0.1:8080}
 # Proves the frontend served is OUR build (title of index.html).
-# F2 flips this to the proxywarden brand — update it WITH the branding patch.
-MARKER=${UI_MARKER:-Nginx Proxy Manager}
+# F2 flips this to the proxywarden brand — updated WITH the branding patch.
+MARKER=${UI_MARKER:-Proxywarden}
 
 say()  { echo "[ui-smoke] $*"; }
 pass() { echo "[ui-smoke] ok: $*"; }
