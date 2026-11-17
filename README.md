@@ -77,8 +77,11 @@ loudly.
 - **F2** ✅ (branch `f2-branding`, patch `001-branding.patch`) — branding:
   name, shield mark, horizontal brand, login/setup pages, teal accent,
   product name across all 25 locales; smoke marker flipped with it
-- **F3** — WAF toggle per host (admin panel; writes marked directives into
-  `advanced_config`)
+- **F3** ✅ (patch `002-waf-toggle.patch`) — WAF toggle per host: two admin
+  switches in the proxy host Options section (DetectionOnly / Block),
+  mutually exclusive, persisted as a marked `# BEGIN/END PROXYWARDEN WAF`
+  block in `advanced_config`; hand-written directives are recognized and
+  rewritten safely (never duplicated)
 - **F4** — audit-log viewer (sidecar API, JWT-verified, admin-only)
 - **F5** — hardening, UI smoke for non-admin login, docs, `v1`
 
