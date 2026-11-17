@@ -10,7 +10,7 @@ connector + OWASP CRS).
 ```
 repo 1  npm-modsec (exists, validated)
           jc21/nginx-proxy-manager:2.17.0
-            → npm-modsec:2.17.0-modsec3.0.17-crs4.30.0      (WAF overlay)
+            → npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4      (WAF overlay)
 
 repo 2  proxywarden (this repo)
           npm-modsec image + frontend fork at v2.17.0
@@ -28,7 +28,7 @@ backend files the backend patch set touches (equivalent to upstream's own
 
 | Pin | Value | Where |
 |---|---|---|
-| `OVERLAY_IMAGE` | `npm-modsec:2.17.0-modsec3.0.17-crs4.30.0` (local tag; CI uses the GHCR path) | `build/Dockerfile` ARG + workflow env |
+| `OVERLAY_IMAGE` | `npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4` (local tag; CI uses the GHCR path) | `build/Dockerfile` ARG + workflow env |
 | `NPM_FRONTEND_REF` | `v2.17.0` | `build/Dockerfile` ARG + workflow env |
 
 Invariants enforced by CI (`pins-sync` job):
@@ -43,8 +43,8 @@ Invariants enforced by CI (`pins-sync` job):
 
 ```bash
 docker build -f build/Dockerfile \
-  --build-arg OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0 \
-  -t proxywarden:2.17.0-modsec3.0.17-crs4.30.0-fe2.17.0 .
+  --build-arg OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4 \
+  -t proxywarden:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 .
 ```
 
 CI builds `FROM` the published overlay image instead and pushes
@@ -53,7 +53,7 @@ CI builds `FROM` the published overlay image instead and pushes
 ## Test before deploy
 
 ```bash
-PROXYWARDEN_IMAGE=proxywarden:2.17.0-modsec3.0.17-crs4.30.0-fe2.17.0 \
+PROXYWARDEN_IMAGE=proxywarden:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 \
   docker compose -f docker-compose.test.yml up -d
 bash scripts/smoke-ui.sh
 docker compose -f docker-compose.test.yml down -v
