@@ -1,0 +1,25 @@
+# Test stack for the proxywarden image (same pattern as repo 1's overlay).
+# PROXYWARDEN_IMAGE is the product image (overlay + our frontend).
+services:
+  proxywarden:
+    image: ${PROXYWARDEN_IMAGE:-proxywarden:local}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8181:81"     # admin UI
+      - "8080:8080"   # in-container WAF test instance
+    volumes:
+      - proxywarden_data:/data
+      - proxywarden_le:/etc/letsencrypt
+      - ./test-runtime/nginx-waf.conf:/etc/nginx-modsec-test/nginx-waf.conf:ro
+
+  # stub backend for the WAF test instance (proxy target)
+  backend:
+    image: python:3.13-slim
+    restart: unless-stopped
+    command: python -m http.server 8080
+
+volumes:
+  proxywarden_data: {}
+  proxywarden_le: {}

@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1
+#
+# proxywarden = validated WAF overlay image + our frontend build.
+#
+# Stage 1 (fe-builder): clone the pinned upstream NPM tag, apply our patch
+#   set (zero patches = stock build), `yarn build` the React/Vite frontend.
+# Stage 2 (product):   FROM the overlay image, replace /app/frontend with
+#   our dist. Backend, modsec layer, s6 seed: untouched.
+#
+# Pins (mirrored in .github/workflows/build.yml — pins-sync enforces):
+#   NPM_FRONTEND_REF : upstream tag the frontend is built from
+#   OVERLAY_IMAGE    : base image (local tag for local builds; CI passes the
+#                      GHCR path — location-dependent, checked by pins-sync
+#                      only for the REPLACE-ME placeholder and the version
+#                      invariant vs NPM_FRONTEND_REF)
+
+# ---- stage 1: frontend builder -------------------------------------------
+FROM node:26 AS fe-builder
+
+ARG NPM_FRONTEND_REF=v2.17.0
+RUN git clone --depth 1 --branch "$NPM_FRONTEND_REF" \
+      https://github.com/NginxProxyManager/nginx-proxy-manager.git /build/npm
+
+COPY patches/frontend/ /patches/
+# Apply our patch set in lexical order; empty set = proven stock build.
+RUN set -eu; cd /build/npm; \
+    found=0; \
+    for p in /patches/*.patch; do \
+      [ -e "$p" ] || continue; \
+      found=1; echo "applying $(basename "$p")"; \
+      git apply --check "$p" && git apply "$p"; \
+    done; \
+    if [ "$found" = 1 ]; then echo "PATCH SET APPLIED"; else echo "STOCK BUILD (no patches)"; fi
+
+RUN set -eu; cd /build/npm/frontend; \
+    npm i -g yarn@1.22.22; \
+    yarn install --frozen-lockfile; \
+    yarn build; \
+    test -f dist/index.html
+
+# ---- stage 2: product image -----------------------------------------------
+ARG OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0
+FROM ${OVERLAY_IMAGE}
+
+# Replace the stock frontend with ours (old hashed assets removed — no orphans).
+RUN rm -rf /app/frontend
+COPY --from=fe-builder /build/npm/frontend/dist/ /app/frontend/
+
+# NOTE (F4): the audit-log sidecar and its wiring land in a later phase;
+# this stage stays a pure frontend swap until then.

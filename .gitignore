@@ -1,0 +1,6 @@
+# never commit upstream source or build output
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
