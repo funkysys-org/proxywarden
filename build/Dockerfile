@@ -14,6 +14,10 @@
 #                      only for the REPLACE-ME placeholder and the version
 #                      invariant vs NPM_FRONTEND_REF)
 
+# Global ARGs — ONLY these are visible to FROM lines (stage 2 consumes
+# OVERLAY_IMAGE; an ARG declared inside a stage is invisible to FROM).
+ARG OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0
+
 # ---- stage 1: frontend builder -------------------------------------------
 FROM node:26 AS fe-builder
 
@@ -45,7 +49,6 @@ RUN set -eu; cd /build/npm/frontend; \
     test -f dist/index.html
 
 # ---- stage 2: product image -----------------------------------------------
-ARG OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0
 FROM ${OVERLAY_IMAGE}
 
 # Replace the stock frontend with ours (old hashed assets removed — no orphans).
