@@ -993,6 +993,25 @@ index 0000000..7170d15
 +		</div>
 +	);
 +}
+diff --git a/frontend/src/pages/Nginx/StaticHosts/index.tsx b/frontend/src/pages/Nginx/StaticHosts/index.tsx
+new file mode 100644
+index 0000000..1c1451d
+--- /dev/null
++++ b/frontend/src/pages/Nginx/StaticHosts/index.tsx
+@@ -0,0 +1,13 @@
++import { HasPermission } from "src/components";
++import { STATIC_HOSTS, VIEW } from "src/modules/Permissions";
++import TableWrapper from "./TableWrapper";
++
++const StaticHosts = () => {
++	return (
++		<HasPermission section={STATIC_HOSTS} permission={VIEW} pageLoading loadingNoLogo>
++			<TableWrapper />
++		</HasPermission>
++	);
++};
++
++export default StaticHosts;
 diff --git a/frontend/src/pages/Users/Table.tsx b/frontend/src/pages/Users/Table.tsx
 index 49c64e6..213244a 100644
 --- a/frontend/src/pages/Users/Table.tsx
