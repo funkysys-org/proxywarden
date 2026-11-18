@@ -77,6 +77,27 @@ served, the API is alive, the module still loads (`nginx -t` at a real boot),
 UI), and a non-admin login is denied the WAF audit source server-side.
 If someone points `OVERLAY_IMAGE` at a wrong base, this test fails loudly.
 
+## Deploy
+
+The repo ships the production stack: `docker-compose.yml` + `env.example`.
+
+```bash
+cp env.example .env          # pins the exact image tag — never a floating :latest
+docker login ghcr.io          # PAT with read:packages (the registry is private)
+docker compose pull           # fails here = prod untouched
+docker compose up -d
+```
+
+- First boot on fresh volumes: the **setup page** on `:81` (create the
+  admin). The mandatory mounts are already wired (`/data` +
+  `/etc/letsencrypt` — the stock prepare service hard-fails without them).
+- The WAF ships **dormant**: enable per host from the UI (Options →
+  WAF DetectionOnly → watch Logs → WAF Audit → then WAF Block).
+- An update is one deliberate line: edit the tag in `.env`, then
+  `docker compose pull && docker compose up -d`.
+- The compose exposes the admin UI on `:81`; to bind it local instead see
+  the comment in `docker-compose.yml` (`127.0.0.1:81:81` + SSH tunnel).
+
 ## Global hardening (image-level)
 
 `rootfs/etc/nginx/conf.d/proxywarden-hardening.conf` is baked into the image

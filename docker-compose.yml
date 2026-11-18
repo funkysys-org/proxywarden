@@ -1,0 +1,32 @@
+# proxywarden — production deploy stack.
+#
+#   cp env.example .env    # pin the exact image tag (no floating :latest)
+#   docker login ghcr.io   # PAT with read:packages — the registry is private
+#   docker compose pull
+#   docker compose up -d
+#
+# First boot on FRESH volumes shows the SETUP page on :81 (create the admin).
+# The WAF ships DORMANT: no host is filtered until you flip a switch in the UI
+# (proxy host → Options → WAF DetectionOnly, then WAF Block when satisfied).
+#
+# /data and /etc/letsencrypt must be mounted VOLUMES — the stock prepare
+# service hard-fails without them. They survive recreates: the SQLite DB,
+# nginx host configs, certs and the modsec tunables (/data/modsec) live there.
+
+services:
+  proxywarden:
+    image: ${PROXYWARDEN_IMAGE:-ghcr.io/funkysys-org/proxywarden:latest}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      # Admin UI. To keep it off the public interface, bind it local and
+      # tunnel in:  "127.0.0.1:81:81"  +  ssh -L 8081:127.0.0.1:81 <host>
+      - "81:81"
+    volumes:
+      - proxywarden_data:/data
+      - proxywarden_le:/etc/letsencrypt
+
+volumes:
+  proxywarden_data: {}
+  proxywarden_le: {}
