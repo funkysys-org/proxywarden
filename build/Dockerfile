@@ -55,7 +55,9 @@ RUN set -eu; cd /build/npm/frontend; \
     yarn install --frozen-lockfile; \
     yarn locale-compile; \
     yarn build; \
-    test -f dist/index.html
+    test -f dist/index.html; \
+    if grep -rq 'NPM instance' dist/; then echo "FATAL: upstream 'NPM instance' string leaked into the bundle — debrand patch (005) not applied?"; exit 1; fi; \
+    grep -rq 'Warden instance' dist/ || { echo "FATAL: 'Warden instance' marker missing from the bundle"; exit 1; }
 
 # ---- stage 2: product image -----------------------------------------------
 FROM ${OVERLAY_IMAGE}

@@ -1,0 +1,1021 @@
+diff --git a/frontend/src/locale/src/HelpDoc/az/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/az/ProxyHosts.md
+index 3ae260a..f57ec4b 100644
+--- a/frontend/src/locale/src/HelpDoc/az/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/az/ProxyHosts.md
+@@ -4,4 +4,4 @@ Proksi Host, yönləndirmək istədiyiniz veb xidmət üçün daxil olan giriş
+ 
+ O, öz daxili SSL dəstəyi olmaya bilən xidmətiniz üçün istəyə bağlı SSL sonlanması təmin edir.
+ 
+-Proksi Hostlar Nginx Proxy Manager-in ən çox istifadə olunan funksiyasıdır.
++Proksi Hostlar Proxywarden-in ən çox istifadə olunan funksiyasıdır.
+diff --git a/frontend/src/locale/src/HelpDoc/bg/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/bg/ProxyHosts.md
+index ef82c39..ccdaae7 100644
+--- a/frontend/src/locale/src/HelpDoc/bg/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/bg/ProxyHosts.md
+@@ -4,4 +4,4 @@
+ 
+ Той предоставя възможност за SSL терминaция на услуга, която може да няма вградена поддръжка на SSL.
+ 
+-Прокси хостовете са най-често използваната функция в Nginx Proxy Manager.
++Прокси хостовете са най-често използваната функция в Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/cs/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/cs/ProxyHosts.md
+index 3637641..d057f3c 100644
+--- a/frontend/src/locale/src/HelpDoc/cs/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/cs/ProxyHosts.md
+@@ -4,4 +4,4 @@ Proxy hostitel je příchozí koncový bod pro webovou službu, kterou chcete p
+ 
+ Poskytuje volitelné ukončení SSL pro vaši službu, která nemusí mít zabudovanou podporu SSL.
+ 
+-Proxy hostitelé jsou nejběžnějším použitím pro Nginx Proxy Manager.
++Proxy hostitelé jsou nejběžnějším použitím pro Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/de/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/de/ProxyHosts.md
+index f116b85..b8474f9 100644
+--- a/frontend/src/locale/src/HelpDoc/de/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/de/ProxyHosts.md
+@@ -4,4 +4,4 @@ Ein Proxy-Host ist der eingehende Endpunkt für einen Webdienst, den Sie weiterl
+ 
+ Er bietet optionale SSL-Terminierung für Ihren Dienst, der möglicherweise keine integrierte SSL-Unterstützung hat.
+ 
+-Proxy-Hosts sind die häufigste Verwendung für den Nginx Proxy Manager.
+\ No newline at end of file
++Proxy-Hosts sind die häufigste Verwendung für den Proxywarden.
+\ No newline at end of file
+diff --git a/frontend/src/locale/src/HelpDoc/en/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/en/ProxyHosts.md
+index e9630d0..4a3117e 100644
+--- a/frontend/src/locale/src/HelpDoc/en/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/en/ProxyHosts.md
+@@ -4,4 +4,4 @@ A Proxy Host is the incoming endpoint for a web service that you want to forward
+ 
+ It provides optional SSL termination for your service that might not have SSL support built in.
+ 
+-Proxy Hosts are the most common use for the Nginx Proxy Manager.
++Proxy Hosts are the most common use for the Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/es/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/es/ProxyHosts.md
+index 57994b7..c5216a3 100644
+--- a/frontend/src/locale/src/HelpDoc/es/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/es/ProxyHosts.md
+@@ -4,4 +4,4 @@ Un Host Proxy es el punto de entrada para un servicio web que deseas reenviar.
+ 
+ Proporciona terminación SSL opcional para tu servicio que podría no tener soporte SSL integrado.
+ 
+-Los Hosts Proxy son el uso más común del Nginx Proxy Manager.
++Los Hosts Proxy son el uso más común del Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/et/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/et/ProxyHosts.md
+index 6586903..dd52d55 100644
+--- a/frontend/src/locale/src/HelpDoc/et/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/et/ProxyHosts.md
+@@ -4,4 +4,4 @@ Puhverserver on veebiteenuse sisend, mille suunad edasi oma tegelikule teenusele
+ 
+ Soovi korral lõpetab see SSL-i sinu eest — isegi kui teenusel endal SSL-tuge pole.
+ 
+-Puhverserverid on Nginx Proxy Manageri kõige tavalisem kasutus.
++Puhverserverid on Proxywardeni kõige tavalisem kasutus.
+diff --git a/frontend/src/locale/src/HelpDoc/fa/Certificates.md b/frontend/src/locale/src/HelpDoc/fa/Certificates.md
+index f65f969..934b648 100644
+--- a/frontend/src/locale/src/HelpDoc/fa/Certificates.md
++++ b/frontend/src/locale/src/HelpDoc/fa/Certificates.md
+@@ -4,7 +4,7 @@
+ 
+ در اعتبارسنجی از طریق HTTP، سرورهای Let's Encrypt تلاش می‌کنند از طریق HTTP (نه HTTPS) به دامنهٔ شما دسترسی پیدا کنند. اگر اعتبارسنجی موفق باشد، گواهی صادر می‌شود.
+ 
+-برای این روش باید از قبل یک _میزبان پراکسی (Proxy Host)_ برای دامنهٔ موردنظر ایجاد کرده باشید که از طریق HTTP در دسترس باشد و به همین نصب Nginx Proxy Manager اشاره کند. پس از صدور گواهی می‌توانید Proxy Host را طوری تنظیم کنید که برای اتصال‌های HTTPS نیز از آن استفاده کند. با این حال، برای تمدید خودکار گواهی، دسترسی HTTP باید همچنان برقرار بماند.
++برای این روش باید از قبل یک _میزبان پراکسی (Proxy Host)_ برای دامنهٔ موردنظر ایجاد کرده باشید که از طریق HTTP در دسترس باشد و به همین نصب Proxywarden اشاره کند. پس از صدور گواهی می‌توانید Proxy Host را طوری تنظیم کنید که برای اتصال‌های HTTPS نیز از آن استفاده کند. با این حال، برای تمدید خودکار گواهی، دسترسی HTTP باید همچنان برقرار بماند.
+ 
+ این روش از دامنه‌های Wildcard پشتیبانی _نمی‌کند_.
+ 
+diff --git a/frontend/src/locale/src/HelpDoc/fa/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/fa/ProxyHosts.md
+index 2ef0fcf..5139186 100644
+--- a/frontend/src/locale/src/HelpDoc/fa/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/fa/ProxyHosts.md
+@@ -2,6 +2,6 @@
+ 
+ میزبان پراکسی (Proxy Host) نقطهٔ ورودی برای یک سرویس وب است که می‌خواهید درخواست‌ها را به آن فوروارد کنید.
+ 
+-Proxy Host می‌تواند SSL/TLS Termination را نیز انجام دهد؛ بنابراین حتی اگر سرویس مقصد خودش SSL نداشته باشد، می‌توانید دسترسی HTTPS را در Nginx Proxy Manager فراهم کنید.
++Proxy Host می‌تواند SSL/TLS Termination را نیز انجام دهد؛ بنابراین حتی اگر سرویس مقصد خودش SSL نداشته باشد، می‌توانید دسترسی HTTPS را در Proxywarden فراهم کنید.
+ 
+-Proxy Hostها رایج‌ترین قابلیت مورد استفاده در Nginx Proxy Manager هستند.
++Proxy Hostها رایج‌ترین قابلیت مورد استفاده در Proxywarden هستند.
+diff --git a/frontend/src/locale/src/HelpDoc/fr/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/fr/ProxyHosts.md
+index 10c75b9..3bc37e4 100644
+--- a/frontend/src/locale/src/HelpDoc/fr/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/fr/ProxyHosts.md
+@@ -4,4 +4,4 @@ Un Hôte Proxy est le point de terminaison entrant d'un service web que vous sou
+ 
+ Il assure la terminaison SSL optionnelle pour votre service qui ne prend pas en charge SSL nativement.
+ 
+-Les Hôtes Proxy constituent l'utilisation la plus courante du Nginx Proxy Manager.
++Les Hôtes Proxy constituent l'utilisation la plus courante du Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/hu/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/hu/ProxyHosts.md
+index 74a333b..830449d 100644
+--- a/frontend/src/locale/src/HelpDoc/hu/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/hu/ProxyHosts.md
+@@ -4,4 +4,4 @@ A Proxy Kiszolgáló egy bejövő végpont egy olyan webszolgáltatáshoz, amely
+ 
+ Opcionális SSL lezárást biztosít a szolgáltatásodhoz, amelyben esetleg nincs beépített SSL támogatás.
+ 
+-A Proxy Kiszolgálók az Nginx Proxy Manager leggyakoribb felhasználási módjai.
++A Proxy Kiszolgálók az Proxywarden leggyakoribb felhasználási módjai.
+diff --git a/frontend/src/locale/src/HelpDoc/id/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/id/ProxyHosts.md
+index b05939a..6d62f34 100644
+--- a/frontend/src/locale/src/HelpDoc/id/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/id/ProxyHosts.md
+@@ -4,4 +4,4 @@ Host Proxy adalah endpoint masuk untuk layanan web yang ingin Anda teruskan.
+ 
+ Host ini menyediakan terminasi SSL opsional untuk layanan Anda yang mungkin tidak memiliki dukungan SSL bawaan.
+ 
+-Host Proxy adalah penggunaan paling umum untuk Nginx Proxy Manager.
++Host Proxy adalah penggunaan paling umum untuk Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/it/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/it/ProxyHosts.md
+index bc1dd53..260e8e9 100644
+--- a/frontend/src/locale/src/HelpDoc/it/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/it/ProxyHosts.md
+@@ -4,4 +4,4 @@ Un host proxy è l'endpoint in entrata per un servizio web che si desidera inolt
+ 
+ Fornisce la terminazione SSL opzionale per il servizio che potrebbe non avere il supporto SSL integrato.
+ 
+-Gli host proxy sono l'uso più comune per Nginx Proxy Manager.
++Gli host proxy sono l'uso più comune per Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/ja/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/ja/ProxyHosts.md
+index e01d0a6..f3c5432 100644
+--- a/frontend/src/locale/src/HelpDoc/ja/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/ja/ProxyHosts.md
+@@ -4,4 +4,4 @@
+ 
+ サービスにSSLサーバーが組み込まれていない場合でも、オプションでSSL終端機能を提供します。
+ 
+-プロキシホストはNginx Proxy Managerのもっとも一般的な使用方法です。
+\ No newline at end of file
++プロキシホストはProxywardenのもっとも一般的な使用方法です。
+\ No newline at end of file
+diff --git a/frontend/src/locale/src/HelpDoc/ko/Certificates.md b/frontend/src/locale/src/HelpDoc/ko/Certificates.md
+index f0b3a06..22b2649 100644
+--- a/frontend/src/locale/src/HelpDoc/ko/Certificates.md
++++ b/frontend/src/locale/src/HelpDoc/ko/Certificates.md
+@@ -4,7 +4,7 @@
+ 
+ HTTP 검증 방식의 인증서는 Let's Encrypt 서버가 **HTTPS가 아닌 HTTP로** 해당 도메인에 접속을 시도해 응답이 확인되면 인증서를 발급하는 방식입니다.
+ 
+-이 방식을 사용하려면 도메인에 대한 **프록시 호스트가 미리 생성되어 있어야 하며**, HTTP로 접근할 수 있어야 하고 Nginx Proxy Manager가 설치된 서버를 가리켜야 합니다. 인증서가 발급된 이후에는 해당 프록시 호스트에 HTTPS용 인증서를 적용할 수 있습니다.
++이 방식을 사용하려면 도메인에 대한 **프록시 호스트가 미리 생성되어 있어야 하며**, HTTP로 접근할 수 있어야 하고 Proxywarden가 설치된 서버를 가리켜야 합니다. 인증서가 발급된 이후에는 해당 프록시 호스트에 HTTPS용 인증서를 적용할 수 있습니다.
+ 
+ 다만, **인증서 자동 갱신을 위해서는 HTTP 접근이 계속 필요합니다.**
+ 
+diff --git a/frontend/src/locale/src/HelpDoc/ko/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/ko/ProxyHosts.md
+index 3212fde..a680dd1 100644
+--- a/frontend/src/locale/src/HelpDoc/ko/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/ko/ProxyHosts.md
+@@ -4,5 +4,5 @@
+ 
+ 원래 SSL을 지원하지 않는 대상이라도, 프록시 호스트를 통해 SSL(HTTPS) 연결을 적용할 수 있습니다.
+ 
+-프록시 호스트는 Nginx Proxy Manager에서 가장 일반적으로 사용되는 기능입니다.
++프록시 호스트는 Proxywarden에서 가장 일반적으로 사용되는 기능입니다.
+ 
+diff --git a/frontend/src/locale/src/HelpDoc/nl/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/nl/ProxyHosts.md
+index 68f9f4c..6fb4d3f 100644
+--- a/frontend/src/locale/src/HelpDoc/nl/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/nl/ProxyHosts.md
+@@ -4,4 +4,4 @@ Een Proxy Host is de inkomende endpoint voor een webdienst dat je wilt doorsture
+ 
+ Het biedt optionele SSL voor je dienst die mogelijk geen SSL ondersteuning heeft.
+ 
+-Proxy Hosts worden het meest gebruikt in Nginx Proxy Manager.
++Proxy Hosts worden het meest gebruikt in Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/no/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/no/ProxyHosts.md
+index 8092e73..c465f38 100644
+--- a/frontend/src/locale/src/HelpDoc/no/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/no/ProxyHosts.md
+@@ -4,4 +4,4 @@ En Proxy‑host er inngangspunktet (innkommende endepunkt) for en webtjeneste du
+ 
+ Den tilbyr valgfri SSL‑terminering for tjenesten din hvis tjenesten ikke har innebygd støtte for SSL.
+ 
+-Proxy‑hosts er den vanligste bruken av Nginx Proxy Manager.
++Proxy‑hosts er den vanligste bruken av Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/pl/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/pl/ProxyHosts.md
+index 43e94ef..8a75628 100644
+--- a/frontend/src/locale/src/HelpDoc/pl/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/pl/ProxyHosts.md
+@@ -4,4 +4,4 @@ Host proxy to punkt wejściowy dla usługi internetowej, którą chcesz przekier
+ 
+ Zapewnia opcjonalne zakończenie SSL dla twojej usługi, która może nie mieć wbudowanej obsługi SSL.
+ 
+-Hosty proxy są najpopularniejszym zastosowaniem Nginx Proxy Manager
+\ No newline at end of file
++Hosty proxy są najpopularniejszym zastosowaniem Proxywarden
+\ No newline at end of file
+diff --git a/frontend/src/locale/src/HelpDoc/pt/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/pt/ProxyHosts.md
+index 4c221fa..a0a3edd 100644
+--- a/frontend/src/locale/src/HelpDoc/pt/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/pt/ProxyHosts.md
+@@ -4,4 +4,4 @@ Um *Proxy Host* é o ponto de entrada para um serviço web que pretendes encamin
+ 
+ Permite, opcionalmente, fazer terminação SSL para um serviço que possa não ter suporte SSL nativo.
+ 
+-Os *Proxy Hosts* são a utilização mais comum do Nginx Proxy Manager.
++Os *Proxy Hosts* são a utilização mais comum do Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/ru/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/ru/ProxyHosts.md
+index 34e5497..a19c12c 100644
+--- a/frontend/src/locale/src/HelpDoc/ru/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/ru/ProxyHosts.md
+@@ -4,4 +4,4 @@
+ 
+ Он может выполнять терминaцию SSL для сервиса, у которого нет собственной поддержки SSL.
+ 
+-Прокси‑хосты — самый распространённый сценарий использования Nginx Proxy Manager.
++Прокси‑хосты — самый распространённый сценарий использования Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/sk/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/sk/ProxyHosts.md
+index 631a1b4..c25bf8e 100644
+--- a/frontend/src/locale/src/HelpDoc/sk/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/sk/ProxyHosts.md
+@@ -4,4 +4,4 @@ Proxy hostiteľ je prichádzajúci koncový bod pre webovú službu, ktorú chce
+ 
+ Poskytuje voliteľné ukončenie SSL pre vašu službu, ktorá nemusí mať zabudovanú podporu SSL.
+ 
+-Proxy hostitelia sú najbežnejším použitím pre Nginx Proxy Manager.
++Proxy hostitelia sú najbežnejším použitím pre Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/tr/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/tr/ProxyHosts.md
+index 224a76a..cd5e8f5 100644
+--- a/frontend/src/locale/src/HelpDoc/tr/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/tr/ProxyHosts.md
+@@ -4,5 +4,5 @@ Proxy Host, iletilmek istediğiniz bir web hizmeti için gelen uç noktadır.
+ 
+ SSL desteği yerleşik olmayan hizmetiniz için isteğe bağlı SSL sonlandırma sağlar.
+ 
+-Proxy Host'lar, Nginx Proxy Manager'ın en yaygın kullanımıdır.
++Proxy Host'lar, Proxywarden'ın en yaygın kullanımıdır.
+ 
+diff --git a/frontend/src/locale/src/HelpDoc/uk/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/uk/ProxyHosts.md
+index a5df6d6..b62be1d 100644
+--- a/frontend/src/locale/src/HelpDoc/uk/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/uk/ProxyHosts.md
+@@ -4,4 +4,4 @@
+ 
+ Він дає змогу за потреби завершувати SSL-з'єднання для сервісу, який може не мати вбудованої підтримки SSL.
+ 
+-Проксі-хости — найпоширеніший спосіб використання Nginx Proxy Manager.
++Проксі-хости — найпоширеніший спосіб використання Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/vi/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/vi/ProxyHosts.md
+index e04552c..be4495f 100644
+--- a/frontend/src/locale/src/HelpDoc/vi/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/vi/ProxyHosts.md
+@@ -4,4 +4,4 @@ Máy chủ proxy là điểm tiếp nhận yêu cầu cho một dịch vụ web
+ 
+ Nó có thể đảm nhận phần mã hóa SSL (SSL termination) cho những dịch vụ không có sẵn hỗ trợ SSL.
+ 
+-Máy chủ proxy là tính năng được dùng nhiều nhất trong Nginx Proxy Manager.
++Máy chủ proxy là tính năng được dùng nhiều nhất trong Proxywarden.
+diff --git a/frontend/src/locale/src/HelpDoc/zh-tw/ProxyHosts.md b/frontend/src/locale/src/HelpDoc/zh-tw/ProxyHosts.md
+index a6d27c3..140c1c5 100644
+--- a/frontend/src/locale/src/HelpDoc/zh-tw/ProxyHosts.md
++++ b/frontend/src/locale/src/HelpDoc/zh-tw/ProxyHosts.md
+@@ -4,4 +4,4 @@
+ 
+ 它可選擇代為處理 SSL 連線，適用於未內建 SSL 支援的服務。
+ 
+-代理主機是 Nginx Proxy Manager 最常見的用途。
++代理主機是 Proxywarden 最常見的用途。
+diff --git a/frontend/src/locale/src/az.json b/frontend/src/locale/src/az.json
+index 93a379a..502096f 100644
+--- a/frontend/src/locale/src/az.json
++++ b/frontend/src/locale/src/az.json
+@@ -207,22 +207,22 @@
+ 		"defaultMessage": "Bu bölmə Certbot və onun DNS plaginləri haqqında müəyyən bilik tələb edir. Zəhmət olmasa müvafiq plaginlərin sənədləri ilə tanış olun."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Bu domendə server tapıldı, lakin bu Proxywarden kimi görünmür. Zəhmət olmasa domeninizin NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
++		"defaultMessage": "Bu domendə server tapıldı, lakin bu Proxywarden kimi görünmür. Zəhmət olmasa domeninizin Warden instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.com ilə əlaqə xətası səbəbindən əlçatanlığı yoxlamaq mümkün olmadı."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Bu domendə heç bir server mövcud deyil. Zəhmət olmasa domeninizin mövcud olduğuna, NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə və lazım gələrsə routerinizdə 80 portunun yönləndirildiyinə əmin olun."
++		"defaultMessage": "Bu domendə heç bir server mövcud deyil. Zəhmət olmasa domeninizin mövcud olduğuna, Warden instansiyanızın işlədiyi IP-yə yönləndirildiyinə və lazım gələrsə routerinizdə 80 portunun yönləndirildiyinə əmin olun."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Serveriniz əlçatandır və sertifikat yaratmaq mümkün olmalıdır."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Bu domendə server tapıldı, lakin gözlənilməz status kodu qaytardı: {code}. Bu NPM serveridirmi? Zəhmət olmasa domeninizin NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
++		"defaultMessage": "Bu domendə server tapıldı, lakin gözlənilməz status kodu qaytardı: {code}. Bu Warden serveridirmi? Zəhmət olmasa domeninizin Warden instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Bu domendə server tapıldı, lakin gözlənilməz məlumat qaytardı. Bu NPM serveridirmi? Zəhmət olmasa domeninizin NPM instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
++		"defaultMessage": "Bu domendə server tapıldı, lakin gözlənilməz məlumat qaytardı. Bu Warden serveridirmi? Zəhmət olmasa domeninizin Warden instansiyanızın işlədiyi IP-yə yönləndirildiyinə əmin olun."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Test nəticələri"
+diff --git a/frontend/src/locale/src/bg.json b/frontend/src/locale/src/bg.json
+index 7566085..267be2a 100644
+--- a/frontend/src/locale/src/bg.json
++++ b/frontend/src/locale/src/bg.json
+@@ -147,22 +147,22 @@
+ 		"defaultMessage": "Този раздел изисква познания за Certbot и неговите DNS плъгини. Моля, консултирайте се с документацията."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Сървър е намерен на този домейн, но не изглежда да е Proxywarden. Уверете се, че домейнът сочи към IP адреса, където работи NPM."
++		"defaultMessage": "Сървър е намерен на този домейн, но не изглежда да е Proxywarden. Уверете се, че домейнът сочи към IP адреса, където работи Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Неуспешна проверка поради грешка в комуникацията със site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Няма достъпен сървър на този домейн. Проверете, че домейнът съществува и сочи към IP-та, където се изпълнява NPM, и ако е необходимо, че порт 80 е пренасочен."
++		"defaultMessage": "Няма достъпен сървър на този домейн. Проверете, че домейнът съществува и сочи към IP-та, където се изпълнява Warden, и ако е необходимо, че порт 80 е пренасочен."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Вашият сървър е достъпен и създаването на сертификати е възможно."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Намерен е сървър, но върна неочакван код {code}. Това NPM ли е? Уверете се, че домейнът сочи към вашия NPM сървър."
++		"defaultMessage": "Намерен е сървър, но върна неочакван код {code}. Това Warden ли е? Уверете се, че домейнът сочи към вашия Warden сървър."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Намерен е сървър, но върна неочаквани данни. Това NPM ли е? Уверете се, че домейнът сочи към вашия NPM сървър."
++		"defaultMessage": "Намерен е сървър, но върна неочаквани данни. Това Warden ли е? Уверете се, че домейнът сочи към вашия Warden сървър."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Резултати от теста"
+diff --git a/frontend/src/locale/src/cs.json b/frontend/src/locale/src/cs.json
+index dbfe625..9bf1c18 100644
+--- a/frontend/src/locale/src/cs.json
++++ b/frontend/src/locale/src/cs.json
+@@ -204,22 +204,22 @@
+ 		"defaultMessage": "Tato sekce vyžaduje znalost Certbotu a jeho DNS doplňků. Prosím, podívejte se do dokumentace příslušného doplňku."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Na této doméně byl nalezen server, ale nezdá se, že jde o Proxywarden. Ujistěte se, že vaše doména směřuje na IP, kde běží vaše instance NPM."
++		"defaultMessage": "Na této doméně byl nalezen server, ale nezdá se, že jde o Proxywarden. Ujistěte se, že vaše doména směřuje na IP, kde běží vaše instance Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nepodařilo se ověřit dostupnost kvůli chybě komunikace se službou site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Na této doméně není dostupný žádný server. Ujistěte se, že doména existuje a směřuje na IP adresu s NPM a pokud je to potřeba, port 80 je přesměrován ve vašem routeru."
++		"defaultMessage": "Na této doméně není dostupný žádný server. Ujistěte se, že doména existuje a směřuje na IP adresu s Warden a pokud je to potřeba, port 80 je přesměrován ve vašem routeru."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Váš server je dostupný a vytvoření certifikátu by mělo být možné."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Na této doméně byl nalezen server, ale vrátil neočekávaný stavový kód {code}. Je to NPM server? Ujistěte se prosím, že doména směřuje na IP, kde běží vaše instance NPM."
++		"defaultMessage": "Na této doméně byl nalezen server, ale vrátil neočekávaný stavový kód {code}. Je to Warden server? Ujistěte se prosím, že doména směřuje na IP, kde běží vaše instance Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Na této doméně byl nalezen server, ale vrátil neočekávaná data. Je to NPM server? Ujistěte se, že doména směřuje na IP, kde běží vaše instance NPM."
++		"defaultMessage": "Na této doméně byl nalezen server, ale vrátil neočekávaná data. Je to Warden server? Ujistěte se, že doména směřuje na IP, kde běží vaše instance Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Výsledky testu"
+diff --git a/frontend/src/locale/src/de.json b/frontend/src/locale/src/de.json
+index 38ce834..ef99b42 100644
+--- a/frontend/src/locale/src/de.json
++++ b/frontend/src/locale/src/de.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "Dieser Abschnitt erfordert einige Kenntnisse über Certbot und seine DNS-Plugins. Bitte konsultieren Sie die jeweilige Plugin-Dokumentation."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, aber es scheint sich nicht um Proxywarden zu handeln. Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre NPM-Instanz ausgeführt wird."
++		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, aber es scheint sich nicht um Proxywarden zu handeln. Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre Warden-Instanz ausgeführt wird."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Die Erreichbarkeit konnte aufgrund eines Kommunikationsfehlers mit site24x7.com nicht überprüft werden."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Unter dieser Domain ist kein Server verfügbar. Bitte stellen Sie sicher, dass Ihre Domain existiert und auf die IP-Adresse verweist, unter der Ihre NPM-Instanz läuft, und dass gegebenenfalls Port 80 in Ihrem Router weitergeleitet wird."
++		"defaultMessage": "Unter dieser Domain ist kein Server verfügbar. Bitte stellen Sie sicher, dass Ihre Domain existiert und auf die IP-Adresse verweist, unter der Ihre Warden-Instanz läuft, und dass gegebenenfalls Port 80 in Ihrem Router weitergeleitet wird."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Ihr Server ist erreichbar und die Erstellung von Zertifikaten sollte möglich sein."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, der jedoch einen unerwarteten Statuscode {code} zurückgegeben hat. Handelt es sich um den NPM-Server? Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre NPM-Instanz ausgeführt wird."
++		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, der jedoch einen unerwarteten Statuscode {code} zurückgegeben hat. Handelt es sich um den Warden-Server? Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre Warden-Instanz ausgeführt wird."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, der jedoch unerwartete Daten zurückgegeben hat. Handelt es sich um den NPM-Server? Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre NPM-Instanz ausgeführt wird."
++		"defaultMessage": "Unter dieser Domain wurde ein Server gefunden, der jedoch unerwartete Daten zurückgegeben hat. Handelt es sich um den Warden-Server? Bitte stellen Sie sicher, dass Ihre Domain auf die IP-Adresse verweist, unter der Ihre Warden-Instanz ausgeführt wird."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Testergebnisse"
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index de9da2e..0d880fd 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "This section requires some knowledge about Certbot and its DNS plugins. Please consult the respective plugins documentation."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "There is a server found at this domain but it does not seem to be Proxywarden. Please make sure your domain points to the IP where your NPM instance is running."
++		"defaultMessage": "There is a server found at this domain but it does not seem to be Proxywarden. Please make sure your domain points to the IP where your Warden instance is running."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Failed to check the reachability due to a communication error with site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "There is no server available at this domain. Please make sure your domain exists and points to the IP where your NPM instance is running and if necessary port 80 is forwarded in your router."
++		"defaultMessage": "There is no server available at this domain. Please make sure your domain exists and points to the IP where your Warden instance is running and if necessary port 80 is forwarded in your router."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Your server is reachable and creating certificates should be possible."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "There is a server found at this domain but it returned an unexpected status code {code}. Is it the NPM server? Please make sure your domain points to the IP where your NPM instance is running."
++		"defaultMessage": "There is a server found at this domain but it returned an unexpected status code {code}. Is it the Warden server? Please make sure your domain points to the IP where your Warden instance is running."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "There is a server found at this domain but it returned an unexpected data. Is it the NPM server? Please make sure your domain points to the IP where your NPM instance is running."
++		"defaultMessage": "There is a server found at this domain but it returned an unexpected data. Is it the Warden server? Please make sure your domain points to the IP where your Warden instance is running."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Test Results"
+diff --git a/frontend/src/locale/src/es.json b/frontend/src/locale/src/es.json
+index 37f57d0..163a0a7 100644
+--- a/frontend/src/locale/src/es.json
++++ b/frontend/src/locale/src/es.json
+@@ -147,22 +147,22 @@
+ 		"defaultMessage": "Esta sección requiere algunos conocimientos sobre Certbot y sus plugins DNS. Consulta la documentación de los plugins respectivos."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Se encontró un servidor en este dominio pero no parece ser Proxywarden. Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de NPM."
++		"defaultMessage": "Se encontró un servidor en este dominio pero no parece ser Proxywarden. Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "No se pudo verificar la accesibilidad debido a un error de comunicación con site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "No hay ningún servidor disponible en este dominio. Asegúrate de que tu dominio existe y apunta a la IP donde se está ejecutando tu instancia de NPM y, si es necesario, que el puerto 80 esté redirigido en tu router."
++		"defaultMessage": "No hay ningún servidor disponible en este dominio. Asegúrate de que tu dominio existe y apunta a la IP donde se está ejecutando tu instancia de Warden y, si es necesario, que el puerto 80 esté redirigido en tu router."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Tu servidor es accesible y debería ser posible crear certificados."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Se encontró un servidor en este dominio pero devolvió un código de estado inesperado {code}. ¿Es el servidor NPM? Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de NPM."
++		"defaultMessage": "Se encontró un servidor en este dominio pero devolvió un código de estado inesperado {code}. ¿Es el servidor Warden? Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Se encontró un servidor en este dominio pero devolvió datos inesperados. ¿Es el servidor NPM? Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de NPM."
++		"defaultMessage": "Se encontró un servidor en este dominio pero devolvió datos inesperados. ¿Es el servidor Warden? Asegúrate de que tu dominio apunte a la IP donde se está ejecutando tu instancia de Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Resultados de la Prueba"
+diff --git a/frontend/src/locale/src/et.json b/frontend/src/locale/src/et.json
+index ba4c311..6e7ee15 100644
+--- a/frontend/src/locale/src/et.json
++++ b/frontend/src/locale/src/et.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "See osa eeldab Certboti ja selle DNS-pluginate tundmist. Vaata vastava plugina juhendit."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Sellel domeenil on küll server, aga see ei tundu olevat Proxywarden. Vaata, et domeen osutaks IP-le, kus NPM tegelikult töötab."
++		"defaultMessage": "Sellel domeenil on küll server, aga see ei tundu olevat Proxywarden. Vaata, et domeen osutaks IP-le, kus Warden tegelikult töötab."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Kättesaadavust ei saanud kontrollida, sest side site24x7.com-iga katkes."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Sellel domeenil ei ole serverit. Vaata, et domeen olemas oleks, osutaks NPM-i IP-le ja vajadusel oleks ruuteris avatud port 80."
++		"defaultMessage": "Sellel domeenil ei ole serverit. Vaata, et domeen olemas oleks, osutaks Warden-i IP-le ja vajadusel oleks ruuteris avatud port 80."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Server on kättesaadav, sertifikaadi saab ära teha."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Sellel domeenil on server, aga vastus tuli ootamatu koodiga {code}. Kas see on NPM? Vaata, et domeen osutaks IP-le, kus NPM töötab."
++		"defaultMessage": "Sellel domeenil on server, aga vastus tuli ootamatu koodiga {code}. Kas see on Warden? Vaata, et domeen osutaks IP-le, kus Warden töötab."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Sellel domeenil on server, aga vastuse sisu ei klapi. Kas see on NPM? Vaata, et domeen osutaks IP-le, kus NPM töötab."
++		"defaultMessage": "Sellel domeenil on server, aga vastuse sisu ei klapi. Kas see on Warden? Vaata, et domeen osutaks IP-le, kus Warden töötab."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Testi tulemused"
+diff --git a/frontend/src/locale/src/fa.json b/frontend/src/locale/src/fa.json
+index bfa9940..36aa5d2 100644
+--- a/frontend/src/locale/src/fa.json
++++ b/frontend/src/locale/src/fa.json
+@@ -207,22 +207,22 @@
+ 		"defaultMessage": "این بخش نیازمند آشنایی با Certbot و افزونه‌های DNS آن است. لطفاً مستندات افزونهٔ مربوطه را بررسی کنید."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما به نظر نمی‌رسد Proxywarden باشد. مطمئن شوید دامنه به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود."
++		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما به نظر نمی‌رسد Proxywarden باشد. مطمئن شوید دامنه به IP سروری اشاره می‌کند که Warden روی آن اجرا می‌شود."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "بررسی دسترسی‌پذیری به‌دلیل خطای ارتباط با site24x7.com انجام نشد."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "هیچ سروری در این دامنه در دسترس نیست. مطمئن شوید دامنه وجود دارد، به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود و در صورت نیاز پورت 80 روی روتر به این سرور فوروارد شده است."
++		"defaultMessage": "هیچ سروری در این دامنه در دسترس نیست. مطمئن شوید دامنه وجود دارد، به IP سروری اشاره می‌کند که Warden روی آن اجرا می‌شود و در صورت نیاز پورت 80 روی روتر به این سرور فوروارد شده است."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "سرور شما در دسترس است و صدور گواهی باید امکان‌پذیر باشد."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما کد وضعیت غیرمنتظرهٔ {code} را برگرداند. آیا این سرور NPM است؟ مطمئن شوید دامنه به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود."
++		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما کد وضعیت غیرمنتظرهٔ {code} را برگرداند. آیا این سرور Warden است؟ مطمئن شوید دامنه به IP سروری اشاره می‌کند که Warden روی آن اجرا می‌شود."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما دادهٔ غیرمنتظره‌ای برگرداند. آیا این سرور NPM است؟ مطمئن شوید دامنه به IP سروری اشاره می‌کند که NPM روی آن اجرا می‌شود."
++		"defaultMessage": "در این دامنه یک سرور پیدا شد، اما دادهٔ غیرمنتظره‌ای برگرداند. آیا این سرور Warden است؟ مطمئن شوید دامنه به IP سروری اشاره می‌کند که Warden روی آن اجرا می‌شود."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "نتایج تست"
+diff --git a/frontend/src/locale/src/fr.json b/frontend/src/locale/src/fr.json
+index 7d4d80c..a267cf1 100644
+--- a/frontend/src/locale/src/fr.json
++++ b/frontend/src/locale/src/fr.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "Cette section requiert une certaine connaissance de Certbot et de ses plugins DNS. Veuillez consulter la documentation des plugins correspondants."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il ne semble pas s'agir de Proxywarden. Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance NPM est exécutée."
++		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il ne semble pas s'agir de Proxywarden. Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance Warden est exécutée."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Impossible de vérifier l'accessibilité en raison d'une erreur de communication avec site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Aucun serveur n'est disponible pour ce domaine. Veuillez vérifier que votre domaine existe et pointe vers l'adresse IP où votre instance NPM est exécutée. Si nécessaire, le port 80 est ouvert dans votre routeur."
++		"defaultMessage": "Aucun serveur n'est disponible pour ce domaine. Veuillez vérifier que votre domaine existe et pointe vers l'adresse IP où votre instance Warden est exécutée. Si nécessaire, le port 80 est ouvert dans votre routeur."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Votre serveur est accessible et la création de certificats devrait être possible."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il a renvoyé un code d'état inattendu {code}. S'agit-il du serveur NPM ? Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance NPM est exécutée."
++		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il a renvoyé un code d'état inattendu {code}. S'agit-il du serveur Warden ? Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance Warden est exécutée."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il a renvoyé des données inattendues. S'agit-il du serveur NPM ? Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance NPM est exécutée."
++		"defaultMessage": "Un serveur a été trouvé sur ce domaine, mais il a renvoyé des données inattendues. S'agit-il du serveur Warden ? Veuillez vérifier que votre domaine pointe bien vers l'adresse IP où votre instance Warden est exécutée."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Résultats du test"
+diff --git a/frontend/src/locale/src/ga.json b/frontend/src/locale/src/ga.json
+index b3547d2..6def571 100644
+--- a/frontend/src/locale/src/ga.json
++++ b/frontend/src/locale/src/ga.json
+@@ -147,22 +147,22 @@
+ 		"defaultMessage": "Éilíonn an chuid seo roinnt eolais faoi Certbot agus a bhreiseáin DNS. Féach ar dhoiciméadacht na mbreiseán faoi seach, le do thoil."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach ní cosúil gur Bainisteoir Proxy Nginx atá ann. Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas NPM ag rith."
++		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach ní cosúil gur Bainisteoir Proxy Nginx atá ann. Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas Warden ag rith."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Theip ar sheiceáil an inrochtaineachta mar gheall ar earráid chumarsáide le site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Níl aon fhreastalaí ar fáil ag an bhfearann seo. Cinntigh le do thoil go bhfuil do fhearann ann agus go bhfuil sé ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas NPM ag rith agus más gá, go bhfuil port 80 curtha ar aghaidh i do ródaire."
++		"defaultMessage": "Níl aon fhreastalaí ar fáil ag an bhfearann seo. Cinntigh le do thoil go bhfuil do fhearann ann agus go bhfuil sé ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas Warden ag rith agus más gá, go bhfuil port 80 curtha ar aghaidh i do ródaire."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Tá rochtain ar do fhreastalaí agus ba cheart go mbeadh sé indéanta deimhnithe a chruthú."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach thug sé cód stádais gan choinne {code} ar ais. An é an freastalaí NPM atá ann? Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas NPM ag rith."
++		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach thug sé cód stádais gan choinne {code} ar ais. An é an freastalaí Warden atá ann? Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas Warden ag rith."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach thug sé sonraí gan choinne ar ais. An é an freastalaí NPM atá ann? Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas NPM ag rith."
++		"defaultMessage": "Tá freastalaí aimsithe ag an bhfearann seo ach thug sé sonraí gan choinne ar ais. An é an freastalaí Warden atá ann? Déan cinnte go bhfuil do fhearann ag pointeáil chuig an seoladh IP ina bhfuil d'eispéireas Warden ag rith."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Torthaí Tástála"
+diff --git a/frontend/src/locale/src/hu.json b/frontend/src/locale/src/hu.json
+index 93a6f41..120694a 100644
+--- a/frontend/src/locale/src/hu.json
++++ b/frontend/src/locale/src/hu.json
+@@ -204,22 +204,22 @@
+ 		"defaultMessage": "Ez a szakasz némi ismeretet igényel a Certbot-ról és a DNS plugin-jeiről. Kérjük, olvassa el a megfelelő plugin dokumentációját."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Található szerver ezen a domain-en, de nem úgy tűnik, hogy Proxywarden lenne. Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az NPM példánya fut."
++		"defaultMessage": "Található szerver ezen a domain-en, de nem úgy tűnik, hogy Proxywarden lenne. Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az Warden példánya fut."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Az elérhetőség ellenőrzése sikertelen a site24x7.com kommunikációs hiba miatt."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Nincs elérhető szerver ezen a domain-en. Kérjük, győződjön meg róla, hogy a domain létezik és arra az IP címre mutat, ahol az NPM példánya fut, és szükség esetén a 80-as port továbbítva van a routerében."
++		"defaultMessage": "Nincs elérhető szerver ezen a domain-en. Kérjük, győződjön meg róla, hogy a domain létezik és arra az IP címre mutat, ahol az Warden példánya fut, és szükség esetén a 80-as port továbbítva van a routerében."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "A szerver elérhető és a tanúsítványok létrehozása lehetséges lesz."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Található szerver ezen a domain-en, de váratlan {code} státuszkódot adott vissza. Ez az NPM szerver? Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az NPM példánya fut."
++		"defaultMessage": "Található szerver ezen a domain-en, de váratlan {code} státuszkódot adott vissza. Ez az Warden szerver? Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az Warden példánya fut."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Található szerver ezen a domain-en, de váratlan adatot adott vissza. Ez az NPM szerver? Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az NPM példánya fut."
++		"defaultMessage": "Található szerver ezen a domain-en, de váratlan adatot adott vissza. Ez az Warden szerver? Kérjük, győződjön meg róla, hogy a domain arra az IP címre mutat, ahol az Warden példánya fut."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Teszt eredmények"
+diff --git a/frontend/src/locale/src/id.json b/frontend/src/locale/src/id.json
+index 6e7c403..65d7ca2 100644
+--- a/frontend/src/locale/src/id.json
++++ b/frontend/src/locale/src/id.json
+@@ -147,22 +147,22 @@
+ 		"defaultMessage": "Bagian ini memerlukan pengetahuan tentang Certbot dan plugin DNS-nya. Silakan merujuk dokumentasi plugin terkait."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi tampaknya bukan Proxywarden. Pastikan domain Anda mengarah ke IP tempat instance NPM berjalan."
++		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi tampaknya bukan Proxywarden. Pastikan domain Anda mengarah ke IP tempat instance Warden berjalan."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Gagal memeriksa keterjangkauan karena kesalahan komunikasi dengan site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Tidak ada server yang tersedia pada domain ini. Pastikan domain Anda ada dan mengarah ke IP tempat instance NPM berjalan dan bila perlu port 80 diteruskan di router Anda."
++		"defaultMessage": "Tidak ada server yang tersedia pada domain ini. Pastikan domain Anda ada dan mengarah ke IP tempat instance Warden berjalan dan bila perlu port 80 diteruskan di router Anda."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Server Anda dapat dijangkau dan pembuatan sertifikat seharusnya memungkinkan."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi mengembalikan kode status tak terduga {code}. Apakah itu server NPM? Pastikan domain Anda mengarah ke IP tempat instance NPM berjalan."
++		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi mengembalikan kode status tak terduga {code}. Apakah itu server Warden? Pastikan domain Anda mengarah ke IP tempat instance Warden berjalan."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi mengembalikan data yang tidak terduga. Apakah itu server NPM? Pastikan domain Anda mengarah ke IP tempat instance NPM berjalan."
++		"defaultMessage": "Ada server yang ditemukan pada domain ini tetapi mengembalikan data yang tidak terduga. Apakah itu server Warden? Pastikan domain Anda mengarah ke IP tempat instance Warden berjalan."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Hasil Uji"
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index ffce36c..aa3b3d8 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -216,7 +216,7 @@
+ 		"defaultMessage": "Questa sezione richiede conoscenze su Certbot e i relativi plugin DNS. Consulta la documentazione del plugin."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "È stato trovato un server su questo dominio, ma non sembra essere Proxywarden. Assicurati che il dominio punti all'IP dove è in esecuzione NPM."
++		"defaultMessage": "È stato trovato un server su questo dominio, ma non sembra essere Proxywarden. Assicurati che il dominio punti all'IP dove è in esecuzione Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Verifica di raggiungibilità fallita per errore di comunicazione con site24x7.com."
+@@ -228,10 +228,10 @@
+ 		"defaultMessage": "Il server è raggiungibile e la creazione dei certificati è possibile."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "È stato trovato un server su questo dominio ma ha restituito un codice di stato imprevisto {code}. È il server NPM? Controlla che il dominio punti correttamente all'IP."
++		"defaultMessage": "È stato trovato un server su questo dominio ma ha restituito un codice di stato imprevisto {code}. È il server Warden? Controlla che il dominio punti correttamente all'IP."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "È stato trovato un server su questo dominio ma ha restituito dati imprevisti. È il server NPM? Controlla che il dominio punti correttamente all'IP."
++		"defaultMessage": "È stato trovato un server su questo dominio ma ha restituito dati imprevisti. È il server Warden? Controlla che il dominio punti correttamente all'IP."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Risultati Test"
+diff --git a/frontend/src/locale/src/ko.json b/frontend/src/locale/src/ko.json
+index da3f919..c9eb7f1 100644
+--- a/frontend/src/locale/src/ko.json
++++ b/frontend/src/locale/src/ko.json
+@@ -228,10 +228,10 @@
+ 		"defaultMessage": "서버에 정상적으로 접근할 수 있어 인증서를 발급할 수 있을 것으로 보입니다."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 예상하지 못한 상태 코드({code})를 반환했습니다. NPM 서버가 맞나요? 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
++		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 예상하지 못한 상태 코드({code})를 반환했습니다. Warden 서버가 맞나요? 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 예상하지 못한 데이터를 반환했습니다. NPM 서버가 맞나요? 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
++		"defaultMessage": "해당 도메인에서 서버가 발견되었지만 예상하지 못한 데이터를 반환했습니다. Warden 서버가 맞나요? 도메인이 NPM이 실행 중인 IP를 가리키는지 확인하세요."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "테스트 결과"
+diff --git a/frontend/src/locale/src/nl.json b/frontend/src/locale/src/nl.json
+index d3ba785..2952d5e 100644
+--- a/frontend/src/locale/src/nl.json
++++ b/frontend/src/locale/src/nl.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "Deze sectie vereist wat informatie over Certbot en zijn DNS plugins. Gebruik de documentatie van de bijbehorende plugins."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar dat lijkt niet Proxywarden te zijn. Zorg ervoor dat je domein verwijst naar het IP waar je NPM-instantie draait."
++		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar dat lijkt niet Proxywarden te zijn. Zorg ervoor dat je domein verwijst naar het IP waar je Warden-instantie draait."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Bereikbaarheid kan niet worden bepaald door een communicatiefout met site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Er is geen server beschikbaar op dit domein. Zorg ervoor dat je domein bestaat en verwijst naar het IP waar je NPM-instantie draait en eventueel port 80 wordt doorgestuurd in je router."
++		"defaultMessage": "Er is geen server beschikbaar op dit domein. Zorg ervoor dat je domein bestaat en verwijst naar het IP waar je Warden-instantie draait en eventueel port 80 wordt doorgestuurd in je router."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Je server is bereikbaar en certificaten kunnen worden aangemaakt."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar heeft een onverwachte statuscode ({code}) teruggegeven. Is dat de NPM-server? Zorg ervoor dat je domein verwijst naar het IP waar jouw NPM-instantie draait."
++		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar heeft een onverwachte statuscode ({code}) teruggegeven. Is dat de Warden-server? Zorg ervoor dat je domein verwijst naar het IP waar jouw Warden-instantie draait."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar heeft een onverwachte gegevens teruggegeven. Is dat de NPM-server? Zorg ervoor dat je domein verwijst naar het IP waar jouw NPM-instantie draait."
++		"defaultMessage": "Er is een server gevonden op deze domeinnaam, maar heeft een onverwachte gegevens teruggegeven. Is dat de Warden-server? Zorg ervoor dat je domein verwijst naar het IP waar jouw Warden-instantie draait."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Testresultaten"
+diff --git a/frontend/src/locale/src/no.json b/frontend/src/locale/src/no.json
+index a07045c..b2ec338 100644
+--- a/frontend/src/locale/src/no.json
++++ b/frontend/src/locale/src/no.json
+@@ -204,22 +204,22 @@
+ 		"defaultMessage": "Denne seksjonen krever noe kunnskap om Certbot og dets DNS-plugins. Vennligst konsulter dokumentasjonen for de respektive pluginene."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Det finnes en server på dette domenet, men det ser ikke ut til å være Proxywarden. Vennligst sørg for at domenet ditt peker til IP-en der NPM-instansen kjører."
++		"defaultMessage": "Det finnes en server på dette domenet, men det ser ikke ut til å være Proxywarden. Vennligst sørg for at domenet ditt peker til IP-en der Warden-instansen kjører."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Kunne ikke sjekke tilgjengeligheten på grunn av en kommunikasjonsfeil med site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Det finnes ingen server tilgjengelig på dette domenet. Vennligst sørg for at domenet ditt eksisterer og peker til IP-en der NPM-instansen kjører, og om nødvendig at port 80 er videresendt i ruteren din."
++		"defaultMessage": "Det finnes ingen server tilgjengelig på dette domenet. Vennligst sørg for at domenet ditt eksisterer og peker til IP-en der Warden-instansen kjører, og om nødvendig at port 80 er videresendt i ruteren din."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Serveren din er tilgjengelig, og det bør være mulig å opprette sertifikater."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Det finnes en server på dette domenet, men den returnerte en uventet statuskode {code}. Er det NPM-serveren? Vennligst sørg for at domenet ditt peker til IP-en der NPM-instansen kjører."
++		"defaultMessage": "Det finnes en server på dette domenet, men den returnerte en uventet statuskode {code}. Er det Warden-serveren? Vennligst sørg for at domenet ditt peker til IP-en der Warden-instansen kjører."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Det finnes en server på dette domenet, men den returnerte uventet data. Er det NPM-serveren? Vennligst sørg for at domenet ditt peker til IP-en der NPM-instansen kjører."
++		"defaultMessage": "Det finnes en server på dette domenet, men den returnerte uventet data. Er det Warden-serveren? Vennligst sørg for at domenet ditt peker til IP-en der Warden-instansen kjører."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Testresultater"
+diff --git a/frontend/src/locale/src/pl.json b/frontend/src/locale/src/pl.json
+index 1a26b23..4cf1fa5 100644
+--- a/frontend/src/locale/src/pl.json
++++ b/frontend/src/locale/src/pl.json
+@@ -138,22 +138,22 @@
+ 		"defaultMessage": "Ta sekcja wymaga pewnej wiedzy na temat Certbot i jego wtyczek DNS. Zapoznaj się z dokumentacją odpowiednich wtyczek."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Znaleziono serwer pod tą domeną, ale nie wygląda na to, że jest to Proxywarden. Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja NPM."
++		"defaultMessage": "Znaleziono serwer pod tą domeną, ale nie wygląda na to, że jest to Proxywarden. Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nie udało się sprawdzić dostępności z powodu błędu komunikacji z site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Brak dostępnego serwera pod tą domeną. Upewnij się, że twoja domena istnieje i wskazuje na adres IP, gdzie działa twoja instancja NPM, oraz w razie potrzeby, że port 80 jest przekierowany w routerze lub owarty w firewall-u."
++		"defaultMessage": "Brak dostępnego serwera pod tą domeną. Upewnij się, że twoja domena istnieje i wskazuje na adres IP, gdzie działa twoja instancja Warden, oraz w razie potrzeby, że port 80 jest przekierowany w routerze lub owarty w firewall-u."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Twój serwer jest dostępny i tworzenie certyfikatów powinno być możliwe."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Znaleziono serwer pod tą domeną, ale zwrócił nieoczekiwany kod statusu {code}. Czy to serwer NPM? Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja NPM."
++		"defaultMessage": "Znaleziono serwer pod tą domeną, ale zwrócił nieoczekiwany kod statusu {code}. Czy to serwer Warden? Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Znaleziono serwer pod tą domeną, ale zwrócił nieoczekiwane dane. Czy to serwer NPM? Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja NPM."
++		"defaultMessage": "Znaleziono serwer pod tą domeną, ale zwrócił nieoczekiwane dane. Czy to serwer Warden? Upewnij się, że twoja domena wskazuje na adres IP, gdzie działa twoja instancja Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Wyniki testu"
+diff --git a/frontend/src/locale/src/pt.json b/frontend/src/locale/src/pt.json
+index 16ab3b9..33d9eb3 100644
+--- a/frontend/src/locale/src/pt.json
++++ b/frontend/src/locale/src/pt.json
+@@ -159,10 +159,10 @@
+ 		"defaultMessage": "O servidor está acessível e a criação de certificados deverá ser possível."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Foi encontrado um servidor neste domínio, mas devolveu um código inesperado ({code}). Será o servidor NPM? Confirme que o domínio aponta para o IP correto."
++		"defaultMessage": "Foi encontrado um servidor neste domínio, mas devolveu um código inesperado ({code}). Será o servidor Warden? Confirme que o domínio aponta para o IP correto."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Foi encontrado um servidor neste domínio, mas devolveu dados inesperados. Será o servidor NPM? Confirme que o domínio aponta para o IP correto."
++		"defaultMessage": "Foi encontrado um servidor neste domínio, mas devolveu dados inesperados. Será o servidor Warden? Confirme que o domínio aponta para o IP correto."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Resultados do Teste"
+diff --git a/frontend/src/locale/src/ru.json b/frontend/src/locale/src/ru.json
+index 83e5dab..c464ded 100644
+--- a/frontend/src/locale/src/ru.json
++++ b/frontend/src/locale/src/ru.json
+@@ -204,22 +204,22 @@
+ 		"defaultMessage": "Этот раздел требует знаний о Certbot и его DNS-плагинах. Пожалуйста, обратитесь к документации соответствующих плагинов."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "На этом домене найден сервер, но, похоже, это не Proxywarden. Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр NPM."
++		"defaultMessage": "На этом домене найден сервер, но, похоже, это не Proxywarden. Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Не удалось проверить доступность из‑за ошибки связи с site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "На этом домене недоступен сервер. Убедитесь, что домен существует и указывает на IP-адрес, где запущен ваш экземпляр NPM, и при необходимости порт 80 проброшен на вашем роутере."
++		"defaultMessage": "На этом домене недоступен сервер. Убедитесь, что домен существует и указывает на IP-адрес, где запущен ваш экземпляр Warden, и при необходимости порт 80 проброшен на вашем роутере."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Сервер доступен, выпуск сертификатов возможен."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "На этом домене найден сервер, но он вернул неожиданный статус‑код {code}. Это сервер NPM? Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр NPM."
++		"defaultMessage": "На этом домене найден сервер, но он вернул неожиданный статус‑код {code}. Это сервер Warden? Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "На этом домене найден сервер, но он вернул неожиданные данные. Это сервер NPM? Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр NPM."
++		"defaultMessage": "На этом домене найден сервер, но он вернул неожиданные данные. Это сервер Warden? Убедитесь, что ваш домен указывает на IP-адрес, где запущен ваш экземпляр Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Результаты проверки"
+diff --git a/frontend/src/locale/src/sk.json b/frontend/src/locale/src/sk.json
+index 3295a08..f073ccd 100644
+--- a/frontend/src/locale/src/sk.json
++++ b/frontend/src/locale/src/sk.json
+@@ -204,22 +204,22 @@
+ 		"defaultMessage": "Táto sekcia vyžaduje znalosť Certbotu a jeho DNS doplnkov. Prosím, pozrite si dokumentáciu príslušného doplnku."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Na tejto doméne bol nájdený server, ale nezdá sa, že ide o Proxywarden. Uistite sa, že vaša doména smeruje na IP, kde beží vaša inštancia NPM."
++		"defaultMessage": "Na tejto doméne bol nájdený server, ale nezdá sa, že ide o Proxywarden. Uistite sa, že vaša doména smeruje na IP, kde beží vaša inštancia Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Nepodarilo sa overiť dostupnosť kvôli chybe komunikácie so službou site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Na tejto doméne nie je dostupný žiadny server. Uistite sa, že doména existuje a smeruje na IP adresu s NPM a ak je to potrebné, port 80 je presmerovaný vo vašom smerovači."
++		"defaultMessage": "Na tejto doméne nie je dostupný žiadny server. Uistite sa, že doména existuje a smeruje na IP adresu s Warden a ak je to potrebné, port 80 je presmerovaný vo vašom smerovači."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Váš server je dostupný a vytvorenie certifikátu by malo byť možné."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Na tejto doméne bol nájdený server, ale vrátil neočakávaný stavový kód {code}. Je to NPM server? Uistite sa prosím, že doména smeruje na IP, kde beží vaša inštancia NPM."
++		"defaultMessage": "Na tejto doméne bol nájdený server, ale vrátil neočakávaný stavový kód {code}. Je to Warden server? Uistite sa prosím, že doména smeruje na IP, kde beží vaša inštancia Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Na tejto doméne bol nájdený server, ale vrátil neočakávané údaje. Je to NPM server? Uistite sa, že doména smeruje na IP, kde beží vaša inštancia NPM."
++		"defaultMessage": "Na tejto doméne bol nájdený server, ale vrátil neočakávané údaje. Je to Warden server? Uistite sa, že doména smeruje na IP, kde beží vaša inštancia Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Výsledky testu"
+diff --git a/frontend/src/locale/src/tr.json b/frontend/src/locale/src/tr.json
+index b113588..5ff2186 100644
+--- a/frontend/src/locale/src/tr.json
++++ b/frontend/src/locale/src/tr.json
+@@ -207,22 +207,22 @@
+ 		"defaultMessage": "Bu bölüm Certbot ve DNS eklentileri hakkında bazı bilgiler gerektirir. Lütfen ilgili eklenti dokümantasyonuna bakın."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak Proxywarden gibi görünmüyor. Lütfen alan adınızın NPM örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
++		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak Proxywarden gibi görünmüyor. Lütfen alan adınızın Warden örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "site24x7.com ile iletişim hatası nedeniyle erişilebilirlik kontrolü başarısız oldu."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Bu alan adında kullanılabilir bir sunucu yok. Lütfen alan adınızın mevcut olduğundan ve NPM örneğinizin çalıştığı IP'ye işaret ettiğinden ve gerekirse yönlendiricinizde 80 portunun yönlendirildiğinden emin olun."
++		"defaultMessage": "Bu alan adında kullanılabilir bir sunucu yok. Lütfen alan adınızın mevcut olduğundan ve Warden örneğinizin çalıştığı IP'ye işaret ettiğinden ve gerekirse yönlendiricinizde 80 portunun yönlendirildiğinden emin olun."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Sunucunuz erişilebilir ve sertifika oluşturma mümkün olmalı."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak beklenmeyen bir durum kodu döndürdü {code}. Bu NPM sunucusu mu? Lütfen alan adınızın NPM örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
++		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak beklenmeyen bir durum kodu döndürdü {code}. Bu Warden sunucusu mu? Lütfen alan adınızın Warden örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak beklenmeyen veri döndürdü. Bu NPM sunucusu mu? Lütfen alan adınızın NPM örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
++		"defaultMessage": "Bu alan adında bir sunucu bulundu ancak beklenmeyen veri döndürdü. Bu Warden sunucusu mu? Lütfen alan adınızın Warden örneğinizin çalıştığı IP'ye işaret ettiğinden emin olun."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Test Sonuçları"
+diff --git a/frontend/src/locale/src/uk.json b/frontend/src/locale/src/uk.json
+index 22422ba..76cbb7b 100644
+--- a/frontend/src/locale/src/uk.json
++++ b/frontend/src/locale/src/uk.json
+@@ -207,22 +207,22 @@
+ 		"defaultMessage": "Цей розділ потребує знань про Certbot та його DNS-плагіни. Будь ласка, зверніться до документації відповідних плагінів."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "На цьому домені знайдено сервер, але, схоже, це не Proxywarden. Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр NPM."
++		"defaultMessage": "На цьому домені знайдено сервер, але, схоже, це не Proxywarden. Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Не вдалося перевірити доступність через помилку зв'язку з site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "На цьому домені недоступний сервер. Переконайтеся, що домен існує та вказує на IP-адресу, де запущено ваш екземпляр NPM, і за потреби порт 80 проброшено на вашому роутері."
++		"defaultMessage": "На цьому домені недоступний сервер. Переконайтеся, що домен існує та вказує на IP-адресу, де запущено ваш екземпляр Warden, і за потреби порт 80 проброшено на вашому роутері."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Сервер доступний, випуск сертифікатів можливий."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "На цьому домені знайдено сервер, але він повернув неочікуваний статус-код {code}. Це сервер NPM? Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр NPM."
++		"defaultMessage": "На цьому домені знайдено сервер, але він повернув неочікуваний статус-код {code}. Це сервер Warden? Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "На цьому домені знайдено сервер, але він повернув неочікувані дані. Це сервер NPM? Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр NPM."
++		"defaultMessage": "На цьому домені знайдено сервер, але він повернув неочікувані дані. Це сервер Warden? Переконайтеся, що ваш домен вказує на IP-адресу, де запущено ваш екземпляр Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Результати перевірки"
+diff --git a/frontend/src/locale/src/vi.json b/frontend/src/locale/src/vi.json
+index 8e3ad15..16ef55e 100644
+--- a/frontend/src/locale/src/vi.json
++++ b/frontend/src/locale/src/vi.json
+@@ -216,28 +216,28 @@
+ 		"defaultMessage": "Phần này yêu cầu một số kiến thức về Certbot và các plugin DNS của nó. Vui lòng tham khảo tài liệu plugin tương ứng."
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng có vẻ không phải Proxywarden. Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy NPM."
++		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng có vẻ không phải Proxywarden. Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy Warden."
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "Không thể kiểm tra khả năng truy cập do lỗi giao tiếp với site24x7.com."
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "Không có máy chủ nào tại tên miền này. Vui lòng đảm bảo tên miền tồn tại, trỏ đến IP của máy đang chạy NPM và nếu cần, cổng 80 đã được chuyển tiếp (port forwarding) trên router."
++		"defaultMessage": "Không có máy chủ nào tại tên miền này. Vui lòng đảm bảo tên miền tồn tại, trỏ đến IP của máy đang chạy Warden và nếu cần, cổng 80 đã được chuyển tiếp (port forwarding) trên router."
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "Máy chủ của bạn truy cập được, có thể tiến hành tạo chứng chỉ."
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng nó trả về mã trạng thái không mong đợi {code}. Đây có phải máy chủ NPM không? Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy NPM."
++		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng nó trả về mã trạng thái không mong đợi {code}. Đây có phải máy chủ Warden không? Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy Warden."
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng nó trả về dữ liệu không mong đợi. Đây có phải máy chủ NPM không? Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy NPM."
++		"defaultMessage": "Tìm thấy một máy chủ tại tên miền này nhưng nó trả về dữ liệu không mong đợi. Đây có phải máy chủ Warden không? Vui lòng đảm bảo tên miền trỏ đến IP của máy đang chạy Warden."
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "Kết quả kiểm tra"
+ 	},
+ 	"certificates.http.warning": {
+-		"defaultMessage": "Các tên miền này phải được cấu hình sẵn để trỏ đến máy chủ NPM này."
++		"defaultMessage": "Các tên miền này phải được cấu hình sẵn để trỏ đến máy chủ Warden này."
+ 	},
+ 	"certificates.key-type": {
+ 		"defaultMessage": "Loại khóa"
+diff --git a/frontend/src/locale/src/zh-tw.json b/frontend/src/locale/src/zh-tw.json
+index 5514447..7b264b2 100644
+--- a/frontend/src/locale/src/zh-tw.json
++++ b/frontend/src/locale/src/zh-tw.json
+@@ -216,22 +216,22 @@
+ 		"defaultMessage": "這部分需要具備一些 Certbot 與 DNS 外掛的相關知識。請參閱對應外掛的官方文件。"
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "此網域有伺服器回應，但似乎不是 Proxywarden。請確認網域已指向執行 NPM 的 IP 位址。"
++		"defaultMessage": "此網域有伺服器回應，但似乎不是 Proxywarden。請確認網域已指向執行 Warden 的 IP 位址。"
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "由於與 site24x7.com 通訊時發生錯誤，無法檢查是否可連線。"
+ 	},
+ 	"certificates.http.reachability-not-resolved": {
+-		"defaultMessage": "此網域沒有伺服器回應。請確認網域存在，並指向執行 NPM 的 IP 位址；如有需要，請在路由器上轉送連接埠 80。"
++		"defaultMessage": "此網域沒有伺服器回應。請確認網域存在，並指向執行 Warden 的 IP 位址；如有需要，請在路由器上轉送連接埠 80。"
+ 	},
+ 	"certificates.http.reachability-ok": {
+ 		"defaultMessage": "可以連線到您的伺服器，應可正常申請憑證。"
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "此網域有伺服器回應，但傳回了未預期的狀態碼 {code}。該伺服器是 NPM 嗎？請確認網域已指向執行 NPM 的 IP 位址。"
++		"defaultMessage": "此網域有伺服器回應，但傳回了未預期的狀態碼 {code}。該伺服器是 Warden 嗎？請確認網域已指向執行 Warden 的 IP 位址。"
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "此網域有伺服器回應，但傳回了未預期的資料。該伺服器是 NPM 嗎？請確認網域已指向執行 NPM 的 IP 位址。"
++		"defaultMessage": "此網域有伺服器回應，但傳回了未預期的資料。該伺服器是 Warden 嗎？請確認網域已指向執行 Warden 的 IP 位址。"
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "測試結果"
+diff --git a/frontend/src/locale/src/zh.json b/frontend/src/locale/src/zh.json
+index 070b9f5..fe7be0e 100644
+--- a/frontend/src/locale/src/zh.json
++++ b/frontend/src/locale/src/zh.json
+@@ -132,7 +132,7 @@
+ 		"defaultMessage": "本节需要您具备一些关于 Certbot 及其 DNS 插件的知识，请参阅相应插件的官方文档。"
+ 	},
+ 	"certificates.http.reachability-404": {
+-		"defaultMessage": "在此域名下找到了一个服务器，但它似乎不是 Nginx 代理管理器。请确保您的域名指向 NPM 实例运行的 IP 地址。"
++		"defaultMessage": "在此域名下找到了一个服务器，但它似乎不是 Nginx 代理管理器。请确保您的域名指向 Warden 实例运行的 IP 地址。"
+ 	},
+ 	"certificates.http.reachability-failed-to-check": {
+ 		"defaultMessage": "由于与site24x7.com通信错误，无法检查可达性。"
+@@ -144,10 +144,10 @@
+ 		"defaultMessage": "您的服务器可以访问，应该可以创建证书。"
+ 	},
+ 	"certificates.http.reachability-other": {
+-		"defaultMessage": "在此域名下找到了一个服务器，但它返回了意外的状态码 {code}。它是 NPM 服务器吗？请确保您的域名指向NPM实例运行的 IP 地址。"
++		"defaultMessage": "在此域名下找到了一个服务器，但它返回了意外的状态码 {code}。它是 Warden 服务器吗？请确保您的域名指向NPM实例运行的 IP 地址。"
+ 	},
+ 	"certificates.http.reachability-wrong-data": {
+-		"defaultMessage": "在此域名下找到了一个服务器，但它返回了意外的数据。它是 NPM 服务器吗？请确保您的域名指向 NPM 实例运行的 IP 地址。"
++		"defaultMessage": "在此域名下找到了一个服务器，但它返回了意外的数据。它是 Warden 服务器吗？请确保您的域名指向 Warden 实例运行的 IP 地址。"
+ 	},
+ 	"certificates.http.test-results": {
+ 		"defaultMessage": "测试结果"
