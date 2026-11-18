@@ -2,18 +2,22 @@
 
 Custom-branded Nginx Proxy Manager with a first-class WAF: the **official NPM
 backend, untouched**, with **our own frontend build** (branding + WAF panels),
-on top of the **validated npm-modsec overlay image** (libmodsecurity v3 +
+on top of the **validated WAF overlay image from funkysys-org/nginx-full** (libmodsecurity v3 +
 connector + OWASP CRS).
 
 ## Architecture — two repos, layered
 
 ```
-repo 1  npm-modsec (exists, validated)
-          jc21/nginx-proxy-manager:2.17.0
-            → npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4      (WAF overlay)
+repo 1  nginx-full (funkysys-org: base + app + WAF — the merged A2b stack)
+          vendored openresty (parity-gated vs the official build) + node + certbot
+            → :certbot-node-or1.31.8.1-node26                        (base)
+          NPM source @ v2.17.0 (backend + frontend + rootfs + s6)
+            → :2.17.0-or1.31.8.1                                      (app)
+          libmodsecurity + CRS + vts + purge layer
+            → ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4   (WAF overlay)
 
 repo 2  proxywarden (this repo)
-          npm-modsec image + frontend fork at v2.17.0
+          WAF image + frontend fork at v2.17.0
             → ghcr.io/funkysys-org/proxywarden:<overlay-tag>-fe<npm-tag>
 ```
 
@@ -28,7 +32,7 @@ backend files the backend patch set touches (equivalent to upstream's own
 
 | Pin | Value | Where |
 |---|---|---|
-| `OVERLAY_IMAGE` | `npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4` (local tag; CI uses the GHCR path) | `build/Dockerfile` ARG + workflow env |
+| `OVERLAY_IMAGE` | `ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4` (pass `--build-arg` to use a local tag) | `build/Dockerfile` ARG + workflow env |
 | `NPM_FRONTEND_REF` | `v2.17.0` | `build/Dockerfile` ARG + workflow env |
 
 Invariants enforced by CI (`pins-sync` job):
@@ -43,8 +47,8 @@ Invariants enforced by CI (`pins-sync` job):
 
 ```bash
 docker build -f build/Dockerfile \
-  --build-arg OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4 \
-  -t proxywarden:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 .
+  --build-arg OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4 \
+  -t proxywarden:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 .
 ```
 
 CI builds `FROM` the published overlay image instead and pushes
@@ -53,7 +57,7 @@ CI builds `FROM` the published overlay image instead and pushes
 ## Test before deploy
 
 ```bash
-PROXYWARDEN_IMAGE=proxywarden:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 \
+PROXYWARDEN_IMAGE=proxywarden:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-fe2.17.0 \
   docker compose -f docker-compose.test.yml up -d
 bash scripts/smoke-ui.sh
 docker compose -f docker-compose.test.yml down -v

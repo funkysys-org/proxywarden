@@ -16,7 +16,9 @@
 
 # Global ARGs — ONLY these are visible to FROM lines (stage 2 consumes
 # OVERLAY_IMAGE; an ARG declared inside a stage is invisible to FROM).
-ARG OVERLAY_IMAGE=npm-modsec:2.17.0-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4
+# Base = the funkysys-org/nginx-full WAF image (Phase A2b merged stack:
+# parity-gated openresty base + NPM app + libmodsecurity/CRS/vts/purge layer).
+ARG OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4
 
 # ---- stage 1: frontend builder -------------------------------------------
 FROM node:26 AS fe-builder
