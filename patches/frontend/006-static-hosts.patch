@@ -1,0 +1,1007 @@
+diff --git a/frontend/src/Router.tsx b/frontend/src/Router.tsx
+index dc75565..edd3ac1 100644
+--- a/frontend/src/Router.tsx
++++ b/frontend/src/Router.tsx
+@@ -25,6 +25,7 @@ const Users = lazy(() => import("src/pages/Users"));
+ const ProxyHosts = lazy(() => import("src/pages/Nginx/ProxyHosts"));
+ const RedirectionHosts = lazy(() => import("src/pages/Nginx/RedirectionHosts"));
+ const DeadHosts = lazy(() => import("src/pages/Nginx/DeadHosts"));
++const StaticHosts = lazy(() => import("src/pages/Nginx/StaticHosts"));
+ const Streams = lazy(() => import("src/pages/Nginx/Streams"));
+ 
+ function Router() {
+@@ -72,6 +73,7 @@ function Router() {
+ 							<Route path="/nginx/proxy" element={<ProxyHosts />} />
+ 							<Route path="/nginx/redirection" element={<RedirectionHosts />} />
+ 							<Route path="/nginx/404" element={<DeadHosts />} />
++							<Route path="/nginx/static" element={<StaticHosts />} />
+ 							<Route path="/nginx/stream" element={<Streams />} />
+ 							<Route path="/" element={<Dashboard />} />
+ 						</Routes>
+diff --git a/frontend/src/api/backend/createStaticHost.ts b/frontend/src/api/backend/createStaticHost.ts
+new file mode 100644
+index 0000000..2fa4be7
+--- /dev/null
++++ b/frontend/src/api/backend/createStaticHost.ts
+@@ -0,0 +1,9 @@
++import * as api from "./base";
++import type { StaticHost } from "./models";
++
++export async function createStaticHost(item: StaticHost): Promise<StaticHost> {
++	return await api.post({
++		url: "/nginx/static-hosts",
++		data: item,
++	});
++}
+diff --git a/frontend/src/api/backend/deleteStaticHost.ts b/frontend/src/api/backend/deleteStaticHost.ts
+new file mode 100644
+index 0000000..7d38715
+--- /dev/null
++++ b/frontend/src/api/backend/deleteStaticHost.ts
+@@ -0,0 +1,7 @@
++import * as api from "./base";
++
++export async function deleteStaticHost(id: number): Promise<boolean> {
++	return await api.del({
++		url: `/nginx/static-hosts/${id}`,
++	});
++}
+diff --git a/frontend/src/api/backend/getStaticHost.ts b/frontend/src/api/backend/getStaticHost.ts
+new file mode 100644
+index 0000000..9f598ee
+--- /dev/null
++++ b/frontend/src/api/backend/getStaticHost.ts
+@@ -0,0 +1,13 @@
++import * as api from "./base";
++import type { HostExpansion } from "./expansions";
++import type { StaticHost } from "./models";
++
++export async function getStaticHost(id: number, expand?: HostExpansion[], params = {}): Promise<StaticHost> {
++	return await api.get({
++		url: `/nginx/static-hosts/${id}`,
++		params: {
++			expand: expand?.join(","),
++			...params,
++		},
++	});
++}
+diff --git a/frontend/src/api/backend/getStaticHosts.ts b/frontend/src/api/backend/getStaticHosts.ts
+new file mode 100644
+index 0000000..7b15d1c
+--- /dev/null
++++ b/frontend/src/api/backend/getStaticHosts.ts
+@@ -0,0 +1,13 @@
++import * as api from "./base";
++import type { HostExpansion } from "./expansions";
++import type { StaticHost } from "./models";
++
++export async function getStaticHosts(expand?: HostExpansion[], params = {}): Promise<StaticHost[]> {
++	return await api.get({
++		url: "/nginx/static-hosts",
++		params: {
++			expand: expand?.join(","),
++			...params,
++		},
++	});
++}
+diff --git a/frontend/src/api/backend/index.ts b/frontend/src/api/backend/index.ts
+index ff6e420..be90187 100644
+--- a/frontend/src/api/backend/index.ts
++++ b/frontend/src/api/backend/index.ts
+@@ -4,6 +4,7 @@ export * from "./createCertificate";
+ export * from "./createDeadHost";
+ export * from "./createProxyHost";
+ export * from "./createRedirectionHost";
++export * from "./createStaticHost";
+ export * from "./createStream";
+ export * from "./createUser";
+ export * from "./deleteAccessList";
+@@ -11,6 +12,7 @@ export * from "./deleteCertificate";
+ export * from "./deleteDeadHost";
+ export * from "./deleteProxyHost";
+ export * from "./deleteRedirectionHost";
++export * from "./deleteStaticHost";
+ export * from "./deleteStream";
+ export * from "./deleteUser";
+ export * from "./downloadCertificate";
+@@ -33,6 +35,8 @@ export * from "./getProxyHostLogs";
+ export * from "./getProxyHosts";
+ export * from "./getRedirectionHost";
+ export * from "./getRedirectionHosts";
++export * from "./getStaticHost";
++export * from "./getStaticHosts";
+ export * from "./getSetting";
+ export * from "./getSettings";
+ export * from "./getStream";
+@@ -51,6 +55,7 @@ export * from "./testHttpCertificate";
+ export * from "./toggleDeadHost";
+ export * from "./toggleProxyHost";
+ export * from "./toggleRedirectionHost";
++export * from "./toggleStaticHost";
+ export * from "./toggleStream";
+ export * from "./toggleUser";
+ export * from "./updateAccessList";
+@@ -58,6 +63,7 @@ export * from "./updateAuth";
+ export * from "./updateDeadHost";
+ export * from "./updateProxyHost";
+ export * from "./updateRedirectionHost";
++export * from "./updateStaticHost";
+ export * from "./updateSetting";
+ export * from "./updateStream";
+ export * from "./updateUser";
+diff --git a/frontend/src/api/backend/models.ts b/frontend/src/api/backend/models.ts
+index 8311be1..8a72939 100644
+--- a/frontend/src/api/backend/models.ts
++++ b/frontend/src/api/backend/models.ts
+@@ -13,6 +13,7 @@ export interface UserPermissions {
+ 	proxyHosts: string;
+ 	redirectionHosts: string;
+ 	deadHosts: string;
++	staticHosts: string;
+ 	streams: string;
+ 	accessLists: string;
+ 	certificates: string;
+@@ -165,6 +166,26 @@ export interface ProxyHost {
+ 	certificate?: Certificate;
+ }
+ 
++export interface StaticHost {
++	id: number;
++	createdOn: string;
++	modifiedOn: string;
++	ownerUserId: number;
++	domainNames: string[];
++	certificateId: number;
++	sslForced: boolean;
++	advancedConfig: string;
++	meta: Record<string, any>;
++	http2Support: boolean;
++	enabled: boolean;
++	hstsEnabled: boolean;
++	hstsSubdomains: boolean;
++	content: string;
++	// Expansions:
++	owner?: User;
++	certificate?: Certificate;
++}
++
+ export interface DeadHost {
+ 	id: number;
+ 	createdOn: string;
+diff --git a/frontend/src/api/backend/toggleStaticHost.ts b/frontend/src/api/backend/toggleStaticHost.ts
+new file mode 100644
+index 0000000..05cd840
+--- /dev/null
++++ b/frontend/src/api/backend/toggleStaticHost.ts
+@@ -0,0 +1,7 @@
++import * as api from "./base";
++
++export async function toggleStaticHost(id: number, enabled: boolean): Promise<boolean> {
++	return await api.post({
++		url: `/nginx/static-hosts/${id}/${enabled ? "enable" : "disable"}`,
++	});
++}
+diff --git a/frontend/src/api/backend/updateStaticHost.ts b/frontend/src/api/backend/updateStaticHost.ts
+new file mode 100644
+index 0000000..55805d0
+--- /dev/null
++++ b/frontend/src/api/backend/updateStaticHost.ts
+@@ -0,0 +1,12 @@
++import * as api from "./base";
++import type { StaticHost } from "./models";
++
++export async function updateStaticHost(item: StaticHost): Promise<StaticHost> {
++	// Remove readonly fields
++	const { id, createdOn: _, modifiedOn: __, ...data } = item;
++
++	return await api.put({
++		url: `/nginx/static-hosts/${id}`,
++		data: data,
++	});
++}
+diff --git a/frontend/src/components/SiteMenu.tsx b/frontend/src/components/SiteMenu.tsx
+index c727475..e06da55 100644
+--- a/frontend/src/components/SiteMenu.tsx
++++ b/frontend/src/components/SiteMenu.tsx
+@@ -21,6 +21,7 @@ import {
+ 	PROXY_HOSTS,
+ 	REDIRECTION_HOSTS,
+ 	type Section,
++	STATIC_HOSTS,
+ 	STREAMS,
+ 	VIEW,
+ } from "src/modules/Permissions";
+@@ -68,7 +69,13 @@ const menuItems: MenuItem[] = [
+ 				permissionSection: DEAD_HOSTS,
+ 				permission: VIEW,
+ 			},
+-		],
++			{
++				to: "/nginx/static",
++				label: "static-hosts",
++				permissionSection: STATIC_HOSTS,
++				permission: VIEW,
++			},
++			],
+ 	},
+ 	{
+ 		to: "/access",
+diff --git a/frontend/src/hooks/index.ts b/frontend/src/hooks/index.ts
+index 761c957..fbafb60 100644
+--- a/frontend/src/hooks/index.ts
++++ b/frontend/src/hooks/index.ts
+@@ -18,6 +18,8 @@ export * from "./useProxyHosts";
+ export * from "./useRedirectionHost";
+ export * from "./useRedirectionHosts";
+ export * from "./useSetting";
++export * from "./useStaticHost";
++export * from "./useStaticHosts";
+ export * from "./useStream";
+ export * from "./useStreams";
+ export * from "./useTheme";
+diff --git a/frontend/src/hooks/useStaticHost.ts b/frontend/src/hooks/useStaticHost.ts
+new file mode 100644
+index 0000000..a02c18d
+--- /dev/null
++++ b/frontend/src/hooks/useStaticHost.ts
+@@ -0,0 +1,61 @@
++import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
++import { createStaticHost, type StaticHost, getStaticHost, updateStaticHost } from "src/api/backend";
++
++const fetchStaticHost = (id: number | "new") => {
++	if (id === "new") {
++		return Promise.resolve({
++			id: 0,
++			createdOn: "",
++			modifiedOn: "",
++			ownerUserId: 0,
++			domainNames: [],
++			certificateId: 0,
++			sslForced: false,
++			advancedConfig: "",
++			meta: {},
++			http2Support: false,
++			enabled: true,
++			hstsEnabled: false,
++			hstsSubdomains: false,
++			content: "",
++		} as StaticHost);
++	}
++	return getStaticHost(id, ["owner"]);
++};
++
++const useStaticHost = (id: number | "new", options = {}) => {
++	return useQuery<StaticHost, Error>({
++		queryKey: ["static-host", id],
++		queryFn: () => fetchStaticHost(id),
++		staleTime: 60 * 1000, // 1 minute
++		...options,
++	});
++};
++
++const useSetStaticHost = () => {
++	const queryClient = useQueryClient();
++	return useMutation({
++		mutationFn: (values: StaticHost) => (values.id ? updateStaticHost(values) : createStaticHost(values)),
++		onMutate: (values: StaticHost) => {
++			if (!values.id) {
++				return;
++			}
++			const previousObject = queryClient.getQueryData(["static-host", values.id]);
++			queryClient.setQueryData(["static-host", values.id], (old: StaticHost) => ({
++				...old,
++				...values,
++			}));
++			return () => queryClient.setQueryData(["static-host", values.id], previousObject);
++		},
++		onError: (_, __, rollback: any) => rollback(),
++		onSuccess: async ({ id }: StaticHost) => {
++			queryClient.invalidateQueries({ queryKey: ["static-host", id] });
++			queryClient.invalidateQueries({ queryKey: ["static-hosts"] });
++			queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
++			queryClient.invalidateQueries({ queryKey: ["host-report"] });
++			queryClient.invalidateQueries({ queryKey: ["certificates"] });
++		},
++	});
++};
++
++export { useStaticHost, useSetStaticHost };
+diff --git a/frontend/src/hooks/useStaticHosts.ts b/frontend/src/hooks/useStaticHosts.ts
+new file mode 100644
+index 0000000..bd83655
+--- /dev/null
++++ b/frontend/src/hooks/useStaticHosts.ts
+@@ -0,0 +1,17 @@
++import { useQuery } from "@tanstack/react-query";
++import { type StaticHost, getStaticHosts, type HostExpansion } from "src/api/backend";
++
++const fetchStaticHosts = (expand?: HostExpansion[]) => {
++	return getStaticHosts(expand);
++};
++
++const useStaticHosts = (expand?: HostExpansion[], options = {}) => {
++	return useQuery<StaticHost[], Error>({
++		queryKey: ["static-hosts", { expand }],
++		queryFn: () => fetchStaticHosts(expand),
++		staleTime: 60 * 1000,
++		...options,
++	});
++};
++
++export { fetchStaticHosts, useStaticHosts };
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index 0d880fd..5e299be 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -791,6 +791,15 @@
+ 	"stream.incoming-port": {
+ 		"defaultMessage": "Incoming Port"
+ 	},
++	"static-host": {
++		"defaultMessage": "Static Host"
++	},
++	"static-hosts": {
++		"defaultMessage": "Static Hosts"
++	},
++	"static-hosts.count": {
++		"defaultMessage": "{count} {count, plural, one {Static Host} other {Static Hosts}}"
++	},
+ 	"streams": {
+ 		"defaultMessage": "Streams"
+ 	},
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index aa3b3d8..c839f2d 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -779,6 +779,15 @@
+ 	"stream.incoming-port": {
+ 		"defaultMessage": "Porta in Ingresso"
+ 	},
++	"static-host": {
++		"defaultMessage": "Host Statico"
++	},
++	"static-hosts": {
++		"defaultMessage": "Host Statici"
++	},
++	"static-hosts.count": {
++		"defaultMessage": "{count} {count, plural, one {Host Statico} other {Host Statici}}"
++	},
+ 	"streams": {
+ 		"defaultMessage": "Stream"
+ 	},
+diff --git a/frontend/src/modals/StaticHostModal.tsx b/frontend/src/modals/StaticHostModal.tsx
+new file mode 100644
+index 0000000..3f2ed77
+--- /dev/null
++++ b/frontend/src/modals/StaticHostModal.tsx
+@@ -0,0 +1,298 @@
++import { IconSettings } from "@tabler/icons-react";
++import cn from "classnames";
++import EasyModal, { type InnerModalProps } from "ez-modal-react";
++import { Field, Form } from "formik";
++import { type ReactNode, useState } from "react";
++import { Alert } from "react-bootstrap";
++import Modal from "react-bootstrap/Modal";
++import {
++	Button,
++	DomainNamesField,
++	Loading,
++	NginxConfigField,
++	SSLCertificateField,
++	SSLOptionsFields,
++} from "src/components";
++import { FormModal } from "src/components/Form";
++import { useStaticHost, useSetStaticHost, useUser } from "src/hooks";
++import { T } from "src/locale";
++import { showObjectSuccess } from "src/notifications";
++
++const showStaticHostModal = (id: number | "new") => {
++	EasyModal.show(StaticHostModal, { id });
++};
++
++interface Props extends InnerModalProps {
++	id: number | "new";
++}
++const StaticHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
++	const { data: currentUser, isLoading: userIsLoading, error: userError } = useUser("me");
++	const { data, isLoading, error } = useStaticHost(id);
++	const { mutate: setStaticHost } = useSetStaticHost();
++	const [errorMsg, setErrorMsg] = useState<ReactNode | null>(null);
++	const [isSubmitting, setIsSubmitting] = useState(false);
++
++	const isAdmin = currentUser?.roles?.includes("admin");
++
++	// Proxywarden WAF state, derived from advancedConfig — recognizes both the
++	// marked block AND the bare two-line pattern (hand-configured hosts).
++	const wafBlock =
++		/modsecurity on;\s*modsecurity_rules_file\s+\/etc\/nginx\/modsec\/main-block\.conf;/.test(
++			data?.advancedConfig || "",
++		);
++	const wafDetect =
++		/modsecurity on;\s*modsecurity_rules_file\s+\/etc\/nginx\/modsec\/main\.conf;/.test(
++			data?.advancedConfig || "",
++		) && !wafBlock;
++
++	const onSubmit = async (values: any, { setSubmitting }: any) => {
++		if (isSubmitting) return;
++		setIsSubmitting(true);
++		setErrorMsg(null);
++
++		const { ...payload } = {
++			id: id === "new" ? undefined : id,
++			...values,
++		};
++
++		// Proxywarden WAF switches are UI state, not API fields: strip them and
++		// compose the marked block inside advancedConfig (admin-only field).
++		delete payload.wafDetect;
++		delete payload.wafBlock;
++		if (!isAdmin) {
++			delete payload.advanced_config;
++			delete payload.advancedConfig;
++		} else {
++			// Strips BOTH the marked block and the bare hand-written directives
++			// (so flipping a switch can never produce duplicates).
++			const wafStripRe =
++				/\n?# BEGIN PROXYWARDEN WAF[\s\S]*?# END PROXYWARDEN WAF\n?|modsecurity on;\s*modsecurity_rules_file\s+\/etc\/nginx\/modsec\/main(-block)?\.conf;\n?/g;
++			let advancedConfig = (values.advancedConfig || "").replace(wafStripRe, "");
++			if (values.wafBlock || values.wafDetect) {
++				const rulesFile = values.wafBlock
++					? "/etc/nginx/modsec/main-block.conf"
++					: "/etc/nginx/modsec/main.conf";
++				advancedConfig = `${advancedConfig.trim()}\n\n# BEGIN PROXYWARDEN WAF\nmodsecurity on;\nmodsecurity_rules_file ${rulesFile};\n# END PROXYWARDEN WAF\n`.trim();
++			}
++			payload.advancedConfig = advancedConfig;
++		}
++
++		setStaticHost(payload, {
++			onError: (err: any) => setErrorMsg(<T id={err.message} />),
++			onSuccess: () => {
++				showObjectSuccess("static-host", "saved");
++				remove();
++			},
++			onSettled: () => {
++				setIsSubmitting(false);
++				setSubmitting(false);
++			},
++		});
++	};
++
++	return (
++		<>
++			{(isLoading || userIsLoading || ((error || userError) && (!data || !currentUser))) && (
++				<Modal show={visible} onHide={remove}>
++					{!isLoading && (error || userError) && (
++						<Alert variant="danger" className="m-3">
++							{error?.message || userError?.message || "Unknown error"}
++						</Alert>
++					)}
++					{(isLoading || userIsLoading) && <Loading noLogo />}
++				</Modal>
++			)}
++			{!isLoading && !userIsLoading && data && currentUser && (
++				<FormModal
++					show={visible}
++					onHide={remove}
++					preventHide={isSubmitting}
++					initialValues={
++						{
++							domainNames: data?.domainNames,
++							certificateId: data?.certificateId,
++							sslForced: data?.sslForced,
++							advancedConfig: data?.advancedConfig,
++							http2Support: data?.http2Support,
++							hstsEnabled: data?.hstsEnabled,
++							hstsSubdomains: data?.hstsSubdomains,
++							meta: data?.meta || {},
++							content: data?.content || "",
++							wafDetect,
++							wafBlock,
++						} as any
++					}
++					onSubmit={onSubmit}
++				>
++					{({ onHide }) => (
++						<Form>
++							<Modal.Header closeButton>
++								<Modal.Title>
++									<T id={data?.id ? "object.edit" : "object.add"} tData={{ object: "static-host" }} />
++								</Modal.Title>
++							</Modal.Header>
++							<Modal.Body className="p-0">
++								<Alert variant="danger" show={!!errorMsg} onClose={() => setErrorMsg(null)} dismissible>
++									{errorMsg}
++								</Alert>
++								<div className="card m-0 border-0">
++									<div className="card-header">
++										<ul className="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
++											<li className="nav-item" role="presentation">
++												<a
++													href="#tab-details"
++													className="nav-link active"
++													data-bs-toggle="tab"
++													aria-selected="true"
++													role="tab"
++												>
++													<T id="column.details" />
++												</a>
++											</li>
++											<li className="nav-item" role="presentation">
++												<a
++													href="#tab-ssl"
++													className="nav-link"
++													data-bs-toggle="tab"
++													aria-selected="false"
++													tabIndex={-1}
++													role="tab"
++												>
++													<T id="column.ssl" />
++												</a>
++											</li>
++											{isAdmin && (
++												<li className="nav-item ms-auto" role="presentation">
++													<a
++														href="#tab-advanced"
++														className="nav-link"
++														title="Settings"
++														data-bs-toggle="tab"
++														aria-selected="false"
++														tabIndex={-1}
++														role="tab"
++													>
++														<IconSettings size={20} />
++													</a>
++												</li>
++											)}
++										</ul>
++									</div>
++									<div className="card-body">
++										<div className="tab-content">
++											<div className="tab-pane active show" id="tab-details" role="tabpanel">
++												<DomainNamesField isWildcardPermitted dnsProviderWildcardSupported />
++												<div className="mb-3">
++													<label className="form-label" htmlFor="content">
++														<T id="static-host" />
++													</label>
++													<Field name="content">
++														{({ field }: any) => (
++															<textarea
++																id="content"
++																className="form-control font-monospace"
++																rows={10}
++																spellCheck={false}
++																{...field}
++															/>
++														)}
++													</Field>
++												</div>
++											</div>
++											<div className="tab-pane" id="tab-ssl" role="tabpanel">
++												<SSLCertificateField
++													name="certificateId"
++													label="ssl-certificate"
++													allowNew
++												/>
++												<SSLOptionsFields color="bg-red" />
++											</div>
++											{isAdmin && (
++												<div className="tab-pane" id="tab-advanced" role="tabpanel">
++													<div className="mb-3">
++														<div>
++															<label className="row" htmlFor="wafDetect">
++																<span className="col">
++																	<T id="host.flags.waf-detect" />
++																</span>
++																<span className="col-auto">
++																	<Field name="wafDetect" type="checkbox">
++																		{({ field, form }: any) => (
++																			<label className="form-check form-check-single form-switch">
++																				<input
++																					id="wafDetect"
++																					className={cn("form-check-input", {
++																						"bg-lime": field.checked,
++																					})}
++																					type="checkbox"
++																					checked={field.checked}
++																					onChange={(e) => {
++																						form.setFieldValue("wafDetect", e.target.checked);
++																						if (e.target.checked) form.setFieldValue("wafBlock", false);
++																					}}
++																				/>
++																			</label>
++																		)}
++																	</Field>
++																</span>
++															</label>
++														</div>
++														<div>
++															<label className="row" htmlFor="wafBlock">
++																<span className="col">
++																	<T id="host.flags.waf-block" />
++																</span>
++																<span className="col-auto">
++																	<Field name="wafBlock" type="checkbox">
++																		{({ field, form }: any) => (
++																			<label className="form-check form-check-single form-switch">
++																				<input
++																					id="wafBlock"
++																					className={cn("form-check-input", {
++																						"bg-lime": field.checked,
++																					})}
++																					type="checkbox"
++																					checked={field.checked}
++																					onChange={(e) => {
++																						form.setFieldValue("wafBlock", e.target.checked);
++																						if (e.target.checked) form.setFieldValue("wafDetect", false);
++																					}}
++																				/>
++																			</label>
++																		)}
++																	</Field>
++																</span>
++															</label>
++														</div>
++													</div>
++													<NginxConfigField />
++												</div>
++											)}
++										</div>
++									</div>
++								</div>
++							</Modal.Body>
++							<Modal.Footer>
++								<Button data-bs-dismiss="modal" onClick={onHide} disabled={isSubmitting}>
++									<T id="cancel" />
++								</Button>
++								<Button
++									type="submit"
++									actionType="primary"
++									className="ms-auto bg-red"
++									data-bs-dismiss="modal"
++									isLoading={isSubmitting}
++									disabled={isSubmitting}
++								>
++									<T id="save" />
++								</Button>
++							</Modal.Footer>
++						</Form>
++					)}
++				</FormModal>
++			)}
++		</>
++	);
++});
++
++export { showStaticHostModal };
+diff --git a/frontend/src/modals/index.ts b/frontend/src/modals/index.ts
+index 902d0d7..aeec775 100644
+--- a/frontend/src/modals/index.ts
++++ b/frontend/src/modals/index.ts
+@@ -13,6 +13,7 @@ export * from "./ProxyHostModal";
+ export * from "./RedirectionHostModal";
+ export * from "./RenewCertificateModal";
+ export * from "./SetPasswordModal";
++export * from "./StaticHostModal";
+ export * from "./StreamModal";
+ export * from "./TwoFactorModal";
+ export * from "./UserModal";
+diff --git a/frontend/src/modules/Permissions.ts b/frontend/src/modules/Permissions.ts
+index 2d78421..d282812 100644
+--- a/frontend/src/modules/Permissions.ts
++++ b/frontend/src/modules/Permissions.ts
+@@ -5,6 +5,7 @@ export const VISIBILITY = "visibility";
+ export const PROXY_HOSTS = "proxyHosts";
+ export const REDIRECTION_HOSTS = "redirectionHosts";
+ export const DEAD_HOSTS = "deadHosts";
++export const STATIC_HOSTS = "staticHosts";
+ export const STREAMS = "streams";
+ export const CERTIFICATES = "certificates";
+ export const ACCESS_LISTS = "accessLists";
+@@ -22,6 +23,7 @@ export type Section =
+ 	| typeof PROXY_HOSTS
+ 	| typeof REDIRECTION_HOSTS
+ 	| typeof DEAD_HOSTS
++	| typeof STATIC_HOSTS
+ 	| typeof STREAMS
+ 	| typeof CERTIFICATES
+ 	| typeof ACCESS_LISTS;
+diff --git a/frontend/src/pages/Nginx/StaticHosts/Table.tsx b/frontend/src/pages/Nginx/StaticHosts/Table.tsx
+new file mode 100644
+index 0000000..5c8bc40
+--- /dev/null
++++ b/frontend/src/pages/Nginx/StaticHosts/Table.tsx
+@@ -0,0 +1,169 @@
++import { IconDotsVertical, IconEdit, IconPower, IconTrash } from "@tabler/icons-react";
++import { createColumnHelper, type SortingState, useTable } from "@tanstack/react-table";
++import { useMemo, useState } from "react";
++import type { StaticHost } from "src/api/backend";
++import {
++	CertificateFormatter,
++	DomainsFormatter,
++	EmptyData,
++	GravatarFormatter,
++	HasPermission,
++	TrueFalseFormatter,
++} from "src/components";
++import { type Features, features } from "src/components/Table/features";
++import { TableLayout } from "src/components/Table/TableLayout";
++import { intl, T } from "src/locale";
++import { STATIC_HOSTS, MANAGE } from "src/modules/Permissions";
++
++interface Props {
++	data: StaticHost[];
++	isFiltered?: boolean;
++	isFetching?: boolean;
++	onEdit?: (id: number) => void;
++	onDelete?: (id: number) => void;
++	onDisableToggle?: (id: number, enabled: boolean) => void;
++	onNew?: () => void;
++}
++export default function Table({ data, isFetching, onEdit, onDelete, onDisableToggle, onNew, isFiltered }: Props) {
++	const columnHelper = createColumnHelper<Features, StaticHost>();
++	const columns = useMemo(
++		() => [
++			columnHelper.accessor((row: any) => row.owner, {
++				id: "owner",
++				enableSorting: false,
++				cell: (info: any) => {
++					const value = info.getValue();
++					return <GravatarFormatter url={value ? value.avatar : ""} name={value ? value.name : ""} />;
++				},
++				meta: {
++					className: "w-1",
++				},
++			}),
++			columnHelper.accessor((row: any) => row, {
++				id: "domainNames",
++				header: intl.formatMessage({ id: "column.source" }),
++				sortFn: (a, b) => {
++					const aVal = a.original.domainNames?.[0] ?? "";
++					const bVal = b.original.domainNames?.[0] ?? "";
++					return aVal.localeCompare(bVal);
++				},
++				cell: (info: any) => {
++					const value = info.getValue();
++					return <DomainsFormatter domains={value.domainNames} createdOn={value.createdOn} />;
++				},
++			}),
++			columnHelper.accessor((row: any) => row.certificate, {
++				id: "certificate",
++				enableSorting: false,
++				header: intl.formatMessage({ id: "column.ssl" }),
++				cell: (info: any) => {
++					return <CertificateFormatter certificate={info.getValue()} />;
++				},
++			}),
++			columnHelper.accessor((row: any) => row.enabled, {
++				id: "enabled",
++				header: intl.formatMessage({ id: "column.status" }),
++				cell: (info: any) => {
++					return <TrueFalseFormatter value={info.getValue()} trueLabel="online" falseLabel="offline" />;
++				},
++			}),
++			columnHelper.display({
++				id: "id",
++				cell: (info: any) => {
++					return (
++						<span className="dropdown">
++							<button
++								type="button"
++								className="btn dropdown-toggle btn-action btn-sm px-1"
++								data-bs-boundary="viewport"
++								data-bs-toggle="dropdown"
++							>
++								<IconDotsVertical />
++							</button>
++							<div className="dropdown-menu dropdown-menu-end">
++								<span className="dropdown-header">
++									<T
++										id="object.actions-title"
++										tData={{ object: "static-host" }}
++										data={{ id: info.row.original.id }}
++									/>
++								</span>
++								<a
++									className="dropdown-item"
++									href="#"
++									onClick={(e) => {
++										e.preventDefault();
++										onEdit?.(info.row.original.id);
++									}}
++								>
++									<IconEdit size={16} />
++									<T id="action.edit" />
++								</a>
++								<HasPermission section={STATIC_HOSTS} permission={MANAGE} hideError>
++									<a
++										className="dropdown-item"
++										href="#"
++										onClick={(e) => {
++											e.preventDefault();
++											onDisableToggle?.(info.row.original.id, !info.row.original.enabled);
++										}}
++									>
++										<IconPower size={16} />
++										<T id={info.row.original.enabled ? "action.disable" : "action.enable"} />
++									</a>
++									<div className="dropdown-divider" />
++									<a
++										className="dropdown-item"
++										href="#"
++										onClick={(e) => {
++											e.preventDefault();
++											onDelete?.(info.row.original.id);
++										}}
++									>
++										<IconTrash size={16} />
++										<T id="action.delete" />
++									</a>
++								</HasPermission>
++							</div>
++						</span>
++					);
++				},
++				meta: {
++					className: "text-end w-1",
++				},
++			}),
++		],
++		[columnHelper, onDelete, onEdit, onDisableToggle],
++	);
++
++	const [sorting, setSorting] = useState<SortingState>([]);
++
++	const tableInstance = useTable({
++		features,
++		columns,
++		data,
++		state: { sorting },
++		onSortingChange: setSorting,
++		meta: {
++			isFetching,
++		},
++		enableSortingRemoval: false,
++	});
++
++	return (
++		<TableLayout
++			tableInstance={tableInstance}
++			emptyState={
++				<EmptyData
++					object="static-host"
++					objects="static-hosts"
++					tableInstance={tableInstance}
++					onNew={onNew}
++					isFiltered={isFiltered}
++					color="teal"
++					permissionSection={STATIC_HOSTS}
++				/>
++			}
++		/>
++	);
++}
+diff --git a/frontend/src/pages/Nginx/StaticHosts/TableWrapper.tsx b/frontend/src/pages/Nginx/StaticHosts/TableWrapper.tsx
+new file mode 100644
+index 0000000..7170d15
+--- /dev/null
++++ b/frontend/src/pages/Nginx/StaticHosts/TableWrapper.tsx
+@@ -0,0 +1,107 @@
++import { IconSearch } from "@tabler/icons-react";
++import { useQueryClient } from "@tanstack/react-query";
++import { useState } from "react";
++import Alert from "react-bootstrap/Alert";
++import { deleteStaticHost, toggleStaticHost } from "src/api/backend";
++import { Button, HasPermission, LoadingPage } from "src/components";
++import { useStaticHosts } from "src/hooks";
++import { T } from "src/locale";
++import { showStaticHostModal, showDeleteConfirmModal } from "src/modals";
++import { STATIC_HOSTS, MANAGE } from "src/modules/Permissions";
++import { showObjectSuccess } from "src/notifications";
++import Table from "./Table";
++
++export default function TableWrapper() {
++	const queryClient = useQueryClient();
++	const [search, setSearch] = useState("");
++	const { isFetching, isLoading, isError, error, data } = useStaticHosts(["owner", "certificate"]);
++
++	if (isLoading) {
++		return <LoadingPage />;
++	}
++
++	if (isError) {
++		return <Alert variant="danger">{error?.message || "Unknown error"}</Alert>;
++	}
++
++	const handleDelete = async (id: number) => {
++		await deleteStaticHost(id);
++		showObjectSuccess("static-host", "deleted");
++	};
++
++	const handleDisableToggle = async (id: number, enabled: boolean) => {
++		await toggleStaticHost(id, enabled);
++		queryClient.invalidateQueries({ queryKey: ["static-hosts"] });
++		queryClient.invalidateQueries({ queryKey: ["static-host", id] });
++		showObjectSuccess("static-host", enabled ? "enabled" : "disabled");
++	};
++
++	let filtered = null;
++	if (search && data) {
++		filtered = data?.filter((item) => {
++			return item.domainNames.some((domain: string) => domain.toLowerCase().includes(search));
++		});
++	} else if (search !== "") {
++		// this can happen if someone deletes the last item while searching
++		setSearch("");
++	}
++
++	return (
++		<div className="card mt-4">
++			<div className="card-status-top bg-teal" />
++			<div className="card-table">
++				<div className="card-header">
++					<div className="row w-full">
++						<div className="col">
++							<h2 className="mt-1 mb-0">
++								<T id="static-hosts" />
++							</h2>
++						</div>
++
++						<div className="col-md-auto col-sm-12">
++							<div className="ms-auto d-flex flex-wrap btn-list">
++								{data?.length ? (
++									<div className="input-group input-group-flat w-auto">
++										<span className="input-group-text input-group-text-sm">
++											<IconSearch size={16} />
++										</span>
++										<input
++											id="advanced-table-search"
++											type="text"
++											className="form-control form-control-sm"
++											autoComplete="off"
++											onChange={(e: any) => setSearch(e.target.value.toLowerCase().trim())}
++										/>
++									</div>
++								) : null}
++								<HasPermission section={STATIC_HOSTS} permission={MANAGE} hideError>
++									{data?.length ? (
++										<Button size="sm" className="btn-teal" onClick={() => showStaticHostModal("new")}>
++											<T id="object.add" tData={{ object: "static-host" }} />
++										</Button>
++									) : null}
++								</HasPermission>
++							</div>
++						</div>
++					</div>
++				</div>
++				<Table
++					data={filtered ?? data ?? []}
++					isFiltered={!!search}
++					isFetching={isFetching}
++					onEdit={(id: number) => showStaticHostModal(id)}
++					onDelete={(id: number) =>
++						showDeleteConfirmModal({
++							title: <T id="object.delete" tData={{ object: "static-host" }} />,
++							onConfirm: () => handleDelete(id),
++							invalidations: [["static-hosts"], ["static-host", id]],
++							children: <T id="object.delete.content" tData={{ object: "static-host" }} />,
++						})
++					}
++					onDisableToggle={handleDisableToggle}
++					onNew={() => showStaticHostModal("new")}
++				/>
++			</div>
++		</div>
++	);
++}
+diff --git a/frontend/src/pages/Users/Table.tsx b/frontend/src/pages/Users/Table.tsx
+index 49c64e6..213244a 100644
+--- a/frontend/src/pages/Users/Table.tsx
++++ b/frontend/src/pages/Users/Table.tsx
+@@ -110,6 +110,7 @@ export default function Table({
+ 						{ key: "proxyHosts", label: "proxy-hosts", val: permissions.proxyHosts },
+ 						{ key: "redirectionHosts", label: "redirection-hosts", val: permissions.redirectionHosts },
+ 						{ key: "deadHosts", label: "dead-hosts", val: permissions.deadHosts },
++						{ key: "staticHosts", label: "static-hosts", val: permissions.staticHosts },
+ 						{ key: "streams", label: "streams", val: permissions.streams },
+ 						{ key: "accessLists", label: "access-lists", val: permissions.accessLists },
+ 						{ key: "certificates", label: "certificates", val: permissions.certificates },
