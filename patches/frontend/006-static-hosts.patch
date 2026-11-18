@@ -705,6 +705,56 @@ index 2d78421..d282812 100644
  	| typeof STREAMS
  	| typeof CERTIFICATES
  	| typeof ACCESS_LISTS;
+diff --git a/frontend/src/pages/Dashboard/index.tsx b/frontend/src/pages/Dashboard/index.tsx
+index 5cb6486..aae92e8 100644
+--- a/frontend/src/pages/Dashboard/index.tsx
++++ b/frontend/src/pages/Dashboard/index.tsx
+@@ -1,9 +1,9 @@
+-import { IconArrowsCross, IconBolt, IconBoltOff, IconDisc } from "@tabler/icons-react";
++import { IconArrowsCross, IconBolt, IconBoltOff, IconDisc, IconFileText } from "@tabler/icons-react";
+ import { useNavigate } from "react-router-dom";
+ import { HasPermission } from "src/components";
+ import { useHostReport } from "src/hooks";
+ import { T } from "src/locale";
+-import { DEAD_HOSTS, PROXY_HOSTS, REDIRECTION_HOSTS, STREAMS, VIEW } from "src/modules/Permissions";
++import { DEAD_HOSTS, PROXY_HOSTS, REDIRECTION_HOSTS, STATIC_HOSTS, STREAMS, VIEW } from "src/modules/Permissions";
+ 
+ const Dashboard = () => {
+ 	const { data: hostReport } = useHostReport();
+@@ -122,7 +122,32 @@ const Dashboard = () => {
+ 								</a>
+ 							</div>
+ 						</HasPermission>
+-					</div>
++						<HasPermission section={STATIC_HOSTS} permission={VIEW} hideError>
++							<div className="col-sm-6 col-lg-3">
++								<a
++									href="/nginx/static"
++									className="card card-sm card-link card-link-pop"
++									onClick={(e) => {
++										e.preventDefault();
++										navigate("/nginx/static");
++									}}
++								>
++									<div className="card-body">
++										<div className="row align-items-center">
++											<div className="col-auto">
++												<span className="bg-teal text-white avatar">
++													<IconFileText />
++												</span>
++											</div>
++											<div className="col">
++												<T id="static-hosts.count" data={{ count: hostReport?.static }} />
++											</div>
++										</div>
++									</div>
++								</a>
++							</div>
++						</HasPermission>
++						</div>
+ 				</div>
+ 			</div>
+ 		</div>
 diff --git a/frontend/src/pages/Nginx/StaticHosts/Table.tsx b/frontend/src/pages/Nginx/StaticHosts/Table.tsx
 new file mode 100644
 index 0000000..5c8bc40
