@@ -94,7 +94,10 @@ docker compose up -d
 - The WAF ships **dormant**: enable per host from the UI (Options →
   WAF DetectionOnly → watch Logs → WAF Audit → then WAF Block).
 - An update is one deliberate line: edit the tag in `.env`, then
-  `docker compose pull && docker compose up -d`.
+  `docker compose pull && docker compose up -d` — AFTER the CI run is
+  green: a same-tag re-publish means the pull must postdate the run, or
+  you fetch the old digest (`docker compose images` shows the build
+  date).
 - The compose exposes the admin UI on `:81`; to bind it local instead see
   the comment in `docker-compose.yml` (`127.0.0.1:81:81` + SSH tunnel).
 
