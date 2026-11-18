@@ -1,0 +1,862 @@
+diff --git a/frontend/package.json b/frontend/package.json
+index 22e0dd6..cedaaba 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -35,6 +35,7 @@
+ 		"react-intl": "^12.1.7",
+ 		"react-markdown": "^10.1.0",
+ 		"react-qr-code": "^2.2.0",
++		"recharts": "^3.11.0",
+ 		"react-router-dom": "^7.18.5",
+ 		"react-select": "^5.10.2",
+ 		"react-toastify": "^11.2.0",
+diff --git a/frontend/src/Router.tsx b/frontend/src/Router.tsx
+index edd3ac1..75e0488 100644
+--- a/frontend/src/Router.tsx
++++ b/frontend/src/Router.tsx
+@@ -27,6 +27,7 @@ const RedirectionHosts = lazy(() => import("src/pages/Nginx/RedirectionHosts"));
+ const DeadHosts = lazy(() => import("src/pages/Nginx/DeadHosts"));
+ const StaticHosts = lazy(() => import("src/pages/Nginx/StaticHosts"));
+ const Streams = lazy(() => import("src/pages/Nginx/Streams"));
++const Metrics = lazy(() => import("src/pages/Metrics"));
+ 
+ function Router() {
+ 	const health = useHealth();
+@@ -75,6 +76,7 @@ function Router() {
+ 							<Route path="/nginx/404" element={<DeadHosts />} />
+ 							<Route path="/nginx/static" element={<StaticHosts />} />
+ 							<Route path="/nginx/stream" element={<Streams />} />
++						<Route path="/metrics" element={<Metrics />} />
+ 							<Route path="/" element={<Dashboard />} />
+ 						</Routes>
+ 					</Suspense>
+diff --git a/frontend/src/api/backend/getMetricsReport.ts b/frontend/src/api/backend/getMetricsReport.ts
+new file mode 100644
+index 0000000..82e4243
+--- /dev/null
++++ b/frontend/src/api/backend/getMetricsReport.ts
+@@ -0,0 +1,11 @@
++import * as api from "./base";
++import type { MetricsReport } from "./models";
++
++export async function getMetricsReport(params = {}): Promise<MetricsReport> {
++	return await api.get({
++		url: "/reports/metrics",
++		params: {
++			...params,
++		},
++	});
++}
+diff --git a/frontend/src/api/backend/index.ts b/frontend/src/api/backend/index.ts
+index be90187..3bb27a5 100644
+--- a/frontend/src/api/backend/index.ts
++++ b/frontend/src/api/backend/index.ts
+@@ -30,6 +30,7 @@ export * from "./getHealth";
+ export * from "./getHostsReport";
+ export * from "./getLogSources";
+ export * from "./getLogTail";
++export * from "./getMetricsReport";
+ export * from "./getProxyHost";
+ export * from "./getProxyHostLogs";
+ export * from "./getProxyHosts";
+diff --git a/frontend/src/api/backend/models.ts b/frontend/src/api/backend/models.ts
+index 8a72939..88889c5 100644
+--- a/frontend/src/api/backend/models.ts
++++ b/frontend/src/api/backend/models.ts
+@@ -186,6 +186,26 @@ export interface StaticHost {
+ 	certificate?: Certificate;
+ }
+ 
++export interface MetricsZone {
++	requests: number;
++	responses?: {
++		"1xx"?: number;
++		"2xx"?: number;
++		"3xx"?: number;
++		"4xx"?: number;
++		"5xx"?: number;
++		total?: number;
++	};
++	inBytes?: number;
++	outBytes?: number;
++}
++
++export interface MetricsReport {
++	generatedAt: string;
++	visibility: string;
++	serverZones: Record<string, MetricsZone>;
++}
++
+ export interface DeadHost {
+ 	id: number;
+ 	createdOn: string;
+diff --git a/frontend/src/components/SiteMenu.tsx b/frontend/src/components/SiteMenu.tsx
+index e06da55..8720c1b 100644
+--- a/frontend/src/components/SiteMenu.tsx
++++ b/frontend/src/components/SiteMenu.tsx
+@@ -1,5 +1,6 @@
+ import {
+ 	IconBook,
++	IconChartBar,
+ 	IconDeviceDesktop,
+ 	IconFileText,
+ 	IconHome,
+@@ -77,6 +78,11 @@ const menuItems: MenuItem[] = [
+ 			},
+ 			],
+ 	},
++	{
++		to: "/metrics",
++		icon: IconChartBar,
++		label: "metrics",
++	},
+ 	{
+ 		to: "/access",
+ 		icon: IconLock,
+diff --git a/frontend/src/hooks/index.ts b/frontend/src/hooks/index.ts
+index fbafb60..09b1fd2 100644
+--- a/frontend/src/hooks/index.ts
++++ b/frontend/src/hooks/index.ts
+@@ -12,6 +12,7 @@ export * from "./useHealth";
+ export * from "./useHostReport";
+ export * from "./useLogSources";
+ export * from "./useLogTail";
++export * from "./useMetricsReport";
+ export * from "./useProxyHost";
+ export * from "./useProxyHostLogs";
+ export * from "./useProxyHosts";
+diff --git a/frontend/src/hooks/useMetricsReport.ts b/frontend/src/hooks/useMetricsReport.ts
+new file mode 100644
+index 0000000..e94b2f2
+--- /dev/null
++++ b/frontend/src/hooks/useMetricsReport.ts
+@@ -0,0 +1,18 @@
++import { useQuery } from "@tanstack/react-query";
++import { getMetricsReport, type MetricsReport } from "src/api/backend";
++
++const fetchMetricsReport = () => getMetricsReport();
++
++const useMetricsReport = (options = {}) => {
++	return useQuery<MetricsReport, Error>({
++		queryKey: ["metrics-report"],
++		queryFn: fetchMetricsReport,
++		refetchOnWindowFocus: false,
++		retry: 1,
++		refetchInterval: 15 * 1000, // 15 seconds — session-sampled series
++		staleTime: 14 * 1000,
++		...options,
++	});
++};
++
++export { fetchMetricsReport, useMetricsReport };
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index 5e299be..01b5664 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -557,6 +557,39 @@
+ 	"logs.truncated-warning": {
+ 		"defaultMessage": "Only the most recent portion of this file is shown."
+ 	},
++	"metrics": {
++		"defaultMessage": "Metrics"
++	},
++	"metrics.4xx": {
++		"defaultMessage": "4xx"
++	},
++	"metrics.5xx": {
++		"defaultMessage": "5xx"
++	},
++	"metrics.bandwidth-out": {
++		"defaultMessage": "Bandwidth (out)"
++	},
++	"metrics.hosts": {
++		"defaultMessage": "Per-host traffic"
++	},
++	"metrics.no-data": {
++		"defaultMessage": "No traffic zones yet — counters start with the first request."
++	},
++	"metrics.requests-sec": {
++		"defaultMessage": "Requests per second"
++	},
++	"metrics.status-codes": {
++		"defaultMessage": "Status codes"
++	},
++	"metrics.total-requests": {
++		"defaultMessage": "Total requests"
++	},
++	"metrics.visibility": {
++		"defaultMessage": "Visibility"
++	},
++	"metrics.zones": {
++		"defaultMessage": "Traffic zones"
++	},
+ 	"nginx-config.label": {
+ 		"defaultMessage": "Custom Nginx Configuration"
+ 	},
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index c839f2d..83b0908 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -554,6 +554,39 @@
+ 	"logs.truncated-warning": {
+ 		"defaultMessage": "Viene mostrata solo la parte più recente di questo file."
+ 	},
++	"metrics": {
++		"defaultMessage": "Metriche"
++	},
++	"metrics.4xx": {
++		"defaultMessage": "4xx"
++	},
++	"metrics.5xx": {
++		"defaultMessage": "5xx"
++	},
++	"metrics.bandwidth-out": {
++		"defaultMessage": "Banda (uscita)"
++	},
++	"metrics.hosts": {
++		"defaultMessage": "Traffico per host"
++	},
++	"metrics.no-data": {
++		"defaultMessage": "Nessuna zona di traffico — i contatori partono dalla prima richiesta."
++	},
++	"metrics.requests-sec": {
++		"defaultMessage": "Richieste al secondo"
++	},
++	"metrics.status-codes": {
++		"defaultMessage": "Codici di stato"
++	},
++	"metrics.total-requests": {
++		"defaultMessage": "Richieste totali"
++	},
++	"metrics.visibility": {
++		"defaultMessage": "Visibilità"
++	},
++	"metrics.zones": {
++		"defaultMessage": "Zone di traffico"
++	},
+ 	"nginx-config.label": {
+ 		"defaultMessage": "Configurazione Nginx Personalizzata"
+ 	},
+diff --git a/frontend/src/pages/Metrics/index.tsx b/frontend/src/pages/Metrics/index.tsx
+new file mode 100644
+index 0000000..720e916
+--- /dev/null
++++ b/frontend/src/pages/Metrics/index.tsx
+@@ -0,0 +1,248 @@
++import { useEffect, useState } from "react";
++import {
++	Bar,
++	BarChart,
++	Cell,
++	Pie,
++	PieChart,
++	ResponsiveContainer,
++	Tooltip,
++	XAxis,
++	YAxis,
++} from "recharts";
++import { useMetricsReport } from "src/hooks";
++import { T } from "src/locale";
++
++const STATUS_COLORS: Record<string, string> = {
++	"2xx": "#4bb4d6",
++	"3xx": "#2fb344",
++	"4xx": "#f76707",
++	"5xx": "#d63939",
++};
++
++type Sample = {
++	t: number;
++	requests: number;
++	inBytes: number;
++	outBytes: number;
++};
++
++const Metrics = () => {
++	const { data: report, isFetching, dataUpdatedAt } = useMetricsReport();
++	const [samples, setSamples] = useState<Sample[]>([]);
++
++	const zones = report?.serverZones || {};
++	const zoneNames = Object.keys(zones).filter((z) => z !== "*" && !z.startsWith("$"));
++
++	const totals = zoneNames.reduce(
++		(acc, name) => {
++			const z = zones[name];
++			acc.requests += z.requests || 0;
++			acc.inBytes += z.inBytes || 0;
++			acc.outBytes += z.outBytes || 0;
++			return acc;
++		},
++		{ requests: 0, inBytes: 0, outBytes: 0 },
++	);
++
++	// Session sampling: vts counters are cumulative since boot; each poll
++	// appends a sample so the series shows live deltas.
++	useEffect(() => {
++		if (!dataUpdatedAt || !report) {
++			return;
++		}
++		const sample: Sample = {
++			t: dataUpdatedAt,
++			requests: totals.requests,
++			inBytes: totals.inBytes,
++			outBytes: totals.outBytes,
++		};
++		setSamples((prev) => {
++			const next = [...prev, sample];
++			return next.length > 120 ? next.slice(next.length - 120) : next;
++		});
++		// eslint-disable-next-line react-hooks/exhaustive-deps
++	}, [dataUpdatedAt]);
++
++	const rateSeries = samples.slice(1).map((s, i) => {
++		const prev = samples[i];
++		const dt = (s.t - prev.t) / 1000;
++		return {
++			time: new Date(s.t).toLocaleTimeString(),
++			reqPerSec: dt > 0 ? Math.round(((s.requests - prev.requests) / dt) * 10) / 10 : 0,
++		};
++	});
++
++	const statusData = ["2xx", "3xx", "4xx", "5xx"]
++		.map((code) => ({
++			name: code,
++			value: zoneNames.reduce((sum, name) => sum + (zones[name]?.responses?.[code as "2xx"] || 0), 0),
++		}))
++		.filter((d) => d.value > 0);
++
++	const hostRows = zoneNames
++		.map((name) => {
++			const z = zones[name];
++			return {
++				name,
++				requests: z.requests || 0,
++				inBytes: z.inBytes || 0,
++				outBytes: z.outBytes || 0,
++				"4xx": z.responses?.["4xx"] || 0,
++				"5xx": z.responses?.["5xx"] || 0,
++			};
++		})
++		.sort((a, b) => b.requests - a.requests);
++
++	const fmtBytes = (n: number) => {
++		if (n > 1024 * 1024 * 1024) return `${(n / 1024 / 1024 / 1024).toFixed(1)} GB`;
++		if (n > 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
++		if (n > 1024) return `${(n / 1024).toFixed(1)} KB`;
++		return `${n} B`;
++	};
++
++	return (
++		<div>
++			<h2>
++				<T id="metrics" />
++			</h2>
++
++			<div className="row row-deck row-cards">
++				<div className="col-sm-6 col-lg-3">
++					<div className="card card-sm">
++						<div className="card-body">
++							<div className="text-muted">
++								<T id="metrics.total-requests" />
++							</div>
++							<div className="h2">{totals.requests.toLocaleString()}</div>
++						</div>
++					</div>
++				</div>
++				<div className="col-sm-6 col-lg-3">
++					<div className="card card-sm">
++						<div className="card-body">
++							<div className="text-muted">
++								<T id="metrics.bandwidth-out" />
++							</div>
++							<div className="h2">{fmtBytes(totals.outBytes)}</div>
++						</div>
++					</div>
++				</div>
++				<div className="col-sm-6 col-lg-3">
++					<div className="card card-sm">
++						<div className="card-body">
++							<div className="text-muted">
++								<T id="metrics.zones" />
++							</div>
++							<div className="h2">{zoneNames.length}</div>
++						</div>
++					</div>
++				</div>
++				<div className="col-sm-6 col-lg-3">
++					<div className="card card-sm">
++						<div className="card-body">
++							<div className="text-muted">
++								<T id="metrics.visibility" />
++							</div>
++							<div className="h2">{report?.visibility === "all" ? "all" : "user"}</div>
++						</div>
++					</div>
++				</div>
++			</div>
++
++			<div className="row row-deck row-cards">
++				<div className="col-lg-8">
++					<div className="card">
++						<div className="card-header">
++							<h3 className="card-title">
++								<T id="metrics.requests-sec" /> {isFetching ? "…" : ""}
++							</h3>
++						</div>
++						<div className="card-body" style={{ height: 260 }}>
++							<ResponsiveContainer width="100%" height="100%">
++								<BarChart data={rateSeries}>
++									<XAxis dataKey="time" tick={{ fontSize: 10 }} />
++									<YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
++									<Tooltip />
++									<Bar dataKey="reqPerSec" fill="#14b8a6" />
++								</BarChart>
++							</ResponsiveContainer>
++						</div>
++					</div>
++				</div>
++				<div className="col-lg-4">
++					<div className="card">
++						<div className="card-header">
++							<h3 className="card-title">
++								<T id="metrics.status-codes" />
++							</h3>
++						</div>
++						<div className="card-body" style={{ height: 260 }}>
++							<ResponsiveContainer width="100%" height="100%">
++								<PieChart>
++									<Pie data={statusData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85}>
++										{statusData.map((entry) => (
++											<Cell key={entry.name} fill={STATUS_COLORS[entry.name] || "#999"} />
++										))}
++									</Pie>
++									<Tooltip />
++								</PieChart>
++							</ResponsiveContainer>
++						</div>
++					</div>
++				</div>
++			</div>
++
++			<div className="card mt-4">
++				<div className="card-header">
++					<h3 className="card-title">
++						<T id="metrics.hosts" />
++					</h3>
++				</div>
++				<div className="table-responsive">
++					<table className="table table-vcenter card-table">
++						<thead>
++							<tr>
++								<th>
++									<T id="column.source" />
++								</th>
++								<th className="text-end">
++									<T id="metrics.total-requests" />
++								</th>
++								<th className="text-end">
++									<T id="metrics.4xx" />
++								</th>
++								<th className="text-end">
++									<T id="metrics.5xx" />
++								</th>
++								<th className="text-end">
++									<T id="metrics.bandwidth-out" />
++								</th>
++							</tr>
++						</thead>
++						<tbody>
++							{hostRows.map((row) => (
++								<tr key={row.name}>
++									<td>{row.name}</td>
++									<td className="text-end">{row.requests.toLocaleString()}</td>
++									<td className="text-end text-warning">{row["4xx"] || 0}</td>
++									<td className="text-end text-danger">{row["5xx"] || 0}</td>
++									<td className="text-end">{fmtBytes(row.outBytes)}</td>
++								</tr>
++							))}
++							{!hostRows.length && (
++								<tr>
++									<td colSpan={5} className="text-muted">
++										<T id="metrics.no-data" />
++									</td>
++								</tr>
++							)}
++						</tbody>
++					</table>
++				</div>
++			</div>
++		</div>
++	);
++};
++
++export default Metrics;
+diff --git a/frontend/yarn.lock b/frontend/yarn.lock
+index ace3c7c..be194cc 100644
+--- a/frontend/yarn.lock
++++ b/frontend/yarn.lock
+@@ -552,6 +552,18 @@
+   resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.37.0.tgz#bbbd3cddc2ba2764a6a915659a1ab0e628779ae9"
+   integrity sha512-VNlZuifu4tHdxWPfHvoMfKsHA9kVTCGkduv5vKVTdinm8wHFJNhyVB5RzIMiRFj0q3RKoCbP68u2zaoBSiFueg==
+ 
++"@reduxjs/toolkit@^1.9.0 || 2.x.x":
++  version "2.14.0"
++  resolved "https://registry.yarnpkg.com/@reduxjs/toolkit/-/toolkit-2.14.0.tgz#4977d4f7f889e634eeb7381becc5b5648fecf051"
++  integrity sha512-m/PxMwRe0xLL6XUsAgy0YjInklHcfi9uMwFhJk+QINqjxqPvyc89T5cMjszA5bDmTE0gwGc7zr9LRO4gL+mhaw==
++  dependencies:
++    "@standard-schema/spec" "^1.0.0"
++    "@standard-schema/utils" "^0.3.0"
++    immer "^11.2.9"
++    redux "^5.0.1"
++    redux-thunk "^3.1.0"
++    reselect "^5.1.0"
++
+ "@restart/hooks@^0.4.9":
+   version "0.4.16"
+   resolved "https://registry.yarnpkg.com/@restart/hooks/-/hooks-0.4.16.tgz#95ae8ac1cc7e2bd4fed5e39800ff85604c6d59fb"
+@@ -752,6 +764,16 @@
+   resolved "https://registry.yarnpkg.com/@solid-primitives/utils/-/utils-6.4.1.tgz#aaa9006ac9dfa7b99b1060ab78669a8723ab2962"
+   integrity sha512-ISSB5QX1qP2ynrheIpYwc4oKR5Ny4siNuUyf1qZniy+Il+p/PtDB0QK1Dnle8noiHpwRD3gpPdubOC3qI/Zamg==
+ 
++"@standard-schema/spec@^1.0.0":
++  version "1.1.0"
++  resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.1.0.tgz#a79b55dbaf8604812f52d140b2c9ab41bc150bb8"
++  integrity sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==
++
++"@standard-schema/utils@^0.3.0":
++  version "0.3.0"
++  resolved "https://registry.yarnpkg.com/@standard-schema/utils/-/utils-0.3.0.tgz#3d5e608f16c2390c10528e98e59aef6bf73cae7b"
++  integrity sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==
++
+ "@swc/helpers@^0.5.0":
+   version "0.5.24"
+   resolved "https://registry.yarnpkg.com/@swc/helpers/-/helpers-0.5.24.tgz#b1a41a35fcfb1413564981be1bab04b46168961b"
+@@ -913,6 +935,57 @@
+   dependencies:
+     country-flag-icons "*"
+ 
++"@types/d3-array@^3.0.3":
++  version "3.2.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-3.2.2.tgz#e02151464d02d4a1b44646d0fcdb93faf88fde8c"
++  integrity sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==
++
++"@types/d3-color@*":
++  version "3.1.3"
++  resolved "https://registry.yarnpkg.com/@types/d3-color/-/d3-color-3.1.3.tgz#368c961a18de721da8200e80bf3943fb53136af2"
++  integrity sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A==
++
++"@types/d3-ease@^3.0.0":
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-ease/-/d3-ease-3.0.2.tgz#e28db1bfbfa617076f7770dd1d9a48eaa3b6c51b"
++  integrity sha512-NcV1JjO5oDzoK26oMzbILE6HW7uVXOHLQvHshBUW4UMdZGfiY6v5BeQwh9a9tCzv+CeefZQHJt5SRgK154RtiA==
++
++"@types/d3-interpolate@^3.0.1":
++  version "3.0.4"
++  resolved "https://registry.yarnpkg.com/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz#412b90e84870285f2ff8a846c6eb60344f12a41c"
++  integrity sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA==
++  dependencies:
++    "@types/d3-color" "*"
++
++"@types/d3-path@*":
++  version "3.1.1"
++  resolved "https://registry.yarnpkg.com/@types/d3-path/-/d3-path-3.1.1.tgz#f632b380c3aca1dba8e34aa049bcd6a4af23df8a"
++  integrity sha512-VMZBYyQvbGmWyWVea0EHs/BwLgxc+MKi1zLDCONksozI4YJMcTt8ZEuIR4Sb1MMTE8MMW49v0IwI5+b7RmfWlg==
++
++"@types/d3-scale@^4.0.2":
++  version "4.0.9"
++  resolved "https://registry.yarnpkg.com/@types/d3-scale/-/d3-scale-4.0.9.tgz#57a2f707242e6fe1de81ad7bfcccaaf606179afb"
++  integrity sha512-dLmtwB8zkAeO/juAMfnV+sItKjlsw2lKdZVVy6LRr0cBmegxSABiLEpGVmSJJ8O08i4+sGR6qQtb6WtuwJdvVw==
++  dependencies:
++    "@types/d3-time" "*"
++
++"@types/d3-shape@^3.1.0":
++  version "3.2.0"
++  resolved "https://registry.yarnpkg.com/@types/d3-shape/-/d3-shape-3.2.0.tgz#66ff342011dc243c6c20e6b899523d148aca412d"
++  integrity sha512-kVd74ta9eof3eJOvbNd1vGKS/XERRyQbT26Og63hIsvDO84cjD5gEOhsXf26w3FSoNlPVz84DOFcKv/oou+fMw==
++  dependencies:
++    "@types/d3-path" "*"
++
++"@types/d3-time@*", "@types/d3-time@^3.0.0":
++  version "3.0.4"
++  resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-3.0.4.tgz#8472feecd639691450dd8000eb33edd444e1323f"
++  integrity sha512-yuzZug1nkAAaBlBBikKZTgzCeA+k1uy4ZFwWANOfKw5z5LRhV0gNA7gNkKm7HoK+HRN0wX3EkxGk0fpbWhmB7g==
++
++"@types/d3-timer@^3.0.0":
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-timer/-/d3-timer-3.0.2.tgz#70bbda77dc23aa727413e22e214afa3f0e852f70"
++  integrity sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw==
++
+ "@types/debug@^4.0.0":
+   version "4.1.13"
+   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.13.tgz#22d1cc9d542d3593caea764f974306ab36286ee7"
+@@ -1031,6 +1104,11 @@
+   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-2.0.11.tgz#11af57b127e32487774841f7a4e54eab166d03c4"
+   integrity sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==
+ 
++"@types/use-sync-external-store@^0.0.6":
++  version "0.0.6"
++  resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.6.tgz#60be8d21baab8c305132eb9cb912ed497852aadc"
++  integrity sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==
++
+ "@types/warning@^3.0.3":
+   version "3.0.4"
+   resolved "https://registry.yarnpkg.com/@types/warning/-/warning-3.0.4.tgz#ebc0c83180dc83994d902bbd51ab0af8a445b1f9"
+@@ -1362,6 +1440,77 @@ csstype@^3.0.2, csstype@^3.1.0, csstype@^3.2.2:
+   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.2.3.tgz#ec48c0f3e993e50648c86da559e2610995cf989a"
+   integrity sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==
+ 
++"d3-array@2 - 3", "d3-array@2.10.0 - 3", d3-array@^3.1.6:
++  version "3.2.5"
++  resolved "https://registry.yarnpkg.com/d3-array/-/d3-array-3.2.5.tgz#4df964c852ae836a15cb2146f7e3ab7a4621d2b4"
++  integrity sha512-Th8qGXoBalmWsstpkuhmBuTsBQIFqYOJtjlBvNVvBfJ8E3uYusBUwUR8HU20U0qKKQkgCvKyR1YjiozWadk5QA==
++  dependencies:
++    internmap "1 - 2"
++
++"d3-color@1 - 3":
++  version "3.1.1"
++  resolved "https://registry.yarnpkg.com/d3-color/-/d3-color-3.1.1.tgz#72442183223bc5bfd044745e9df2b2d242de744a"
++  integrity sha512-lfab8x0Bj0UO7SNsY8dZSbNIA6ipbkE3X0NG9nqjCu6CfCHZseuDnOSJY7hidKrjpP++i1M2qT+FlAdPKYRilA==
++
++d3-ease@^3.0.1:
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/d3-ease/-/d3-ease-3.0.2.tgz#8b5e1e55bc581800425f9abe186d6d200087d22f"
++  integrity sha512-B5znKqRmKROAN4oHWQ50W/qisVjA9GXh2WMsVKdFVp4DxWmcrOsweqgUOUVsv5th96kwaZlokU6SlV4J3gak1w==
++
++"d3-format@1 - 3":
++  version "3.1.3"
++  resolved "https://registry.yarnpkg.com/d3-format/-/d3-format-3.1.3.tgz#c6bd0f4058fc6e43ef2a8114f467a875322d5bd4"
++  integrity sha512-+F+/49swqmGuQJmSKnVMIDH/QkEFV5li9QRj0xm/KhyAUBv099O5PrvpQFxBp24PYph17Mnvt9mjKQV0ii0nMA==
++
++"d3-interpolate@1.2.0 - 3", d3-interpolate@^3.0.1:
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/d3-interpolate/-/d3-interpolate-3.0.2.tgz#09c66b39a3a32a93cfa90883dd38c9a5b22436a4"
++  integrity sha512-IRzGU62DtxhvsnSTWMQIdnoZ6gA+BCWwBon1EJI6SjoN595799b6z/QRBzXfFhE8iupUPp3042yBNo0STPqnzQ==
++  dependencies:
++    d3-color "1 - 3"
++
++d3-path@^3.1.1:
++  version "3.1.1"
++  resolved "https://registry.yarnpkg.com/d3-path/-/d3-path-3.1.1.tgz#9bd21068c0713dabea2d8b4cf9e46b907b0c8f11"
++  integrity sha512-jsbgV8zIT38ReB9O7X7gcLndTQRONSqNNd+oGIaTBdUug4r5jFmp0N6RY9R5GWbdUDucn0qoTGyfjapT4tDhcg==
++
++d3-scale@^4.0.2:
++  version "4.0.3"
++  resolved "https://registry.yarnpkg.com/d3-scale/-/d3-scale-4.0.3.tgz#a482f46d5cc3bb6bbccc712769657c64f206a0c1"
++  integrity sha512-66cWobCNzcMvlfoaDHCxuIv9TBUWG1BLOWdv9kHHFuCr1JdqAWPvTmsaEYDD5NRMyWZ5+7u0GqiCDfMXMqh3hg==
++  dependencies:
++    d3-array "2.10.0 - 3"
++    d3-format "1 - 3"
++    d3-interpolate "1.2.0 - 3"
++    d3-time "2.1.1 - 3"
++    d3-time-format "2 - 4"
++
++d3-shape@^3.1.0:
++  version "3.2.1"
++  resolved "https://registry.yarnpkg.com/d3-shape/-/d3-shape-3.2.1.tgz#94eb40a42f74783365f98c20f5047417946ec83d"
++  integrity sha512-dm2o+lbKdzg9tY7GEag/dB9hcbodLfwkE/DkvqbELJXaMz0yKzWWhZqhbI7CKubukA7HnRyz0avdtvi7EPxPvw==
++  dependencies:
++    d3-path "^3.1.1"
++
++"d3-time-format@2 - 4":
++  version "4.1.1"
++  resolved "https://registry.yarnpkg.com/d3-time-format/-/d3-time-format-4.1.1.tgz#b29a443b4331e505447d5c3fa60be48376d794bd"
++  integrity sha512-22XaqjyCjpqgda20erhsOjGmC3vvYwTNYniKAd45W5UWLDF43moeOuV9qYpRqobIlsnK0UhnKZjUUJm3VgORUA==
++  dependencies:
++    d3-time "1 - 3"
++
++"d3-time@1 - 3", "d3-time@2.1.1 - 3", d3-time@^3.0.0:
++  version "3.1.1"
++  resolved "https://registry.yarnpkg.com/d3-time/-/d3-time-3.1.1.tgz#8a2306d202ff96dbe35d5b92d45b8125ac7417a2"
++  integrity sha512-Ze7rjrhMzdeulh0/hjcfFj7XLAHOfowtEMfsoG6DU866HPynQNW7Wfen6hzXcqKTv8XzxvF6Hzr5XD6bMHr2ug==
++  dependencies:
++    d3-array "2 - 3"
++
++d3-timer@^3.0.1:
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/d3-timer/-/d3-timer-3.0.2.tgz#35decb7421234fb6ec58cafd3d14351f945f2f37"
++  integrity sha512-1Il1aliroVSErrv5aulRBxAY+7+DnaoLIWGd1C6SsBTWDeobWiP/V69vwb8vT6abR1kKwaNe1196pmaQ1fK90A==
++
+ date-fns@^4.4.0:
+   version "4.4.0"
+   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-4.4.0.tgz#806539edf45c616b2b76b5f78b88c56ed3c7e036"
+@@ -1374,6 +1523,11 @@ debug@^4.0.0, debug@^4.3.1:
+   dependencies:
+     ms "^2.1.3"
+ 
++decimal.js-light@^2.5.1:
++  version "2.5.1"
++  resolved "https://registry.yarnpkg.com/decimal.js-light/-/decimal.js-light-2.5.1.tgz#134fd32508f19e208f4fb2f8dac0d2626a867934"
++  integrity sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==
++
+ decode-named-character-reference@^1.0.0:
+   version "1.3.0"
+   resolved "https://registry.yarnpkg.com/decode-named-character-reference/-/decode-named-character-reference-1.3.0.tgz#3e40603760874c2e5867691b599d73a7da25b53f"
+@@ -1448,6 +1602,11 @@ es-module-lexer@^2.3.2:
+   resolved "https://registry.yarnpkg.com/es-module-lexer/-/es-module-lexer-2.3.2.tgz#311fa4f40168c1975c505477c51b23234d41ad55"
+   integrity sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==
+ 
++es-toolkit@^1.39.3:
++  version "1.53.2"
++  resolved "https://registry.yarnpkg.com/es-toolkit/-/es-toolkit-1.53.2.tgz#334b8210b2e63eb19d18aea9830b71b079e11265"
++  integrity sha512-iUqZ+NlwH4jUgRmXZUxFBsV/9762TQEa1O4IXLFBmDEjVHScBytKuseX23I0+v9ShZ5MYxEx6WKNzm6IPnex8g==
++
+ escape-string-regexp@^4.0.0:
+   version "4.0.0"
+   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
+@@ -1465,6 +1624,11 @@ estree-walker@^3.0.3:
+   dependencies:
+     "@types/estree" "^1.0.0"
+ 
++eventemitter3@^5.0.1:
++  version "5.0.4"
++  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.4.tgz#a86d66170433712dde814707ac52b5271ceb1feb"
++  integrity sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==
++
+ expect-type@^1.4.0:
+   version "1.4.0"
+   resolved "https://registry.yarnpkg.com/expect-type/-/expect-type-1.4.0.tgz#24edf7f0cc69a44d008567ba4594ab96f3c3a3d6"
+@@ -1698,6 +1862,11 @@ ieee754@^1.2.1:
+   resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.2.1.tgz#8eb7a10a63fff25d15a57b001586d177d1b0d352"
+   integrity sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==
+ 
++immer@^11.1.8, immer@^11.2.9:
++  version "11.2.10"
++  resolved "https://registry.yarnpkg.com/immer/-/immer-11.2.10.tgz#fe5f3fa0c14882ed2dbca049866e43562247e252"
++  integrity sha512-pzANBj+0A9u+prdhBJ14DVi44vCvVUQzBa8DKt6I0AMCokPHtt722BK9IX5bFC70xUSU9TnzLRIJLTGqIzjEFw==
++
+ immutable@^5.1.5:
+   version "5.1.9"
+   resolved "https://registry.yarnpkg.com/immutable/-/immutable-5.1.9.tgz#ac23c3a01992ab665e14ac9ffff298f28cd74a0c"
+@@ -1721,6 +1890,11 @@ inline-style-parser@0.2.9:
+   resolved "https://registry.yarnpkg.com/inline-style-parser/-/inline-style-parser-0.2.9.tgz#148d759a4b8677a560a1d3e185e6db7f6be57652"
+   integrity sha512-IttN8BqKLxzUrnTqHI+/hwAJQItBAUjdoHERCDv+oOuX48VP6bzW8+QjOXSfoevzq3YrYAwX1uLHp8TqO9yIeg==
+ 
++"internmap@1 - 2":
++  version "2.0.3"
++  resolved "https://registry.yarnpkg.com/internmap/-/internmap-2.0.3.tgz#6685f23755e43c524e251d29cbc97248e3061009"
++  integrity sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==
++
+ intl-messageformat@12.1.5:
+   version "12.1.5"
+   resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-12.1.5.tgz#1b902dd7f68764c69318a7afe363cbc34b426486"
+@@ -2515,6 +2689,14 @@ react-qr-code@^2.2.0:
+     prop-types "^15.8.1"
+     qrcode-generator "^2.0.4"
+ 
++"react-redux@8.x.x || 9.x.x":
++  version "9.3.1"
++  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-9.3.1.tgz#d51a471d02e8580838d3f38a67a9370072aefa01"
++  integrity sha512-vxMLT0lalUjbZPkoTepWyKAZbjIIFssNx/CEL9lTfwQBU6XpkGSmCNdcCIrkOBUgB68uftZMnbXVb6DwGnhRKQ==
++  dependencies:
++    "@types/use-sync-external-store" "^0.0.6"
++    use-sync-external-store "^1.4.0"
++
+ react-router-dom@^7.18.5:
+   version "7.18.5"
+   resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-7.18.5.tgz#25e19a13396de166785c1199227a64bcd6815a8d"
+@@ -2584,6 +2766,23 @@ readdirp@^5.0.0, readdirp@^5.1.1:
+   resolved "https://registry.yarnpkg.com/readdirp/-/readdirp-5.1.1.tgz#520bca06f9d1ae1b96cc0800dbe84b983d19422c"
+   integrity sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==
+ 
++recharts@^3.11.0:
++  version "3.11.0"
++  resolved "https://registry.yarnpkg.com/recharts/-/recharts-3.11.0.tgz#1a5513dab84cb934638724fef2e0142b5004185a"
++  integrity sha512-Hs7vXskAYl82TKKkeikPxMFOaOqVJBoqxay6a4Oj+sBURVorpSKk8J732vyNsmedxK08lpPhyj2GL4E6ZMHR6Q==
++  dependencies:
++    "@reduxjs/toolkit" "^1.9.0 || 2.x.x"
++    clsx "^2.1.1"
++    decimal.js-light "^2.5.1"
++    es-toolkit "^1.39.3"
++    eventemitter3 "^5.0.1"
++    immer "^11.1.8"
++    react-redux "8.x.x || 9.x.x"
++    reselect "5.2.0"
++    tiny-invariant "^1.3.3"
++    use-sync-external-store "^1.2.2"
++    victory-vendor "^37.0.2"
++
+ redent@^3.0.0:
+   version "3.0.0"
+   resolved "https://registry.yarnpkg.com/redent/-/redent-3.0.0.tgz#e557b7998316bb53c9f1f56fa626352c6963059f"
+@@ -2592,6 +2791,16 @@ redent@^3.0.0:
+     indent-string "^4.0.0"
+     strip-indent "^3.0.0"
+ 
++redux-thunk@^3.1.0:
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-3.1.0.tgz#94aa6e04977c30e14e892eae84978c1af6058ff3"
++  integrity sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==
++
++redux@^5.0.1:
++  version "5.0.1"
++  resolved "https://registry.yarnpkg.com/redux/-/redux-5.0.1.tgz#97fa26881ce5746500125585d5642c77b6e9447b"
++  integrity sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==
++
+ refractor@^4.8.0:
+   version "4.9.0"
+   resolved "https://registry.yarnpkg.com/refractor/-/refractor-4.9.0.tgz#2e1c7af0157230cdd2f9086660912eadc5f68323"
+@@ -2668,6 +2877,16 @@ remove-accents@0.5.0:
+   resolved "https://registry.yarnpkg.com/remove-accents/-/remove-accents-0.5.0.tgz#77991f37ba212afba162e375b627631315bed687"
+   integrity sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==
+ 
++reselect@5.2.0:
++  version "5.2.0"
++  resolved "https://registry.yarnpkg.com/reselect/-/reselect-5.2.0.tgz#f380ef7664332d26ea06c1cba04bdbbdcaa955f1"
++  integrity sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==
++
++reselect@^5.1.0:
++  version "5.3.0"
++  resolved "https://registry.yarnpkg.com/reselect/-/reselect-5.3.0.tgz#0a3e3ed4436bdf2ab7c5e0f392dab2c062595d61"
++  integrity sha512-XGoLeRAVzUTcJ1qkxPQhDJyIZ5d6zzZD9nT7AEZOaaU9UbWclhycElmhO+VD5bFeLuzhPBaOV2oXC8uG35ZSpg==
++
+ resolve-from@^4.0.0:
+   version "4.0.0"
+   resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-4.0.0.tgz#4abcd852ad32dd7baabfe9b40e00a36db5f392e6"
+@@ -2850,6 +3069,11 @@ supports-preserve-symlinks-flag@^1.0.0:
+   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
+   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
+ 
++tiny-invariant@^1.3.3:
++  version "1.3.3"
++  resolved "https://registry.yarnpkg.com/tiny-invariant/-/tiny-invariant-1.3.3.tgz#46680b7a873a0d5d10005995eb90a70d74d60127"
++  integrity sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==
++
+ tiny-warning@^1.0.2:
+   version "1.0.3"
+   resolved "https://registry.yarnpkg.com/tiny-warning/-/tiny-warning-1.0.3.tgz#94a30db453df4c643d0fd566060d60a875d84754"
+@@ -3004,7 +3228,7 @@ use-isomorphic-layout-effect@^1.2.0:
+   resolved "https://registry.yarnpkg.com/use-isomorphic-layout-effect/-/use-isomorphic-layout-effect-1.2.1.tgz#2f11a525628f56424521c748feabc2ffcc962fce"
+   integrity sha512-tpZZ+EX0gaghDAiFR37hj5MgY6ZN55kLiPkJsKxBMZ6GZdOSPJXiOzPM984oPYZ5AnehYx5WQp1+ME8I/P/pRA==
+ 
+-use-sync-external-store@^1.6.0:
++use-sync-external-store@^1.2.2, use-sync-external-store@^1.4.0, use-sync-external-store@^1.6.0:
+   version "1.7.0"
+   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz#6dcb66ef569e02f186af6b3d575f414ce746e18f"
+   integrity sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==
+@@ -3033,6 +3257,26 @@ vfile@^6.0.0:
+     "@types/unist" "^3.0.0"
+     vfile-message "^4.0.0"
+ 
++victory-vendor@^37.0.2:
++  version "37.4.1"
++  resolved "https://registry.yarnpkg.com/victory-vendor/-/victory-vendor-37.4.1.tgz#d47c14778dd63716fea3643bf694d9560d435a08"
++  integrity sha512-geV4p2GVfVM9lgm9ZRS3pvsbAPS+BUGhM9W9nPzPHTKi+/+KjNrFXdgP6KkG+XspNZuvcXmchcrtklfuQ4gniw==
++  dependencies:
++    "@types/d3-array" "^3.0.3"
++    "@types/d3-ease" "^3.0.0"
++    "@types/d3-interpolate" "^3.0.1"
++    "@types/d3-scale" "^4.0.2"
++    "@types/d3-shape" "^3.1.0"
++    "@types/d3-time" "^3.0.0"
++    "@types/d3-timer" "^3.0.0"
++    d3-array "^3.1.6"
++    d3-ease "^3.0.1"
++    d3-interpolate "^3.0.1"
++    d3-scale "^4.0.2"
++    d3-shape "^3.1.0"
++    d3-time "^3.0.0"
++    d3-timer "^3.0.1"
++
+ vite-plugin-checker@^1.0.0:
+   version "1.0.0"
+   resolved "https://registry.yarnpkg.com/vite-plugin-checker/-/vite-plugin-checker-1.0.0.tgz#8027a347e19cdaa0e7d841cd5ae5eed9f59b5b9e"
