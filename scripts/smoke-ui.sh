@@ -1,4 +1,7 @@
 #!/bin/bash
+# NOTE: same-tag digest discipline — when the WAF image republishes under the
+# same tag, this product run must be re-triggered AFTER the upstream green
+# (a mid-flight build pulls the OLD digest and ships without the new backend).
 # UI smoke for the proxywarden image against the compose test stack
 # (docker-compose.test.yml must be UP before running this).
 # Verifies the LAYERING, not just the UI:
