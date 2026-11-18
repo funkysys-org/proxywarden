@@ -2,13 +2,16 @@
 #
 # proxywarden = validated WAF overlay image + our frontend build.
 #
-# Stage 1 (fe-builder): clone the pinned upstream NPM tag, apply our patch
-#   set (zero patches = stock build), `yarn build` the React/Vite frontend.
-# Stage 2 (product):   FROM the overlay image, replace /app/frontend with
-#   our dist. Backend, modsec layer, s6 seed: untouched.
+# Stage 1 (fe-builder): the VENDORED NPM frontend source (Phase A4:
+#   vendor/npm-frontend/, PROVENANCE-gated — no build-time clone of jc21),
+#   our frontend patch set (zero patches = stock build), `yarn build`.
+# Stage 2 (product):   FROM the WAF image (its backend already carries our
+#   WAF-audit patch from nginx-full since Phase A4), replace /app/frontend
+#   with our dist. Modsec layer, s6 seed, backend: untouched here.
 #
 # Pins (mirrored in .github/workflows/build.yml — pins-sync enforces):
-#   NPM_FRONTEND_REF : upstream tag the frontend is built from
+#   NPM_FRONTEND_REF : upstream tag the vendored frontend is from
+#   NPM_COMMIT       : upstream sha — must equal vendor/npm-frontend/PROVENANCE.md
 #   OVERLAY_IMAGE    : base image (local tag for local builds; CI passes the
 #                      GHCR path — location-dependent, checked by pins-sync
 #                      only for the REPLACE-ME placeholder and the version
@@ -21,18 +24,21 @@
 ARG OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4
 
 # ---- stage 1: frontend builder -------------------------------------------
+# Frontend base = the vendored pinned source (Phase A4). git stays installed
+# (node:26 ships it): `git apply` runs the patch set.
 FROM node:26 AS fe-builder
 
+# Provenance tag pin (the vendored tree is the actual build input; pins-sync
+# checks this value against vendor/npm-frontend/PROVENANCE.md via NPM_COMMIT).
 ARG NPM_FRONTEND_REF=v2.17.0
-RUN git clone --depth 1 --branch "$NPM_FRONTEND_REF" \
-      https://github.com/NginxProxyManager/nginx-proxy-manager.git /build/npm
 
+COPY vendor/npm-frontend/ /build/npm/
 COPY patches/ /patches/
-# Apply our patch sets — backend first, then frontend — in lexical order;
-# empty sets = proven stock build.
+# Apply our FRONTEND patch set in lexical order; empty set = stock build.
+# (Backend patches live in funkysys-org/nginx-full since Phase A4.)
 RUN set -eu; cd /build/npm; \
     found=0; \
-    for p in /patches/backend/*.patch /patches/frontend/*.patch; do \
+    for p in /patches/frontend/*.patch; do \
       [ -e "$p" ] || continue; \
       found=1; echo "applying $(basename "$p")"; \
       git apply --check "$p" && git apply "$p"; \
@@ -58,12 +64,9 @@ FROM ${OVERLAY_IMAGE}
 RUN rm -rf /app/frontend
 COPY --from=fe-builder /build/npm/frontend/dist/ /app/frontend/
 
-# Backend overlay: the files touched by patches/backend/. Same assembly as
-# upstream (its docker/Dockerfile does `COPY backend /app`), so overlaying the
-# patched files is equivalent — the module runs from source, no rebuild.
-# NOTE: extend this list when a backend patch touches new files.
-COPY --from=fe-builder /build/npm/backend/internal/log-viewer.js /app/internal/log-viewer.js
-COPY --from=fe-builder /build/npm/backend/routes/logs.js /app/routes/logs.js
+# (Backend overlay: gone in Phase A4 — the WAF image from nginx-full ships
+#  the backend already patched: the WAF-audit log source lives in nginx-full's
+#  overlay/patches/. This stage is frontend-only now.)
 
 # Image-level overlay files: the global hardening conf lands in
 # /etc/nginx/conf.d/, which the stock nginx.conf already includes.

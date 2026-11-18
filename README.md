@@ -1,8 +1,9 @@
 # proxywarden
 
-Custom-branded Nginx Proxy Manager with a first-class WAF: the **official NPM
-backend, untouched**, with **our own frontend build** (branding + WAF panels),
-on top of the **validated WAF overlay image from funkysys-org/nginx-full** (libmodsecurity v3 +
+Custom-branded Nginx Proxy Manager with a first-class WAF: the **NPM backend
+with our WAF-audit patch** (from nginx-full, Phase A4), with **our own
+frontend build** (branding + WAF panels), on top of the **validated WAF
+overlay image from funkysys-org/nginx-full** (libmodsecurity v3 +
 connector + OWASP CRS).
 
 ## Architecture — two repos, layered
@@ -11,22 +12,24 @@ connector + OWASP CRS).
 repo 1  nginx-full (funkysys-org: base + app + WAF — the merged A2b stack)
           vendored openresty (parity-gated vs the official build) + node + certbot
             → :certbot-node-or1.31.8.1-node26                        (base)
-          NPM source @ v2.17.0 (backend + frontend + rootfs + s6)
+          vendored NPM source @ v2.17.0 (backend + frontend + rootfs + s6)
             → :2.17.0-or1.31.8.1                                      (app)
           libmodsecurity + CRS + vts + purge layer
-            → ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4   (WAF overlay)
+            → ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4   (WAF overlay,
+              backend carries our WAF-audit patch from overlay/patches/)
 
 repo 2  proxywarden (this repo)
-          WAF image + frontend fork at v2.17.0
+          vendored frontend (vendor/npm-frontend/, PROVENANCE-gated)
+            + our frontend patch set → pure-frontend product on the WAF image
             → ghcr.io/funkysys-org/proxywarden:<overlay-tag>-fe<npm-tag>
 ```
 
-The same overlay philosophy as repo 1, now applied to both trees: the
-upstream tag is cloned at build time, our numbered patches are applied
-(frontend: `patches/frontend/`, backend: `patches/backend/`), and only the
-patched artifacts overlay the image — `/app/frontend`, plus the specific
-backend files the backend patch set touches (equivalent to upstream's own
-`COPY backend /app`). No stock file is edited at runtime.
+The same overlay philosophy as repo 1, applied to the VENDORED tree: no
+build-time clone of jc21's repo anywhere in the chain. Our numbered frontend
+patches (`patches/frontend/`) are applied at build time on the vendored
+source and only the built `dist/` overlays the image. Backend deltas are
+repo 1's jurisdiction (`overlay/patches/`) — this repo never touches backend
+files. No stock file is edited at runtime.
 
 ## Pins
 
@@ -34,10 +37,14 @@ backend files the backend patch set touches (equivalent to upstream's own
 |---|---|---|
 | `OVERLAY_IMAGE` | `ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4` (pass `--build-arg` to use a local tag) | `build/Dockerfile` ARG + workflow env |
 | `NPM_FRONTEND_REF` | `v2.17.0` | `build/Dockerfile` ARG + workflow env |
+| `NPM_COMMIT` | `5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186` | workflow env ↔ `vendor/npm-frontend/PROVENANCE.md` |
 
 Invariants enforced by CI (`pins-sync` job):
 - `NPM_FRONTEND_REF` must equal the `ARG` in `build/Dockerfile` (no drift
   between files — a wasted build is caught in seconds);
+- `NPM_COMMIT` must equal the vendored tree's `PROVENANCE.md` sha — the
+  vendored source IS the build input, so the pin and the tree can never
+  drift apart silently;
 - the frontend tag MUST match the NPM version inside the overlay image tag
   (`fe2.17.0` ↔ overlay `2.17.0-…`) — a frontend built against a different
   backend version never ships;
@@ -116,7 +123,8 @@ security fix line (Broccoli2Shell / CVE-2026-111497 was fixed in Node
   block in `advanced_config`; hand-written directives are recognized and
   rewritten safely (never duplicated)
 - **F4** ✅ (branch `f4-audit-viewer`, patches `backend/001-waf-log-source` +
-  `frontend/003-waf-log-viewer`) — WAF Audit as a 4th source in the native
+  `frontend/003-waf-log-viewer` — the backend half moved to nginx-full
+  `overlay/patches/` in Phase A4) — WAF Audit as a 4th source in the native
   `/logs` viewer: the log-viewer gains a `waf` source that parses
   `modsec_audit.log` JSON lines into readable text (`time ip "METHOD uri"
   host=… -> code INTERRUPTED rules [...]`), riding the existing `logs:list`

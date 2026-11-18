@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - build/**
+      - vendor/**
       - patches/**
       - sidecar/**
       - test-runtime/**
@@ -17,6 +18,7 @@ on:
 
 env:
   NPM_FRONTEND_REF: v2.17.0
+  NPM_COMMIT: '5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186'   # vendored sha — must equal vendor/npm-frontend/PROVENANCE.md
   OVERLAY_TAG: 2.17.0-or1.31.8.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4
   # The published WAF overlay image — now the funkysys-org/nginx-full stack
   # (Phase A2b: base + app + WAF merged into one pipeline, one image family).
@@ -45,6 +47,11 @@ jobs:
               echo "::error::OVERLAY_IMAGE is still the placeholder — set it in this workflow env"
               exit 1;;
           esac
+          prov_sha=$(sed -n 's/^| Commit | \(.*\) |$/\1/p' vendor/npm-frontend/PROVENANCE.md | tr -d ' ')
+          if [ "$NPM_COMMIT" != "$prov_sha" ]; then
+            echo "::error::PROVENANCE MISMATCH: workflow NPM_COMMIT '$NPM_COMMIT' vs vendored '$prov_sha' — re-vendor or fix the pin"
+            exit 1
+          fi
           fe_ver="${NPM_FRONTEND_REF#v}"
           ov_ver="${OVERLAY_TAG%%-*}"
           if [ "$fe_ver" != "$ov_ver" ]; then
