@@ -1,0 +1,192 @@
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index 5040ea6..e53c5bd 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -943,5 +943,17 @@
+ 	},
+ 	"settings.ldap.visibility": {
+ 		"defaultMessage": "Default Visibility"
++	},
++	"settings.security.nav": {
++		"defaultMessage": "Security"
++	},
++	"settings.security.2fa-required": {
++		"defaultMessage": "Require 2FA for non-admin logins"
++	},
++	"settings.security.2fa-required-hint": {
++		"defaultMessage": "When on, users without two-factor authentication cannot log in. Admins are exempt. Have users enable 2FA on their profile BEFORE turning this on."
++	},
++	"error.2fa-required": {
++		"defaultMessage": "This account requires two-factor authentication. Enable it on your profile or contact your administrator."
+ 	}
+ }
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index bbd890e..ea53c2a 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -931,5 +931,17 @@
+ 	},
+ 	"settings.ldap.visibility": {
+ 		"defaultMessage": "Visibilità di default"
++	},
++	"settings.security.nav": {
++		"defaultMessage": "Sicurezza"
++	},
++	"settings.security.2fa-required": {
++		"defaultMessage": "Richiedi 2FA per gli accessi non-admin"
++	},
++	"settings.security.2fa-required-hint": {
++		"defaultMessage": "Quando attivo, gli utenti senza autenticazione a due fattori non possono accedere. Gli admin sono esenti. Fai attivare il 2FA dal profilo PRIMA di accendere questo."
++	},
++	"error.2fa-required": {
++		"defaultMessage": "Questo account richiede l'autenticazione a due fattori. Attivala dal tuo profilo o contatta l'amministratore."
+ 	}
+ }
+diff --git a/frontend/src/pages/Settings/Layout.tsx b/frontend/src/pages/Settings/Layout.tsx
+index bd69299..4d8163d 100644
+--- a/frontend/src/pages/Settings/Layout.tsx
++++ b/frontend/src/pages/Settings/Layout.tsx
+@@ -2,6 +2,7 @@ import { useState } from "react";
+ import { T } from "src/locale";
+ import DefaultSite from "./DefaultSite";
+ import LdapAuth from "./LdapAuth";
++import Security from "./Security";
+ 
+ export default function Layout() {
+ 	// Taken from https://preview.tabler.io/settings.html
+@@ -48,11 +49,23 @@ export default function Layout() {
+ 								>
+ 									<T id="settings.ldap.nav" />
+ 								</a>
++								<a
++									href="#"
++									className={`list-group-item list-group-item-action d-flex align-items-center ${
++										active === "security" ? "active" : ""
++									}`}
++									onClick={(e) => {
++										e.preventDefault();
++										setActive("security");
++									}}
++								>
++									<T id="settings.security.nav" />
++								</a>
+ 							</div>
+ 						</div>
+ 					</div>
+ 					<div className="col-12 col-md-9 d-flex flex-column">
+-						{active === "default-site" ? <DefaultSite /> : <LdapAuth />}
++						{active === "default-site" ? <DefaultSite /> : active === "ldap-auth" ? <LdapAuth /> : <Security />}
+ 					</div>
+ 				</div>
+ 			</div>
+diff --git a/frontend/src/pages/Settings/Security.tsx b/frontend/src/pages/Settings/Security.tsx
+new file mode 100644
+index 0000000..7b164f8
+--- /dev/null
++++ b/frontend/src/pages/Settings/Security.tsx
+@@ -0,0 +1,105 @@
++import { Field, Form, Formik } from "formik";
++import { type ReactNode, useState } from "react";
++import { Alert } from "react-bootstrap";
++import { Button, Loading } from "src/components";
++import { useSetSetting, useSetting } from "src/hooks";
++import { T } from "src/locale";
++import { showObjectSuccess } from "src/notifications";
++
++export default function Security() {
++	const { data, isLoading, error } = useSetting("2fa-policy");
++	const { mutate: setSetting } = useSetSetting();
++	const [errorMsg, setErrorMsg] = useState<ReactNode | null>(null);
++	const [isSubmitting, setIsSubmitting] = useState(false);
++
++	const onSubmit = async (values: any, { setSubmitting }: any) => {
++		if (isSubmitting) return;
++		setIsSubmitting(true);
++		setErrorMsg(null);
++
++		const payload = {
++			id: "2fa-policy",
++			value: values.enabled ? "enabled" : "disabled",
++			meta: {
++				enabled: !!values.enabled,
++			},
++		};
++
++		setSetting(payload, {
++			onError: (err: any) => setErrorMsg(<T id={err.message} />),
++			onSuccess: () => {
++				showObjectSuccess("setting", "saved");
++			},
++			onSettled: () => {
++				setIsSubmitting(false);
++				setSubmitting(false);
++			},
++		});
++	};
++
++	if (!isLoading && error) {
++		return (
++			<div className="card-body">
++				<div className="mb-3">
++					<Alert variant="danger" show>
++						{error.message}
++					</Alert>
++				</div>
++			</div>
++		);
++	}
++
++	if (isLoading) {
++		return (
++			<div className="card-body">
++				<div className="mb-3">
++					<Loading noLogo />
++				</div>
++			</div>
++		);
++	}
++
++	return (
++		<Formik initialValues={{ enabled: !!data?.meta?.enabled } as any} onSubmit={onSubmit}>
++			{() => (
++				<Form>
++					<div className="card-body">
++						<Alert variant="danger" show={!!errorMsg} onClose={() => setErrorMsg(null)} dismissible>
++							{errorMsg}
++						</Alert>
++						<div className="mb-3">
++							<label className="form-label" htmlFor="policy-2fa-enabled">
++								<T id="settings.security.2fa-required" />
++							</label>
++							<div>
++								<Field name="enabled" type="checkbox">
++									{({ field }: any) => (
++										<label className="form-check form-switch">
++											<input
++												id="policy-2fa-enabled"
++												className="form-check-input"
++												type="checkbox"
++												checked={field.checked}
++												onChange={field.onChange}
++											/>
++										</label>
++									)}
++								</Field>
++							</div>
++							<div className="form-hint">
++								<T id="settings.security.2fa-required-hint" />
++							</div>
++						</div>
++					</div>
++					<div className="card-footer text-end">
++						<div className="d-flex">
++							<Button type="submit" actionType="primary" className="ms-auto bg-teal" isLoading={isSubmitting} disabled={isSubmitting}>
++								<T id="save" />
++							</Button>
++						</div>
++					</div>
++				</Form>
++			)}
++		</Formik>
++	);
++}
