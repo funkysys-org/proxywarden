@@ -1,0 +1,80 @@
+diff --git a/frontend/src/api/backend/models.ts b/frontend/src/api/backend/models.ts
+index 88889c5..5c7cdee 100644
+--- a/frontend/src/api/backend/models.ts
++++ b/frontend/src/api/backend/models.ts
+@@ -181,6 +181,7 @@ export interface StaticHost {
+ 	hstsEnabled: boolean;
+ 	hstsSubdomains: boolean;
+ 	content: string;
++	documentRoot?: string | null;
+ 	// Expansions:
+ 	owner?: User;
+ 	certificate?: Certificate;
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index e53c5bd..251352d 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -955,5 +955,11 @@
+ 	},
+ 	"error.2fa-required": {
+ 		"defaultMessage": "This account requires two-factor authentication. Enable it on your profile or contact your administrator."
++	},
++	"static-host.document-root": {
++		"defaultMessage": "Document Root"
++	},
++	"static-host.document-root-hint": {
++		"defaultMessage": "Optional: absolute path inside the container to a mounted directory tree (e.g. a volume mount). When set, it is served instead of the inline content below."
+ 	}
+ }
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index ea53c2a..c527801 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -943,5 +943,11 @@
+ 	},
+ 	"error.2fa-required": {
+ 		"defaultMessage": "Questo account richiede l'autenticazione a due fattori. Attivala dal tuo profilo o contatta l'amministratore."
++	},
++	"static-host.document-root": {
++		"defaultMessage": "Document Root"
++	},
++	"static-host.document-root-hint": {
++		"defaultMessage": "Opzionale: percorso assoluto nel container verso un albero di directory montato (es. un volume). Se impostato, viene servito al posto del contenuto inline qui sotto."
+ 	}
+ }
+diff --git a/frontend/src/modals/StaticHostModal.tsx b/frontend/src/modals/StaticHostModal.tsx
+index 3f2ed77..4580cf2 100644
+--- a/frontend/src/modals/StaticHostModal.tsx
++++ b/frontend/src/modals/StaticHostModal.tsx
+@@ -118,6 +118,7 @@ const StaticHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
+ 							hstsSubdomains: data?.hstsSubdomains,
+ 							meta: data?.meta || {},
+ 							content: data?.content || "",
++							documentRoot: data?.documentRoot || "",
+ 							wafDetect,
+ 							wafBlock,
+ 						} as any
+@@ -182,10 +183,19 @@ const StaticHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
+ 										<div className="tab-content">
+ 											<div className="tab-pane active show" id="tab-details" role="tabpanel">
+ 												<DomainNamesField isWildcardPermitted dnsProviderWildcardSupported />
+-												<div className="mb-3">
+-													<label className="form-label" htmlFor="content">
+-														<T id="static-host" />
+-													</label>
++													<div className="mb-3">
++														<label className="form-label" htmlFor="documentRoot">
++															<T id="static-host.document-root" />
++														</label>
++														<Field id="documentRoot" name="documentRoot" type="text" className="form-control font-monospace" placeholder="/data/static-sites/example.com" />
++														<div className="form-hint">
++															<T id="static-host.document-root-hint" />
++														</div>
++													</div>
++													<div className="mb-3">
++														<label className="form-label" htmlFor="content">
++															<T id="static-host" />
++														</label>
+ 													<Field name="content">
+ 														{({ field }: any) => (
+ 															<textarea
