@@ -20,7 +20,7 @@ services:
       GEOIPUPDATE_FREQUENCY: 168 # hours — weekly
       GEOIPUPDATE_PRESERVE_CONFIG_TIMES: 1
     volumes:
-      - proxywarden_geoip:/usr/local/share/GeoIP
+      - proxywarden_geoip:/usr/share/GeoIP
 
   proxywarden:
     volumes:
