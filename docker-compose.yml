@@ -1,4 +1,4 @@
-# proxywarden — production deploy stack.
+# proxywarden — production deploy stack (single file).
 #
 #   cp env.example .env    # pin the exact image tag (no floating :latest)
 #   docker login ghcr.io   # PAT with read:packages — the registry is private
@@ -12,6 +12,13 @@
 # /data and /etc/letsencrypt must be mounted VOLUMES — the stock prepare
 # service hard-fails without them. They survive recreates: the SQLite DB,
 # nginx host configs, certs and the modsec tunables (/data/modsec) live there.
+#
+# GEOBLOCKING (optional, one line in .env): set COMPOSE_PROFILES=geoip and
+# fill MAXMIND_ACCOUNT_ID/MAXMIND_LICENSE_KEY — the geoipupdate sidecar
+# below keeps GeoLite2-Country fresh in the shared volume and the image's
+# s6 oneshot arms the lookup at boot. WITHOUT the profile the sidecar is
+# ignored entirely (no container, no crash-loop) and the country rules on
+# hosts stay stored but dormant.
 
 services:
   proxywarden:
@@ -26,7 +33,26 @@ services:
     volumes:
       - proxywarden_data:/data
       - proxywarden_le:/etc/letsencrypt
+      # GeoLite2 lands here via the geoip profile below; without the DB the
+      # armer keeps country rules dormant — an empty volume is harmless.
+      - proxywarden_geoip:/data/geoip:ro
+
+  # Optional sidecar (profile "geoip"): refreshes GeoLite2-Country weekly.
+  # Credentials live in .env — NEVER in this file.
+  geoipupdate:
+    image: maxmindinc/geoipupdate:v8.0
+    restart: unless-stopped
+    profiles: ["geoip"]
+    environment:
+      GEOIPUPDATE_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID}
+      GEOIPUPDATE_LICENSE_KEY: ${MAXMIND_LICENSE_KEY}
+      GEOIPUPDATE_EDITION_IDS: GeoLite2-Country
+      GEOIPUPDATE_FREQUENCY: 168 # hours — weekly
+      GEOIPUPDATE_PRESERVE_CONFIG_TIMES: 1
+    volumes:
+      - proxywarden_geoip:/usr/share/GeoIP
 
 volumes:
   proxywarden_data: {}
   proxywarden_le: {}
+  proxywarden_geoip: {}
