@@ -1,0 +1,142 @@
+diff --git a/frontend/src/components/SiteFooter.tsx b/frontend/src/components/SiteFooter.tsx
+index df903a6..1ff1153 100644
+--- a/frontend/src/components/SiteFooter.tsx
++++ b/frontend/src/components/SiteFooter.tsx
+@@ -1,9 +1,8 @@
+-import { useCheckVersion, useHealth } from "src/hooks";
++import { useHealth } from "src/hooks";
+ import { T } from "src/locale";
+ 
+ export function SiteFooter() {
+ 	const health = useHealth();
+-	const { data: versionData } = useCheckVersion();
+ 
+ 	const getVersion = () => {
+ 		if (!health.data) {
+@@ -17,27 +16,10 @@ export function SiteFooter() {
+ 		<footer className="footer d-print-none py-3">
+ 			<div className="container-xl">
+ 				<div className="row text-center align-items-center flex-row-reverse">
+-					<div className="col-lg-auto ms-lg-auto">
+-						<ul className="list-inline list-inline-dots mb-0">
+-							<li className="list-inline-item">
+-								<a
+-									href="https://github.com/NginxProxyManager/nginx-proxy-manager"
+-									target="_blank"
+-									className="link-secondary"
+-									rel="noopener"
+-								>
+-									<T id="footer.github-fork" />
+-								</a>
+-							</li>
+-						</ul>
+-					</div>
+ 					<div className="col-12 col-lg-auto mt-3 mt-lg-0">
+ 						<ul className="list-inline list-inline-dots mb-0">
+ 							<li className="list-inline-item">
+-								© 2026{" "}
+-								<a href="https://jc21.com" rel="noreferrer" target="_blank" className="link-secondary">
+-									jc21.com
+-								</a>
++								<T id="footer.copyright" tData={{ year: String(new Date().getFullYear()) }} />
+ 							</li>
+ 							<li className="list-inline-item">
+ 								Theme by{" "}
+@@ -45,30 +27,7 @@ export function SiteFooter() {
+ 									Tabler
+ 								</a>
+ 							</li>
+-							<li className="list-inline-item">
+-								<a
+-									href={`https://github.com/NginxProxyManager/nginx-proxy-manager/releases/tag/${getVersion()}`}
+-									className="link-secondary"
+-									target="_blank"
+-									rel="noopener"
+-								>
+-									{" "}
+-									{getVersion()}{" "}
+-								</a>
+-							</li>
+-							{versionData?.updateAvailable && versionData?.latest && (
+-								<li className="list-inline-item">
+-									<a
+-										href={`https://github.com/NginxProxyManager/nginx-proxy-manager/releases/tag/${versionData.latest}`}
+-										className="link-warning fw-bold"
+-										target="_blank"
+-										rel="noopener"
+-										title={`New version ${versionData.latest} is available`}
+-									>
+-										<T id="update-available" data={{ latestVersion: versionData.latest }} />
+-									</a>
+-								</li>
+-							)}
++							<li className="list-inline-item">{getVersion()}</li>
+ 						</ul>
+ 					</div>
+ 				</div>
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index ddb4be8..85bde8d 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -434,9 +434,6 @@
+ 	"expires.on": {
+ 		"defaultMessage": "Expires: {date}"
+ 	},
+-	"footer.github-fork": {
+-		"defaultMessage": "Fork me on Github"
+-	},
+ 	"form.unsaved-changes": {
+ 		"defaultMessage": "You have unsaved changes. Are you sure you want to discard them?"
+ 	},
+@@ -848,9 +845,6 @@
+ 	"test": {
+ 		"defaultMessage": "Test"
+ 	},
+-	"update-available": {
+-		"defaultMessage": "Update Available: {latestVersion}"
+-	},
+ 	"user": {
+ 		"defaultMessage": "User"
+ 	},
+@@ -1021,5 +1015,8 @@
+ 	},
+ 	"dashboard.cert-expiry": {
+ 		"defaultMessage": "{count, plural, one {# day left} other {# days left}}"
++	},
++	"footer.copyright": {
++		"defaultMessage": "© {year} Proxywarden"
+ 	}
+ }
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index a816c75..d2b1acc 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -434,9 +434,6 @@
+ 	"expires.on": {
+ 		"defaultMessage": "Scade: {date}"
+ 	},
+-	"footer.github-fork": {
+-		"defaultMessage": "Forkami su GitHub"
+-	},
+ 	"host.flags.block-exploits": {
+ 		"defaultMessage": "Blocca Exploit Comuni"
+ 	},
+@@ -836,9 +833,6 @@
+ 	"test": {
+ 		"defaultMessage": "Test"
+ 	},
+-	"update-available": {
+-		"defaultMessage": "Aggiornamento Disponibile: {latestVersion}"
+-	},
+ 	"user": {
+ 		"defaultMessage": "Utente"
+ 	},
+@@ -1009,5 +1003,8 @@
+ 	},
+ 	"dashboard.cert-expiry": {
+ 		"defaultMessage": "{count, plural, one {# giorno rimasto} other {# giorni rimasti}}"
++	},
++	"footer.copyright": {
++		"defaultMessage": "© {year} Proxywarden"
+ 	}
+ }

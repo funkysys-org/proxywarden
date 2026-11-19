@@ -57,7 +57,9 @@ RUN set -eu; cd /build/npm/frontend; \
     yarn build; \
     test -f dist/index.html; \
     if grep -rq 'NPM instance' dist/; then echo "FATAL: upstream 'NPM instance' string leaked into the bundle — debrand patch (005) not applied?"; exit 1; fi; \
-    grep -rq 'Warden instance' dist/ || { echo "FATAL: 'Warden instance' marker missing from the bundle"; exit 1; }
+    grep -rq 'Warden instance' dist/ || { echo "FATAL: 'Warden instance' marker missing from the bundle"; exit 1; }; \
+    if grep -rq 'jc21' dist/; then echo "FATAL: 'jc21' leaked into the bundle — footer/product debrand regressed?"; exit 1; fi; \
+    if grep -rq 'NginxProxyManager' dist/; then echo "FATAL: 'NginxProxyManager' leaked into the bundle — footer/repo links regressed?"; exit 1; fi
 
 # ---- stage 2: product image -----------------------------------------------
 FROM ${OVERLAY_IMAGE}
