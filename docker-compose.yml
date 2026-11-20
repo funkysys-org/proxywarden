@@ -52,7 +52,53 @@ services:
     volumes:
       - proxywarden_geoip:/usr/share/GeoIP
 
+  # ─── Optional logging stack (profile "logging"): Loki + Alloy + Grafana ───
+  # Same opt-in shape as the geoip sidecar: add "logging" to COMPOSE_PROFILES
+  # in .env (e.g. COMPOSE_PROFILES=geoip,logging). Configs are versioned in
+  # ./logging/ and mounted read-only; no secret ever lives in the compose.
+  loki:
+    image: grafana/loki:3.6.22
+    restart: unless-stopped
+    profiles: ["logging"]
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./logging/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    # no ports: Grafana reaches it on the compose network at loki:3100
+
+  alloy:
+    image: grafana/alloy:v1.22.0
+    restart: unless-stopped
+    profiles: ["logging"]
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+      - ./logging/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # container log discovery
+      - proxywarden_data:/data:ro                        # WAF audit log tail
+    # no ports: the Alloy UI stays off the public interface
+
+  grafana:
+    image: grafana/grafana:13.3.1
+    restart: unless-stopped
+    profiles: ["logging"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./logging/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      # Loopback only — tunnel in like :81:
+      #   ssh -L 3000:127.0.0.1:3000 <host>
+      - "127.0.0.1:3000:3000"
+
 volumes:
   proxywarden_data: {}
   proxywarden_le: {}
   proxywarden_geoip: {}
+  loki_data: {}
+  grafana_data: {}

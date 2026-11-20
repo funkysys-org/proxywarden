@@ -1,0 +1,90 @@
+// Proxywarden logging pipeline — two sources, one sink.
+//
+//  1. Container stdout (docker socket): nginx access/error + the app logs of
+//     the proxywarden compose project, discovered via docker_sd and kept to
+//     this project only.
+//  2. WAF audit log (/data/modsec/audit.log, JSON lines): the same stream the
+//     in-app WAF report reads; here it gets structured labels per event.
+//
+// Everything pushes to Loki on the compose network. The Alloy UI is not
+// exposed (no ports on the service).
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// ── 1) Container stdout via docker discovery ──────────────────────────────
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Keep only THIS compose project (label set by docker compose v2).
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "proxywarden"
+    action        = "keep"
+  }
+
+  // Human-readable stream name: proxywarden-1, geoipupdate-1, ...
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+    replacement   = "$1"
+    action        = "replace"
+  }
+
+  // job label from the compose service name (proxywarden, geoipupdate, ...)
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+    action        = "replace"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.local.receiver]
+}
+
+// ── 2) WAF audit log: JSON lines → structured labels ─────────────────────
+
+local.file_match "waf_audit" {
+  path_targets = [{
+    __path__ = "/data/modsec/audit.log",
+    job      = "waf-audit",
+  }]
+}
+
+loki.source.file "waf_audit" {
+  targets    = local.file_match.waf_audit.targets
+  forward_to = [loki.process.waf_audit.receiver]
+}
+
+loki.process "waf_audit" {
+  // ModSecurity JSON audit entries. Tolerant by design: a line that is not
+  // parseable still reaches Loki raw (no extracted labels); the app's own
+  // WAF report stays the tolerant authority for aggregation.
+  stage.json {
+    expressions = {
+      transaction_id = "transaction.transaction_id",
+      client_ip      = "transaction.client_ip",
+      host           = "transaction.request.headers.Host",
+      rule_id        = "transaction.messages.0.details.ruleId",
+    }
+  }
+  stage.labels {
+    values = {
+      client_ip = "",
+      rule_id   = "",
+    }
+  }
+  forward_to = [loki.write.local.receiver]
+}
