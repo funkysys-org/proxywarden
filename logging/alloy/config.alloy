@@ -77,7 +77,7 @@ loki.process "waf_audit" {
       transaction_id = "transaction.transaction_id",
       client_ip      = "transaction.client_ip",
       host           = "transaction.request.headers.Host",
-      rule_id        = "transaction.messages.0.details.ruleId",
+      rule_id        = "transaction.messages[0].details.ruleId",
     }
   }
   stage.labels {
