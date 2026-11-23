@@ -1,0 +1,90 @@
+diff --git a/frontend/src/pages/Settings/LdapAuth.tsx b/frontend/src/pages/Settings/LdapAuth.tsx
+index 339650c..8effb95 100644
+--- a/frontend/src/pages/Settings/LdapAuth.tsx
++++ b/frontend/src/pages/Settings/LdapAuth.tsx
+@@ -23,9 +23,9 @@ export default function LdapAuth() {
+ 			meta: {
+ 				enabled: !!values.enabled,
+ 				url: values.url || "",
+-				bindDN: values.bindDN || "",
++				bindDn: values.bindDn || "",
+ 				bindPassword: values.bindPassword || "",
+-				baseDN: values.baseDN || "",
++				baseDn: values.baseDn || "",
+ 				filter: values.filter || "(uid={username})",
+ 				starttls: !!values.starttls,
+ 				provisionOnLogin: !!values.provisionOnLogin,
+@@ -73,9 +73,9 @@ export default function LdapAuth() {
+ 				{
+ 					enabled: !!data?.meta?.enabled,
+ 					url: data?.meta?.url || "",
+-					bindDN: data?.meta?.bindDN || "",
++					bindDn: data?.meta?.bindDn || "",
+ 					bindPassword: data?.meta?.bindPassword || "",
+-					baseDN: data?.meta?.baseDN || "",
++					baseDn: data?.meta?.baseDn || "",
+ 					filter: data?.meta?.filter || "(uid={username})",
+ 					starttls: !!data?.meta?.starttls,
+ 					provisionOnLogin: data?.meta?.provisionOnLogin !== false,
+@@ -102,8 +102,7 @@ export default function LdapAuth() {
+ 												id="ldap-enabled"
+ 												className="form-check-input"
+ 												type="checkbox"
+-												checked={field.checked}
+-												onChange={field.onChange}
++												{...field}
+ 											/>
+ 										</label>
+ 									)}
+@@ -123,7 +122,7 @@ export default function LdapAuth() {
+ 							<label className="form-label" htmlFor="ldap-binddn">
+ 								<T id="settings.ldap.binddn" />
+ 							</label>
+-							<Field id="ldap-binddn" name="bindDN" type="text" className="form-control" />
++							<Field id="ldap-binddn" name="bindDn" type="text" className="form-control" />
+ 							<div className="form-hint">
+ 								<T id="settings.ldap.binddn-hint" />
+ 							</div>
+@@ -138,7 +137,7 @@ export default function LdapAuth() {
+ 							<label className="form-label" htmlFor="ldap-basedn">
+ 								<T id="settings.ldap.basedn" />
+ 							</label>
+-							<Field id="ldap-basedn" name="baseDN" type="text" className="form-control" placeholder="ou=users,dc=example,dc=com" />
++							<Field id="ldap-basedn" name="baseDn" type="text" className="form-control" placeholder="ou=users,dc=example,dc=com" />
+ 						</div>
+ 						<div className="mb-3">
+ 							<label className="form-label" htmlFor="ldap-filter">
+@@ -161,8 +160,7 @@ export default function LdapAuth() {
+ 												id="ldap-starttls"
+ 												className="form-check-input"
+ 												type="checkbox"
+-												checked={field.checked}
+-												onChange={field.onChange}
++												{...field}
+ 											/>
+ 										</label>
+ 									)}
+@@ -181,8 +179,7 @@ export default function LdapAuth() {
+ 												id="ldap-provision"
+ 												className="form-check-input"
+ 												type="checkbox"
+-												checked={field.checked}
+-												onChange={field.onChange}
++												{...field}
+ 											/>
+ 										</label>
+ 									)}
+diff --git a/frontend/src/pages/Settings/Security.tsx b/frontend/src/pages/Settings/Security.tsx
+index 7b164f8..7811746 100644
+--- a/frontend/src/pages/Settings/Security.tsx
++++ b/frontend/src/pages/Settings/Security.tsx
+@@ -79,8 +79,7 @@ export default function Security() {
+ 												id="policy-2fa-enabled"
+ 												className="form-check-input"
+ 												type="checkbox"
+-												checked={field.checked}
+-												onChange={field.onChange}
++												{...field}
+ 											/>
+ 										</label>
+ 									)}
