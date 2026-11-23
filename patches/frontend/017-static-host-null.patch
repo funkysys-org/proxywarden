@@ -1,0 +1,15 @@
+diff --git a/frontend/src/modals/StaticHostModal.tsx b/frontend/src/modals/StaticHostModal.tsx
+index 7c53e5c..aaa87e1 100644
+--- a/frontend/src/modals/StaticHostModal.tsx
++++ b/frontend/src/modals/StaticHostModal.tsx
+@@ -55,6 +55,10 @@ const StaticHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
+ 			...values,
+ 		};
+ 
++		// documentRoot: the wire wants null when unset — an empty STRING fails
++		// the schema pattern (and an omitted key could not CLEAR the field on
++		// edit): null = "no document root" AND stays clearable.
++		payload.documentRoot = values.documentRoot || null;
+ 		// Country deny: comma-separated codes in the form, an array on the wire
+ 		payload.countryDeny = String(values.countryDeny || "")
+ 			.split(",")
