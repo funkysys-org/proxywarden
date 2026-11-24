@@ -15,7 +15,6 @@ on:
       - 'rootfs/**'
       - 'rootfs-s6/**'
       - 'build/**'
-      - 'sidecar/**'
       - 'test-runtime/**'
       - 'base-debrand.patch'
       - 'docker-compose.test.yml'
