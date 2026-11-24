@@ -19,10 +19,10 @@ on:
 env:
   NPM_FRONTEND_REF: v2.17.0
   NPM_COMMIT: '5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186'   # vendored sha — must equal vendor/npm-frontend/PROVENANCE.md
-  OVERLAY_TAG: 2.17.0-or1.31.9.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
+  OVERLAY_TAG: 2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
   # The published WAF overlay image — now the funkysys-org/nginx-full stack
   # (Phase A2b: base + app + WAF merged into one pipeline, one image family).
-  OVERLAY_IMAGE: ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.9.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
+  OVERLAY_IMAGE: ghcr.io/funkysys-org/nginx-full:2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
   IMAGE: ghcr.io/funkysys-org/proxywarden
 
 permissions:
@@ -87,7 +87,10 @@ jobs:
           PROXYWARDEN_IMAGE="$IMAGE:$TAG" docker compose -f docker-compose.test.yml up -d
           bash scripts/smoke-ui.sh
           docker compose -f docker-compose.test.yml down -v
+      # Branch discipline: phase-b builds + smokes, but ONLY main
+      # publishes (the branch publishes nothing until it merges).
       - name: Push (only after SMOKE OK)
+        if: github.ref == 'refs/heads/main'
         run: |
           set -eu
           TAG="$OVERLAY_TAG-fe${NPM_FRONTEND_REF#v}"

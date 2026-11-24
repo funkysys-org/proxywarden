@@ -21,7 +21,7 @@
 # OVERLAY_IMAGE; an ARG declared inside a stage is invisible to FROM).
 # Base = the funkysys-org/nginx-full WAF image (Phase A2b merged stack:
 # parity-gated openresty base + NPM app + libmodsecurity/CRS/vts/purge layer).
-ARG OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-or1.31.9.1-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
+ARG OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
 
 # ---- stage 1: frontend builder -------------------------------------------
 # Frontend base = the vendored pinned source (Phase A4). git stays installed
