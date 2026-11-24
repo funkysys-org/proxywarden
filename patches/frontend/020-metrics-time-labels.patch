@@ -1,0 +1,72 @@
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index a008f90..7ff01be 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -557,7 +557,13 @@
+ 	"metrics": {
+ 		"defaultMessage": "Metrics"
+ 	},
+-	"metrics.2xx": {
++	"metrics.window-30m": {
++		"defaultMessage": "Last 30 minutes (rolling — fills while the page stays open)"
++	},
++"metrics.since-boot": {
++		"defaultMessage": "Cumulative since nginx booted (each reload resets it)"
++	},
++"metrics.2xx": {
+ 		"defaultMessage": "2xx"
+ 	},
+ "metrics.3xx": {
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index bcab580..5f3b420 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -554,7 +554,13 @@
+ 	"metrics": {
+ 		"defaultMessage": "Metriche"
+ 	},
+-	"metrics.2xx": {
++	"metrics.window-30m": {
++		"defaultMessage": "Ultimi 30 minuti (finestra mobile — si riempie mentre la pagina resta aperta)"
++	},
++"metrics.since-boot": {
++		"defaultMessage": "Cumulativo dal boot di nginx (ogni reload lo azzera)"
++	},
++"metrics.2xx": {
+ 		"defaultMessage": "2xx"
+ 	},
+ "metrics.3xx": {
+diff --git a/frontend/src/pages/Metrics/index.tsx b/frontend/src/pages/Metrics/index.tsx
+index 7622d72..e075f8f 100644
+--- a/frontend/src/pages/Metrics/index.tsx
++++ b/frontend/src/pages/Metrics/index.tsx
+@@ -160,6 +160,9 @@ const Metrics = () => {
+ 							<h3 className="card-title">
+ 								<T id="metrics.requests-sec" /> {isFetching ? "…" : ""}
+ 							</h3>
++							<div className="card-subtitle text-secondary">
++								<T id="metrics.window-30m" />
++							</div>
+ 						</div>
+ 						<div className="card-body" style={{ height: 260 }}>
+ 							<ResponsiveContainer width="100%" height="100%">
+@@ -179,6 +182,9 @@ const Metrics = () => {
+ 							<h3 className="card-title">
+ 								<T id="metrics.status-codes" />
+ 							</h3>
++							<div className="card-subtitle text-secondary">
++								<T id="metrics.since-boot" />
++							</div>
+ 						</div>
+ 						<div className="card-body" style={{ height: 260 }}>
+ 							<ResponsiveContainer width="100%" height="100%">
+@@ -201,6 +207,9 @@ const Metrics = () => {
+ 					<h3 className="card-title">
+ 						<T id="metrics.hosts" />
+ 					</h3>
++					<div className="card-subtitle text-secondary">
++						<T id="metrics.since-boot" />
++					</div>
+ 				</div>
+ 				<div className="table-responsive">
+ 					<table className="table table-vcenter card-table">
