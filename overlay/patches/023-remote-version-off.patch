@@ -1,0 +1,41 @@
+diff --git a/backend/internal/remote-version.js b/backend/internal/remote-version.js
+index dd9c927..38ac628 100644
+--- a/backend/internal/remote-version.js
++++ b/backend/internal/remote-version.js
+@@ -15,26 +15,20 @@ const internalRemoteVersion = {
+ 	 * @return {Promise<{current: string, latest: string, update_available: boolean}>} Version info
+ 	 */
+ 	get: async () => {
+-		if (
+-			!internalRemoteVersion.last_result ||
+-			!internalRemoteVersion.last_fetch_time ||
+-			Date.now() - internalRemoteVersion.last_fetch_time > internalRemoteVersion.cache_timeout
+-		) {
+-			const raw = await internalRemoteVersion.fetchUrl(VERSION_URL);
+-			const data = JSON.parse(raw);
+-			internalRemoteVersion.last_result = data;
+-			internalRemoteVersion.last_fetch_time = Date.now();
+-		} else {
+-			debug(logger, "Using cached remote version result");
+-		}
+-
+-		const latestVersion = internalRemoteVersion.last_result.tag_name;
++		// Proxywarden (patch 023): the upstream version check is retired.
++		// We diverged from NPM deliberately — the patch stack IS the
++		// product — so "update_available" against their releases is
++		// meaningless forever: it would nag about an update we must never
++		// take (re-vendoring would wipe the stack). The update decisions
++		// live in the nginx.org watchdog and the drift-check (informative
++		// for NPM). The endpoint stays for compatibility and answers the
++		// truth: our vendored base version, nothing newer, no phone-home.
+ 		const version = pjson.version.split("-").shift().split(".");
+ 		const currentVersion = `v${version[0]}.${version[1]}.${version[2]}`;
+ 		return {
+ 			current: currentVersion,
+-			latest: latestVersion,
+-			update_available: internalRemoteVersion.compareVersions(currentVersion, latestVersion),
++			latest: currentVersion,
++			update_available: false,
+ 		};
+ 	},
+ 
