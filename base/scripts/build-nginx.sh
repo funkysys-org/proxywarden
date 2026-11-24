@@ -23,6 +23,9 @@ case "${NGINX_VERSION}" in
 	1.31.9)
 		NGINX_SHA256="a11c5eeee2e257f4478f0e649f84b0040787d277d2d3e5233952aa6b6dcb80ad"
 		;;
+	1.31.10)
+		NGINX_SHA256="a9b690957fca84abdae8a9b52d66b1bb459282d7f01fe4b94b498ed8e977bdb3"
+		;;
 	*)
 		echo "FATAL: no sha256 pinned for nginx ${NGINX_VERSION} — add it to the case block in build-nginx.sh" >&2
 		exit 1

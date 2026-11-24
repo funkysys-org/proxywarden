@@ -28,7 +28,7 @@ on:
 env:
   # base (Phase B: plain nginx.org — the sha256 case block in
   # base/scripts/build-nginx.sh IS the base provenance)
-  NGINX_VERSION: '1.31.9'
+  NGINX_VERSION: '1.31.10'
   NODE_MAJOR: '26'
   # app layer (vendored NPM source: vendor/npm/)
   NPM_VERSION: '2.17.0'
