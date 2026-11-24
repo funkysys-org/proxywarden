@@ -1,0 +1,94 @@
+diff --git a/frontend/src/api/backend/models.ts b/frontend/src/api/backend/models.ts
+index 40f397b..ad1b370 100644
+--- a/frontend/src/api/backend/models.ts
++++ b/frontend/src/api/backend/models.ts
+@@ -50,8 +50,8 @@ export interface AuditLog {
+ 	user?: User;
+ }
+ 
+-export type LogSourceType = "system" | "letsencrypt" | "host" | "waf";
+-export type LogHostType = "proxy" | "redirection" | "dead" | "stream";
++export type LogSourceType = "system" | "letsencrypt" | "host" | "waf" | "default";
++export type LogHostType = "proxy" | "redirection" | "dead" | "stream" | "static";
+ // Which of the two files nginx writes per host - named "channel", not "stream",
+ // to avoid confusion with the "stream" LogHostType (TCP/UDP stream hosts).
+ export type LogChannel = "access" | "error";
+diff --git a/frontend/src/locale/src/en.json b/frontend/src/locale/src/en.json
+index 7ff01be..9fefb66 100644
+--- a/frontend/src/locale/src/en.json
++++ b/frontend/src/locale/src/en.json
+@@ -548,7 +548,10 @@
+ 	"logs.source.system": {
+ 		"defaultMessage": "System"
+ 	},
+-	"logs.source.waf": {
++	"logs.source.default": {
++		"defaultMessage": "Default Site"
++	},
++"logs.source.waf": {
+ 		"defaultMessage": "WAF Audit"
+ 	},
+ 	"logs.truncated-warning": {
+diff --git a/frontend/src/locale/src/it.json b/frontend/src/locale/src/it.json
+index 5f3b420..bea0eb2 100644
+--- a/frontend/src/locale/src/it.json
++++ b/frontend/src/locale/src/it.json
+@@ -545,7 +545,10 @@
+ 	"logs.source.system": {
+ 		"defaultMessage": "Sistema"
+ 	},
+-	"logs.source.waf": {
++	"logs.source.default": {
++		"defaultMessage": "Sito predefinito"
++	},
++"logs.source.waf": {
+ 		"defaultMessage": "WAF Audit"
+ 	},
+ 	"logs.truncated-warning": {
+diff --git a/frontend/src/pages/Logs/LogViewer.tsx b/frontend/src/pages/Logs/LogViewer.tsx
+index d93dccd..b0236ff 100644
+--- a/frontend/src/pages/Logs/LogViewer.tsx
++++ b/frontend/src/pages/Logs/LogViewer.tsx
+@@ -15,6 +15,7 @@ const HOST_TYPES: { type: LogHostType; labelId: string }[] = [
+ 	{ type: "redirection", labelId: "redirection-hosts" },
+ 	{ type: "dead", labelId: "dead-hosts" },
+ 	{ type: "stream", labelId: "streams" },
++	{ type: "static", labelId: "static-hosts" },
+ ];
+ 
+ interface Selection {
+@@ -31,7 +32,7 @@ const encodeSelection = (selection: Selection): string => {
+ };
+ 
+ const decodeSelection = (value: string): Selection => {
+-	if (value === "system" || value === "letsencrypt" || value === "waf") {
++	if (value === "system" || value === "letsencrypt" || value === "waf" || value === "default") {
+ 		return { type: value };
+ 	}
+ 	const [, hostType, hostId] = value.split(":");
+@@ -72,7 +73,7 @@ export default function LogViewer() {
+ 		type: selection.type,
+ 		hostType: selection.hostType,
+ 		hostId: selection.hostId,
+-		channel: selection.type === "host" ? channel : undefined,
++		channel: selection.type === "host" || selection.type === "default" ? channel : undefined,
+ 		lines,
+ 		level: selection.type === "system" && level ? level : undefined,
+ 		search: search || undefined,
+@@ -128,6 +129,7 @@ export default function LogViewer() {
+ 							<option value="system">{intl.formatMessage({ id: "logs.source.system" })}</option>
+ 							<option value="letsencrypt">{intl.formatMessage({ id: "lets-encrypt" })}</option>
+ 							<option value="waf">{intl.formatMessage({ id: "logs.source.waf" })}</option>
++								<option value="default">{intl.formatMessage({ id: "logs.source.default" })}</option>
+ 							{hostGroups.map((group) => (
+ 								<optgroup key={group.type} label={intl.formatMessage({ id: group.labelId })}>
+ 									{group.options.map((option) => (
+@@ -139,7 +141,7 @@ export default function LogViewer() {
+ 							))}
+ 						</select>
+ 					</div>
+-					{selection.type === "host" && (
++					{(selection.type === "host" || selection.type === "default") && (
+ 						<div className="col-auto">
+ 							<div className="btn-group" role="group">
+ 								<button
