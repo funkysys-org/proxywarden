@@ -248,9 +248,19 @@ jobs:
           npm_latest=$(git ls-remote --tags --refs https://github.com/NginxProxyManager/nginx-proxy-manager 'refs/tags/v2*' \
             | sed 's|.*refs/tags/v||' | sort -V | tail -1)
           echo "nginx.org latest: ${ngx_latest} | our pin: ${NGINX_VERSION}"
-          echo "NPM source latest: ${npm_latest} | our pin: ${NPM_VERSION}"
-          if [ "$ngx_latest" != "${NGINX_VERSION}" ] || [ "$npm_latest" != "$NPM_VERSION" ]; then
-            echo "::error::UPSTREAM MOVED (nginx ${ngx_latest} / NPM ${npm_latest}). Pins are a human decision — bump in workflow env + build-nginx.sh sha case + parity oracle, rebuild, re-run."
+          echo "NPM source latest: ${npm_latest} | our pin: ${NPM_VERSION} (deliberately diverged: 22 backend + 21 frontend patches)"
+          # nginx.org: FATAL — it is OUR engine; a newer release means a
+          # security/bugfix bump we want the same day.
+          if [ "$ngx_latest" != "${NGINX_VERSION}" ]; then
+            echo "::error::nginx.org MOVED (${ngx_latest} > our ${NGINX_VERSION}). Pins are a human decision — bump in workflow env + build-nginx.sh sha case, rebuild, re-run."
             exit 1
           fi
-          echo "no drift — pins current"
+          # NPM upstream: INFORMATIVE ONLY — we diverged deliberately (the
+          # patch stack IS the product). A newer NPM release is not an alarm;
+          # it is a pointer: review THEIR release notes for cherry-pickable
+          # fixes (security especially). Re-vendoring = a major wave, decided
+          # by a human, never forced by a scheduled job.
+          if [ "$npm_latest" != "$NPM_VERSION" ]; then
+            echo "::warning::NPM upstream moved (${npm_latest} > our vendored ${NPM_VERSION}) — informational only: review their release notes for cherry-pickable security fixes. Divergence is the product; re-vendoring is a major human decision."
+          fi
+          echo "drift check done — nginx fatal, NPM informative"
