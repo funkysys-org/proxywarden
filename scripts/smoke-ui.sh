@@ -57,12 +57,25 @@ html=$(curl -s "$UI/" 2>/dev/null) || die "could not fetch UI index"
 echo "$html" | grep -qF "$MARKER" || die "served index.html lacks the build marker — is /app/frontend ours?"
 pass "frontend build marker present"
 
-# 3) API alive
-api=$(code "$UI/api/")
+# 3) API alive (the backend boots AFTER nginx — first-boot migrations can
+#    take tens of seconds. The UI coming up fast is NOT the backend being
+#    ready: with the lean nginx the frontend snaps up in ~2s and a single
+#    API probe raced the backend (502) — the one thing the openresty-era
+#    slower boot used to hide. Retry like the UI wait.)
+say "waiting for the API on $UI/api/ ..."
+api=""
+for i in $(seq 1 45); do
+  api=$(code "$UI/api/")
+  case "$api" in
+    200|301|302|401|404) break ;;
+    *) sleep 2 ;;
+  esac
+done
 case "$api" in
   200|301|302|401|404) pass "API responds ($api)" ;;
-  *) die "API not responding (code: ${api:-none})" ;;
+  *) die "API not responding after 90s (code: ${api:-none})" ;;
 esac
+
 
 # 4) overlay layer intact: module loads at a real boot
 out=$(execsvc 'nginx -t 2>&1') || die "could not run nginx -t inside container"
