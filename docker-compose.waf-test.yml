@@ -1,0 +1,23 @@
+services:
+  npm:
+    image: ${WAF_IMAGE:-waf:local}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8181:81"    # NPM admin UI
+      - "8080:8080"  # WAF smoke-test instance (test-runtime/nginx-waf.conf)
+    volumes:
+      - npm_data:/data
+      - npm_le:/etc/letsencrypt
+      - ./test-runtime/nginx-waf.conf:/etc/nginx-modsec-test/nginx-waf.conf:ro
+
+  backend:
+    image: python:3.13-slim
+    restart: unless-stopped
+    working_dir: /srv
+    command: python -m http.server 8080
+
+volumes:
+  npm_data:
+  npm_le:

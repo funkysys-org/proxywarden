@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+BLUE='\E[1;34m'
+CYAN='\E[1;36m'
+YELLOW='\E[1;33m'
+GREEN='\E[1;32m'
+RESET='\E[0m'
+
+echo -e "${BLUE}❯ ${CYAN}Installing nginx ${YELLOW}${NGINX_VERSION}...${RESET}"
+
+cd /tmp/nginx-src
+make install
+rm -rf /tmp/nginx-src
+
+echo -e "${BLUE}❯ ${GREEN}nginx install completed${RESET}"

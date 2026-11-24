@@ -1,0 +1,16 @@
+diff --git a/backend/schema/swagger.json b/backend/schema/swagger.json
+index fd0dc33..d127d6b 100644
+--- a/backend/schema/swagger.json
++++ b/backend/schema/swagger.json
+@@ -1,9 +1,9 @@
+ {
+ 	"openapi": "3.1.0",
+ 	"info": {
+-		"title": "Nginx Proxy Manager API",
++		"title": "Proxywarden API",
+ 		"version": "2.x.x",
+-		"description": "This is the official API documentation for Nginx Proxy Manager.\n\nMost endpoints require authentication via Bearer Token (JWT). You can generate a token by logging in via the `POST /tokens` endpoint.\n\nFor more information, visit the [Nginx Proxy Manager Documentation](https://nginxproxymanager.com)."
++		"description": "API for Proxywarden.\n\nMost endpoints require authentication via Bearer Token (JWT). You can generate a token by logging in via the `POST /tokens` endpoint.\n\nThis schema is served live by `GET /schema`."
+ 	},
+ 	"servers": [
+ 		{

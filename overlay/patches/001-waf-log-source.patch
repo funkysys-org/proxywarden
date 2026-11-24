@@ -1,0 +1,110 @@
+From 094ffa454e4b8c875c6f9acd83f25e79de4e176e Mon Sep 17 00:00:00 2001
+From: Hermes Agent <hermes-agent@users.noreply.github.com>
+Date: Tue, 17 Nov 2026 23:01:07 +0000
+Subject: [PATCH] =?UTF-8?q?waf-log-source:=20'waf'=20as=20a=204th=20log=20?=
+ =?UTF-8?q?source=20=E2=80=94=20modsec=20audit=20JSON=20parsed=20to=20read?=
+ =?UTF-8?q?able=20lines,=20rides=20existing=20logs:list=20access?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ backend/internal/log-viewer.js | 40 ++++++++++++++++++++++++++++++++++
+ backend/routes/logs.js         |  2 +-
+ 2 files changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/backend/internal/log-viewer.js b/backend/internal/log-viewer.js
+index 2b1b8e9..f389697 100644
+--- a/backend/internal/log-viewer.js
++++ b/backend/internal/log-viewer.js
+@@ -7,6 +7,7 @@ import internalStream from "./stream.js";
+ 
+ const SYSTEM_LOG_FILE = "/data/logs/backend.log";
+ const LETSENCRYPT_LOG_FILE = "/data/logs/letsencrypt.log";
++const WAF_AUDIT_LOG_FILE = "/data/logs/modsec_audit.log";
+ 
+ // Matches the access_log/error_log paths written by the nginx templates
+ // (see backend/templates/{proxy_host,redirection_host,dead_host,stream}.conf).
+@@ -115,6 +116,8 @@ const resolveFilePath = (data) => {
+ 			return SYSTEM_LOG_FILE;
+ 		case "letsencrypt":
+ 			return LETSENCRYPT_LOG_FILE;
++		case "waf":
++			return WAF_AUDIT_LOG_FILE;
+ 		case "host": {
+ 			const prefix = HOST_FILE_PREFIX[data.host_type];
+ 			if (!prefix || !data.host_id || !["access", "error"].includes(data.channel)) {
+@@ -137,6 +140,36 @@ const toHostOptions = (rows) =>
+ 		label: Array.isArray(row.domain_names) ? row.domain_names.join(", ") : `Host #${row.id}`,
+ 	}));
+ 
++/**
++ * Formats one ModSecurity audit-log line (JSON) into a readable text line.
++ * Non-JSON lines (rotation boundaries, foreign formats) pass through raw.
++ *
++ * @param   {String} line
++ * @returns {String}
++ */
++const formatWafAuditLine = (line) => {
++	try {
++		const entry = JSON.parse(line);
++		const t = entry.transaction || {};
++		const req = t.request || {};
++		const res = t.response || {};
++		const rules = (t.messages || []).map((m) => m?.details?.ruleId).filter(Boolean);
++		const flags = [];
++		if (t.is_interrupted) flags.push("INTERRUPTED");
++		if (rules.length) flags.push(`rules [${rules.join(",")}]`);
++		return [
++			t.time_stamp || "?",
++			t.client_ip || "?",
++			`${req.method || "?"} ${req.uri || "?"}`,
++			`host=${req.hostname || "?"}`,
++			`-> ${res.http_code ?? "?"}`,
++			...flags,
++		].join(" ");
++	} catch {
++		return line;
++	}
++};
++
+ const internalLogViewer = {
+ 	/**
+ 	 * Lists the log sources available for the log viewer: the system (backend)
+@@ -159,6 +192,7 @@ const internalLogViewer = {
+ 		return {
+ 			system: { label: "System" },
+ 			letsencrypt: { label: "Let's Encrypt" },
++			waf: { label: "WAF Audit" },
+ 			hosts: {
+ 				proxy: toHostOptions(proxyHosts),
+ 				redirection: toHostOptions(redirectionHosts),
+@@ -212,6 +246,12 @@ const internalLogViewer = {
+ 			outputLines = outputLines.filter((line) => line.includes(needle));
+ 		}
+ 
++		// WAF audit lines are JSON — format them so the viewer (and the search
++		// filter below) operate on readable text.
++		if (data.type === "waf") {
++			outputLines = outputLines.map(formatWafAuditLine);
++		}
++
+ 		if (data.search) {
+ 			const needle = data.search.toLowerCase();
+ 			outputLines = outputLines.filter((line) => line.toLowerCase().includes(needle));
+diff --git a/backend/routes/logs.js b/backend/routes/logs.js
+index 09841b3..f174d72 100644
+--- a/backend/routes/logs.js
++++ b/backend/routes/logs.js
+@@ -59,7 +59,7 @@ router
+ 					properties: {
+ 						type: {
+ 							type: "string",
+-							enum: ["system", "letsencrypt", "host"],
++							enum: ["system", "letsencrypt", "host", "waf"],
+ 						},
+ 						host_type: {
+ 							anyOf: [
+-- 
+2.47.3
+

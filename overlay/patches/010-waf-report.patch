@@ -1,0 +1,314 @@
+diff --git a/backend/internal/waf.js b/backend/internal/waf.js
+index 0ee9a37..9b49d7b 100644
+--- a/backend/internal/waf.js
++++ b/backend/internal/waf.js
+@@ -1,5 +1,9 @@
+ import fs from "node:fs/promises";
+ import errs from "../lib/error.js";
++import proxyHostModel, { scopeToOwnerOrAllowed } from "../models/proxy_host.js";
++import redirectionHostModel from "../models/redirection_host.js";
++import deadHostModel from "../models/dead_host.js";
++import staticHostModel from "../models/static_host.js";
+ import internalNginx from "./nginx.js";
+ 
+ /**
+@@ -16,6 +20,7 @@ import internalNginx from "./nginx.js";
+ const MODSEC_DIR = "/data/modsec";
+ const RULES_AFTER = `${MODSEC_DIR}/rules-after.conf`;
+ const RULES_BEFORE = `${MODSEC_DIR}/rules-before.conf`;
++const AUDIT_LOG = "/data/logs/modsec_audit.log";
+ const PARANOIA_BEGIN = "# BEGIN PROXYWARDEN PARANOIA";
+ const PARANOIA_END = "# END PROXYWARDEN PARANOIA";
+ const AFTER_HEADER = "# custom rules/exclusions evaluated AFTER CRS (managed by the WAF tuning UI — hand edits below the marker are preserved)";
+@@ -133,6 +138,142 @@ const internalWaf = {
+ 
+ 		return internalWaf.getTuning(access);
+ 	},
++
++	/**
++	 * Aggregates the recent WAF audit log (JSON format, one event per line)
++	 * into counters: flagged/blocked totals, per-host, per-rule, per-source.
++	 * Tolerant by design: every field is optional at parse time, so a format
++	 * drift degrades counts instead of crashing the endpoint.
++	 *
++	 * Scoping mirrors the metrics report: non-admin users only see events
++	 * for hosts they own (or are allowed) across the four host families.
++	 *
++	 * @param   {Object}  access
++	 * @returns {Promise<Object>}
++	 */
++	getWafReport: async (access) => {
++		const access_data = await access.can("reports:hosts", 1);
++		const userId = access.token.getUserId(1);
++		const isAdmin = access.isAdmin?.() || access_data.permission_visibility === "all";
++
++		let allowedDomains = null; // null = unrestricted
++		if (!isAdmin) {
++			const permissionsMeta = access.getPermissions?.()?.meta;
++			const proxyQuery = proxyHostModel.query().where("is_deleted", 0);
++			scopeToOwnerOrAllowed(proxyQuery, userId, permissionsMeta);
++			const redirectionQuery = redirectionHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++			const deadQuery = deadHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++			const staticQuery = staticHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++			const [proxies, redirections, deads, statics] = await Promise.all([
++				proxyQuery.select("domain_names"),
++				redirectionQuery.select("domain_names"),
++				deadQuery.select("domain_names"),
++				staticQuery.select("domain_names"),
++			]);
++			allowedDomains = new Set(
++				[...proxies, ...redirections, ...deads, ...statics]
++					.flatMap((r) => r.domain_names || [])
++					.map((d) => d.toLowerCase()),
++			);
++		}
++
++		// Bounded tail read: the last 512 KB of audit events is plenty for a
++		// live picture and keeps the endpoint cheap regardless of log size.
++		let raw = "";
++		let partialFirst = false;
++		try {
++			const stat = await fs.stat(AUDIT_LOG);
++			const start = Math.max(0, stat.size - 512 * 1024);
++			partialFirst = start > 0;
++			const handle = await fs.open(AUDIT_LOG, "r");
++			try {
++				const buf = Buffer.alloc(stat.size - start);
++				await handle.read(buf, 0, buf.length, start);
++				raw = buf.toString("utf8");
++			} finally {
++				await handle.close();
++			}
++		} catch {
++			// no audit log yet — empty report
++			return {
++				flagged: 0,
++				blocked: 0,
++				perHost: {},
++				perRule: {},
++				perSource: {},
++				lastEvent: null,
++			};
++		}
++
++		let blockedTotal = 0;
++		const perHost = {};
++		const perRule = {};
++		const perSource = {};
++		let lastEvent = null;
++
++		// When the tail window started mid-line, the first line is a partial
++		// event — skip it.
++		const lines = raw.split("\n");
++		if (partialFirst) {
++			lines.shift();
++		}
++		let total = 0;
++		for (const line of lines) {
++			const t = line.trim();
++			if (!t.startsWith("{")) continue;
++			let ev;
++			try {
++				ev = JSON.parse(t);
++			} catch {
++				continue;
++			}
++
++			const host = String(ev.request?.headers?.Host || ev.request?.headers?.host || "").toLowerCase();
++			if (allowedDomains && !allowedDomains.has(host)) continue;
++
++			const status = Number(ev.response?.status) || 0;
++			const messages = [...(ev.audit_data?.messages || []), ...(ev.audit_data?.error_messages || [])];
++			const ruleIds = [];
++			for (const m of messages) {
++				for (const match of String(m).matchAll(/\[id "(\d+)"\]/g)) {
++					const id = match[1];
++					if (!ruleIds.includes(id)) ruleIds.push(id);
++				}
++			}
++
++			total++;
++			const isBlocked = status >= 400 && ruleIds.length > 0;
++			if (isBlocked) blockedTotal++;
++			if (host) {
++				perHost[host] = perHost[host] || { flagged: 0, blocked: 0 };
++				perHost[host].flagged++;
++				if (isBlocked) perHost[host].blocked++;
++			}
++			for (const id of ruleIds) {
++				perRule[id] = (perRule[id] || 0) + 1;
++			}
++			const src = ev.transaction?.remote_address;
++			if (src) {
++				perSource[src] = (perSource[src] || 0) + 1;
++			}
++			const time = ev.transaction?.time;
++			if (time) lastEvent = time;
++		}
++
++		const topRules = Object.entries(perRule)
++			.sort((a, b) => b[1] - a[1])
++			.slice(0, 10)
++			.map(([id, count]) => ({ id: Number(id), count }));
++
++		return {
++			flagged: total,
++			blocked: blockedTotal,
++			perHost,
++			perRule: topRules,
++			perSource,
++			lastEvent,
++		};
++	},
+ };
+ 
+ export default internalWaf;
+diff --git a/backend/routes/waf.js b/backend/routes/waf.js
+index a80f45c..ed83b7b 100644
+--- a/backend/routes/waf.js
++++ b/backend/routes/waf.js
+@@ -11,6 +11,31 @@ const router = express.Router({
+ 	mergeParams: true,
+ });
+ 
++/**
++ * /api/waf/report
++ */
++router
++	.route("/report")
++	.options((_, res) => {
++		res.sendStatus(204);
++	})
++	.all(jwtdecode())
++
++	/**
++	 * GET /api/waf/report
++	 *
++	 * Recent WAF audit activity, aggregated and scoped like the metrics
++	 */
++	.get(async (req, res, next) => {
++		try {
++			const data = await internalWaf.getWafReport(res.locals.access);
++			res.status(200).send(data);
++		} catch (err) {
++			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
++			next(err);
++		}
++	});
++
+ /**
+  * /api/waf/tuning
+  */
+diff --git a/backend/schema/paths/waf/report/get.json b/backend/schema/paths/waf/report/get.json
+new file mode 100644
+index 0000000..4aca574
+--- /dev/null
++++ b/backend/schema/paths/waf/report/get.json
+@@ -0,0 +1,91 @@
++{
++	"operationId": "getWafReport",
++	"summary": "Recent WAF activity",
++	"description": "Aggregated recent audit-log activity: flagged/blocked totals, per-host, top rules, per-source. Scoped by host visibility like the metrics report.",
++	"tags": [
++		"reports"
++	],
++	"security": [
++		{
++			"bearerAuth": [
++				"user"
++			]
++		}
++	],
++	"responses": {
++		"200": {
++			"description": "WAF activity report",
++			"content": {
++				"application/json": {
++					"schema": {
++						"type": "object",
++						"additionalProperties": false,
++						"required": [
++							"flagged",
++							"blocked",
++							"perHost",
++							"perRule",
++							"perSource",
++							"lastEvent"
++						],
++						"properties": {
++							"flagged": {
++								"type": "integer",
++								"example": 42
++							},
++							"blocked": {
++								"type": "integer",
++								"example": 7
++							},
++							"perHost": {
++								"type": "object",
++								"description": "host -> {flagged, blocked} (from the last 512 KB of audit events)",
++								"additionalProperties": {
++									"type": "object",
++									"properties": {
++										"flagged": {
++											"type": "integer"
++										},
++										"blocked": {
++											"type": "integer"
++										}
++									}
++								}
++							},
++							"perRule": {
++								"type": "array",
++								"description": "top 10 rules by hits",
++								"items": {
++									"type": "object",
++									"properties": {
++										"id": {
++											"type": "integer",
++											"example": 942100
++										},
++										"count": {
++											"type": "integer"
++										}
++									}
++								}
++							},
++							"perSource": {
++								"type": "object",
++								"description": "client IP -> event count",
++								"additionalProperties": {
++									"type": "integer"
++								}
++							},
++							"lastEvent": {
++								"type": [
++									"string",
++									"null"
++								],
++								"example": "18/Nov/2026:18:56:53.123456"
++							}
++						}
++					}
++				}
++			}
++		}
++	}
++}
+diff --git a/backend/schema/swagger.json b/backend/schema/swagger.json
+index ab6c4a5..349bf08 100644
+--- a/backend/schema/swagger.json
++++ b/backend/schema/swagger.json
+@@ -413,6 +413,11 @@
+ 			"put": {
+ 				"$ref": "./paths/waf/tuning/put.json"
+ 			}
++		},
++		"/waf/report": {
++			"get": {
++				"$ref": "./paths/waf/report/get.json"
++			}
+ 		}
+ 	}
+ }

@@ -1,0 +1,213 @@
+diff --git a/backend/internal/static-host.js b/backend/internal/static-host.js
+index 06b68aa..8ecac89 100644
+--- a/backend/internal/static-host.js
++++ b/backend/internal/static-host.js
+@@ -25,6 +25,12 @@ const internalStaticHost = {
+ 	 * @returns {Promise}
+ 	 */
+ 	writeContentFile: async (row) => {
++		// A host with document_root serves a real filesystem tree the
++		// operator mounted — the derived file is NOT written (and never
++		// clobbered); nginx roots at document_root directly.
++		if (row.document_root) {
++			return;
++		}
+ 		const dir = `/data/nginx/static_host/${row.id}`;
+ 		await mkdir(dir, { recursive: true });
+ 		await writeFile(`${dir}/index.html`, typeof row.content === "string" ? row.content : "", { encoding: "utf8" });
+diff --git a/backend/lib/nginx-values.js b/backend/lib/nginx-values.js
+index 0f53826..159e5c1 100644
+--- a/backend/lib/nginx-values.js
++++ b/backend/lib/nginx-values.js
+@@ -20,6 +20,10 @@ import errs from "./error.js";
+ const TOKEN_CHAR = String.raw`[^\s\p{Cc};{}"'#\\]`;
+ // Host part of a forward host: also no "$" (no variables in the upstream address) and no "/"
+ const HOST_CHARS = String.raw`[^\s\p{Cc};{}"'#\\$/]+`;
++// One filesystem path segment for documentRoot: at least one character,
++// never "." or ".." (traversal — the guard checks the SEGMENT boundary:
++// slash or end of string, not just end of string), and no token-breakers
++const PATH_SEGMENT = String.raw`(?!\.\.?(?:/|$))[A-Za-z0-9._-]+`;
+ // The existing domain name rule ("a.b.c", no "*", no empty labels), written so it can't
+ // backtrack exponentially
+ const DOMAIN = String.raw`[^.*]+(?:\.[^.*]+)*\.?[^.]`;
+@@ -45,6 +49,11 @@ export const patterns = {
+ 	clientIpv6: String.raw`^(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0-9A-Fa-f]{1,4}|:)|(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa-f]{1,4}|(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|(?:[0-9A-Fa-f]{1,4}:){5}(?:(?::[0-9A-Fa-f]{1,4}){1,2}|:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|(?:[0-9A-Fa-f]{1,4}:){4}(?:(?::[0-9A-Fa-f]{1,4}){1,3}|(?::[0-9A-Fa-f]{1,4})?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|(?:[0-9A-Fa-f]{1,4}:){3}(?:(?::[0-9A-Fa-f]{1,4}){1,4}|(?::[0-9A-Fa-f]{1,4}){0,2}:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|(?:[0-9A-Fa-f]{1,4}:){2}(?:(?::[0-9A-Fa-f]{1,4}){1,5}|(?::[0-9A-Fa-f]{1,4}){0,3}:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|(?:[0-9A-Fa-f]{1,4}:)(?:(?::[0-9A-Fa-f]{1,4}){1,6}|(?::[0-9A-Fa-f]{1,4}){0,4}:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:)|:(?:(?::[0-9A-Fa-f]{1,4}){1,7}|(?::[0-9A-Fa-f]{1,4}){0,5}:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}|:))(?:/(?:[0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?$`,
+ 	// htpasswd user name: a ":" or a line break would corrupt the file
+ 	accessUsername: String.raw`^[^:\p{Cc}]+$`,
++	// static_host document_root: an absolute filesystem path written into
++	// `root <path>;` unquoted. Path-safe characters only (no token-breakers,
++	// so the value can't add directives) and no "." / ".." segments, so it
++	// can only name a location inside a tree the operator mounted
++	documentRoot: String.raw`^/(?:${PATH_SEGMENT}/)*${PATH_SEGMENT}/?$`,
+ };
+ 
+ const re = Object.fromEntries(Object.entries(patterns).map(([k, v]) => [k, new RegExp(v, "u")]));
+@@ -128,6 +137,14 @@ export const assertHostRenderable = (hostType, host) => {
+ 		check(isTokenSafe(host.forward_domain_name), "forward domain", host.forward_domain_name);
+ 	}
+ 
++	if (hostType === "static_host") {
++		// document_root lands in `root <path>;` unquoted; when unset the
++		// host serves the derived content file instead
++		if (host.document_root) {
++			check(isValid("documentRoot", host.document_root), "document root", host.document_root);
++		}
++	}
++
+ 	if (hostType === "stream") {
+ 		check(isTokenSafe(host.forwarding_host), "forwarding host", host.forwarding_host);
+ 	}
+diff --git a/backend/migrations/20261118191000_static_host_document_root.js b/backend/migrations/20261118191000_static_host_document_root.js
+new file mode 100644
+index 0000000..357ccf6
+--- /dev/null
++++ b/backend/migrations/20261118191000_static_host_document_root.js
+@@ -0,0 +1,41 @@
++import { migrate as logger } from "../logger.js";
++
++const migrateName = "static_host_document_root";
++
++/**
++ * Migrate
++ *
++ * Adds the optional document_root to static hosts: when set, the host
++ * serves the given absolute filesystem path (a mounted tree) instead of
++ * the inline content. The column is nullable and optional — unset means
++ * the existing inline-content behavior.
++ *
++ * @see http://knexjs.org/#Schema
++ *
++ * @param   {Object}  knex
++ * @returns {Promise}
++ */
++const up = (knex) => {
++	logger.info(`[${migrateName}] Migrating Up...`);
++
++	return knex.schema
++		.table("static_host", (static_host) => {
++			static_host.text("document_root").nullable().defaultTo(null);
++		})
++		.then(() => {
++			logger.info(`[${migrateName}] static_host Table altered`);
++		});
++};
++
++/**
++ * Undo Migrate
++ *
++ * @param   {Object}  knex
++ * @returns {Promise}
++ */
++const down = (_knex) => {
++	logger.warn(`[${migrateName}] You can't migrate down this one.`);
++	return Promise.resolve(true);
++};
++
++export { up, down };
+diff --git a/backend/schema/components/static-host-object.json b/backend/schema/components/static-host-object.json
+index b6c6940..06e790a 100644
+--- a/backend/schema/components/static-host-object.json
++++ b/backend/schema/components/static-host-object.json
+@@ -64,6 +64,12 @@
+ 			"type": "string",
+ 			"example": "<h1>Hello from Proxywarden</h1>"
+ 		},
++		"document_root": {
++			"type": "string",
++			"pattern": "^/(?:(?!\\.\\.?(?:/|$))[A-Za-z0-9._-]+/)*(?!\\.\\.?(?:/|$))[A-Za-z0-9._-]+/?$",
++			"description": "Optional absolute filesystem path to serve (a mounted tree). When set, this takes precedence over the inline content.",
++			"example": "/data/static-sites/example.com"
++		},
+ 		"certificate": {
+ 			"oneOf": [
+ 				{
+diff --git a/backend/schema/paths/nginx/static-hosts/hostID/put.json b/backend/schema/paths/nginx/static-hosts/hostID/put.json
+index 881e305..f97d3a1 100644
+--- a/backend/schema/paths/nginx/static-hosts/hostID/put.json
++++ b/backend/schema/paths/nginx/static-hosts/hostID/put.json
+@@ -60,6 +60,9 @@
+ 						},
+ 						"content": {
+ 							"$ref": "../../../../components/static-host-object.json#/properties/content"
++						},
++						"document_root": {
++							"$ref": "../../../../components/static-host-object.json#/properties/document_root"
+ 						}
+ 					}
+ 				}
+diff --git a/backend/schema/paths/nginx/static-hosts/post.json b/backend/schema/paths/nginx/static-hosts/post.json
+index df3859c..d843f9a 100644
+--- a/backend/schema/paths/nginx/static-hosts/post.json
++++ b/backend/schema/paths/nginx/static-hosts/post.json
+@@ -49,6 +49,9 @@
+ 						},
+ 						"content": {
+ 							"$ref": "../../../components/static-host-object.json#/properties/content"
++						},
++						"document_root": {
++							"$ref": "../../../components/static-host-object.json#/properties/document_root"
+ 						}
+ 					}
+ 				},
+diff --git a/backend/templates/static_host.conf b/backend/templates/static_host.conf
+index 130ccdd..3b962ff 100644
+--- a/backend/templates/static_host.conf
++++ b/backend/templates/static_host.conf
+@@ -18,8 +18,14 @@ server {
+ {% if use_default_location %}
+   location / {
+ {% include "_hsts.conf" %}
++{% if document_root %}
++    root {{ document_root }};
++    index index.html;
++    try_files $uri $uri/ =404;
++{% else %}
+     root /data/nginx/static_host/{{ id }};
+     try_files /index.html =404;
++{% endif %}
+   }
+ {% endif %}
+ 
+diff --git a/backend/test/nginx-values.test.js b/backend/test/nginx-values.test.js
+index a70a986..c28adcb 100644
+--- a/backend/test/nginx-values.test.js
++++ b/backend/test/nginx-values.test.js
+@@ -210,6 +210,11 @@ const cases = {
+ 		injections: [],
+ 		rejected: ["a:b", "a\nroot:$apr1$x$y", "\u0000"],
+ 	},
++	documentRoot: {
++		valid: ["/data/static-sites/example.com", "/srv/www/a/b", "/data/x/", "/a", "/data/.hidden-dir/x", "/data/..x/file"],
++		injections: ["/data/x; return 200;", "/data/x\nreturn 200;", '/data/x"} server { listen 8080'],
++		rejected: ["", "relative/path", "/data/../etc", "/data/./x", "/data/a b", "//double", "/", "/.."],
++	},
+ };
+ 
+ const checkers = {
+@@ -221,6 +226,7 @@ const checkers = {
+ 	domainName: (v) => isValid("domainName", v),
+ 	clientAddress: isValidClientAddress,
+ 	accessUsername: (v) => isValid("accessUsername", v),
++	documentRoot: (v) => isValid("documentRoot", v),
+ };
+ 
+ describe("nginx value rules", () => {
+@@ -329,6 +335,10 @@ describe("API request validation", async () => {
+ 			["/nginx/access-lists", "post", (v) => ({ name: "x", items: [{ username: v, password: "pw" }] })],
+ 			["/nginx/access-lists/{listID}", "put", (v) => ({ items: [{ username: v, password: "pw" }] })],
+ 		],
++		documentRoot: [
++			["/nginx/static-hosts", "post", (v) => ({ domain_names: ["example.com"], document_root: v })],
++			["/nginx/static-hosts/{hostID}", "put", (v) => ({ document_root: v })],
++		],
+ 	};
+ 
+ 	const validate = (path, method, payload) => {
+@@ -373,6 +383,7 @@ describe("API request validation", async () => {
+ 		assert.equal(body("/nginx/streams", "post").properties.forwarding_host.anyOf[0].pattern, patterns.streamDomain);
+ 		assert.equal(al.clients.items.properties.address.oneOf[1].pattern, patterns.clientIpv6);
+ 		assert.equal(al.items.items.properties.username.pattern, patterns.accessUsername);
++		assert.equal(body("/nginx/static-hosts", "post").properties.document_root.pattern, patterns.documentRoot);
+ 	});
+ });
+ 

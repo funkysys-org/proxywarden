@@ -2,27 +2,51 @@ name: build
 
 on:
   push:
-    branches: [main, phase-b/nginx-base]
+    branches: [main, phase-c/single-repo]
     paths:
-      - build/**
-      - vendor/**
-      - patches/**
-      - sidecar/**
-      - test-runtime/**
-      - scripts/**
-      - docker-compose.test.yml
-      - .github/workflows/build.yml
+      - 'base/**'
+      - 'app/**'
+      - 'overlay/**'
+      - 'modsec/**'
+      - 'parity/**'
+      - 'vendor/**'
+      - 'patches/**'
+      - 'scripts/**'
+      - 'rootfs/**'
+      - 'rootfs-s6/**'
+      - 'build/**'
+      - 'sidecar/**'
+      - 'test-runtime/**'
+      - 'base-debrand.patch'
+      - 'docker-compose.test.yml'
+      - 'docker-compose.waf-test.yml'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
   schedule:
-    - cron: '23 4 * * 1'   # weekly drift-check
+    - cron: '23 4 * * 1'   # weekly drift check
 
 env:
+  # base (Phase B: plain nginx.org — the sha256 case block in
+  # base/scripts/build-nginx.sh IS the base provenance)
+  NGINX_VERSION: '1.31.9'
+  NODE_MAJOR: '26'
+  # app layer (vendored NPM source: vendor/npm/)
+  NPM_VERSION: '2.17.0'
+  NPM_COMMIT: '5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186'
+  # frontend (vendor/npm-frontend/)
   NPM_FRONTEND_REF: v2.17.0
-  NPM_COMMIT: '5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186'   # vendored sha — must equal vendor/npm-frontend/PROVENANCE.md
-  OVERLAY_TAG: 2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
-  # The published WAF overlay image — now the funkysys-org/nginx-full stack
-  # (Phase A2b: base + app + WAF merged into one pipeline, one image family).
-  OVERLAY_IMAGE: ghcr.io/funkysys-org/nginx-full:2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
+  # WAF layer (Phase A2b, merged with the product in Phase C)
+  MODSEC_VERSION: '3.0.17'
+  MODSEC_NGINX_VERSION: '1.0.4'
+  CRS_VERSION: 'v4.30.0'
+  VTS_VERSION: 'v0.2.7'
+  CACHE_PURGE_VERSION: '3.0.4'
+  # brotli: libbrotli at the CVE-2026-111497 fix tag; the module repo has no
+  # usable tags — pinned by commit SHA (pins-sync checks both against the ARGs)
+  BROTLI_VERSION: 'v1.2.1'
+  BROTLI_MODULE_SHA: '53e0fb55f250f48fe80c0ddbf6c0f7103cdbaae1'
+  WAF_BUILD_JOBS: '4'
+  NODE_FLOOR: '26.12.1'  # Broccoli2Shell / CVE-2026-111497 fix line
   IMAGE: ghcr.io/funkysys-org/proxywarden
 
 permissions:
@@ -34,36 +58,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Pins match and invariants hold
+      - name: Assert every pin agrees with every file it governs
         run: |
           set -eu
+          # Phase C: ONE repo, ONE pinsync — base + app + frontend + WAF.
+          df=$(sed -n 's/^ARG NPM_VERSION=//p' app/Dockerfile)
+          [ "$NPM_VERSION" = "$df" ] || { echo "::error::PIN MISMATCH NPM_VERSION: workflow='${NPM_VERSION}' app/Dockerfile='${df}'"; exit 1; }
           df_ref="$(sed -n 's/^ARG NPM_FRONTEND_REF=//p' build/Dockerfile)"
-          if [ "$NPM_FRONTEND_REF" != "$df_ref" ]; then
-            echo "::error::NPM_FRONTEND_REF drift: workflow '$NPM_FRONTEND_REF' vs build/Dockerfile '$df_ref'"
-            exit 1
-          fi
-          case "$OVERLAY_IMAGE" in
-            *REPLACE-ME*)
-              echo "::error::OVERLAY_IMAGE is still the placeholder — set it in this workflow env"
-              exit 1;;
-          esac
+          [ "$NPM_FRONTEND_REF" = "$df_ref" ] || { echo "::error::NPM_FRONTEND_REF drift: workflow '${NPM_FRONTEND_REF}' vs build/Dockerfile '${df_ref}'"; exit 1; }
+          [ "${NPM_FRONTEND_REF#v}" = "$NPM_VERSION" ] \
+            || { echo "::error::frontend v${NPM_FRONTEND_REF#v} vs backend ${NPM_VERSION} — never ship a frontend against a different backend version"; exit 1; }
+          prov_sha=$(sed -n 's/^| Commit | \(.*\) |$/\1/p' vendor/npm/PROVENANCE.md | tr -d ' ')
+          [ "$NPM_COMMIT" = "$prov_sha" ] || { echo "::error::PROVENANCE MISMATCH (vendor/npm): workflow '${NPM_COMMIT}' vendored '${prov_sha}' — re-vendor or fix the pin"; exit 1; }
           prov_sha=$(sed -n 's/^| Commit | \(.*\) |$/\1/p' vendor/npm-frontend/PROVENANCE.md | tr -d ' ')
-          if [ "$NPM_COMMIT" != "$prov_sha" ]; then
-            echo "::error::PROVENANCE MISMATCH: workflow NPM_COMMIT '$NPM_COMMIT' vs vendored '$prov_sha' — re-vendor or fix the pin"
-            exit 1
-          fi
-          fe_ver="${NPM_FRONTEND_REF#v}"
-          ov_ver="${OVERLAY_TAG%%-*}"
-          if [ "$fe_ver" != "$ov_ver" ]; then
-            echo "::error::frontend v$fe_ver vs overlay built for NPM $ov_ver — never ship a frontend against a different backend version"
-            exit 1
-          fi
-          echo "pins-sync OK: frontend $NPM_FRONTEND_REF matches overlay $OVERLAY_TAG"
+          [ "$NPM_COMMIT" = "$prov_sha" ] || { echo "::error::PROVENANCE MISMATCH (vendor/npm-frontend): workflow '${NPM_COMMIT}' vendored '${prov_sha}' — re-vendor or fix the pin"; exit 1; }
+          # NGINX_VERSION is WORKFLOW-AUTHORITATIVE: the bake receives it
+          # via --var; the overlay's args stage asserts the built binary's
+          # banner against it, and the parity gate re-checks the line.
+          for pin in NODE_MAJOR; do
+            wf=$(printenv "$pin")
+            hcl=$(awk -v p="$pin" '
+              $0 ~ "^variable \"" p "\" {" { inblock=1; next }
+              inblock && /default/ { gsub(/^.*default = "/, ""); gsub(/".*$/, ""); print; exit }
+            ' base/docker-bake.hcl)
+            [ "$wf" = "$hcl" ] || { echo "::error::PIN MISMATCH ${pin}: workflow='${wf}' base/docker-bake.hcl='${hcl}'"; exit 1; }
+          done
+          for pin in MODSEC_VERSION MODSEC_NGINX_VERSION CRS_VERSION VTS_VERSION CACHE_PURGE_VERSION BROTLI_VERSION BROTLI_MODULE_SHA; do
+            wf=$(printenv "$pin")
+            df=$(sed -n "s/^ARG ${pin}=//p" overlay/Dockerfile)
+            [ "$wf" = "$df" ] || { echo "::error::PIN MISMATCH ${pin}: workflow='${wf}' overlay/Dockerfile='${df}'"; exit 1; }
+          done
+          echo "pins in sync (base + app + frontend + WAF)"
 
   build:
     needs: pins-sync
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180   # the WHOLE chain cooks in this one run now
     steps:
       - uses: actions/checkout@v5
       - uses: docker/login-action@v4
@@ -71,47 +102,156 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build image (frontend fork on the overlay)
+
+      - name: Build the base chain (certbot-node variant) + the shared tag names
         run: |
           set -eu
-          TAG="$OVERLAY_TAG-fe${NPM_FRONTEND_REF#v}"
-          docker pull "$OVERLAY_IMAGE"   # fail fast & clear if not published/accessible
+          # The tag names every later step reads (the pins compose them —
+          # no pinned tag STRINGS to drift, unlike the two-repo era).
+          WAF_TAG="${NPM_VERSION}-nginx${NGINX_VERSION}-modsec${MODSEC_VERSION}-crs${CRS_VERSION#v}-vts${VTS_VERSION#v}-purge${CACHE_PURGE_VERSION}-brotli${BROTLI_VERSION#v}"
+          PRODUCT_TAG="${WAF_TAG}-fe${NPM_FRONTEND_REF#v}"
+          echo "WAF_TAG=${WAF_TAG}" >> "$GITHUB_ENV"
+          echo "PRODUCT_TAG=${PRODUCT_TAG}" >> "$GITHUB_ENV"
+          # Base debrand: labels only, build-time, ROOT-RELATIVE paths
+          # (git apply from a subdirectory silently ignores paths outside
+          # it — the lesson that cost weeks of green-with-dirt builds).
+          git apply base-debrand.patch
+          grep -q 'funkysys-org' base/Dockerfile.certbot-node \
+            || { echo "::error::base-debrand.patch applied NOTHING (silent no-op) — dying"; exit 1; }
+          echo "[instrument] tree state at build time (must be funkysys-org):"
+          grep -n 'maintainer=' base/Dockerfile.certbot-node
+          docker buildx create --name basebake || true
+          docker buildx use basebake
+          docker buildx bake \
+            --file base/docker-bake.hcl \
+            --progress=plain \
+            --var DOCKER_IMAGE="${IMAGE}" \
+            --var NGINX_VERSION="${NGINX_VERSION}" \
+            --var NODE_MAJOR="${NODE_MAJOR}" \
+            --set "common.platforms=linux/amd64" \
+            --set "certbot-node.output=type=docker" \
+            certbot-node
+          docker image inspect "${IMAGE}:certbot-node" >/dev/null
+          echo "[instrument] baked base labels:"
+          docker inspect "${IMAGE}:certbot-node" --format '{{json .Config.Labels}}'
+
+      - name: Parity gate (the self-oracle)
+        run: bash scripts/parity-check.sh "${IMAGE}:certbot-node"
+
+      - name: Node security floor (we ship the Node now)
+        run: |
+          set -eu
+          node_v=$(docker run --rm --entrypoint /usr/bin/node "${IMAGE}:certbot-node" --version)
+          node_v=${node_v#v}
+          lowest=$(printf '%s\n%s\n' "${NODE_FLOOR}" "${node_v}" | sort -V | head -1)
+          [ "$lowest" = "$NODE_FLOOR" ] \
+            || { echo "::error::Node ${node_v} below floor ${NODE_FLOOR} — bump NODE_MAJOR/re-vendor."; exit 1; }
+          echo "node ${node_v} >= floor ${NODE_FLOOR}"
+
+      - name: Build the app image (the NPM-equivalent backend)
+        run: |
+          set -eu
+          # ":app-build" is NEVER PUBLISHED: BuildKit resolves a FROM-tag from
+          # the REGISTRY whenever the tag exists there — a never-published tag
+          # can only resolve locally (the same-tag race, closed by contract).
+          docker build \
+            --build-arg BASE_IMAGE="${IMAGE}:certbot-node" \
+            --build-arg NPM_VERSION="${NPM_VERSION}" \
+            --build-arg BUILD_COMMIT="${NPM_COMMIT}" \
+            --build-arg BUILD_DATE="$(date '+%Y-%m-%d %T %Z')" \
+            -t "${IMAGE}:app-build" \
+            -f app/Dockerfile .
+          echo "[instrument] app labels:"
+          docker inspect "${IMAGE}:app-build" --format '{{json .Config.Labels}}'
+
+      - name: App smoke (boots, stock UI served, nginx -t)
+        run: |
+          set -eu
+          # The stock prepare service HARD-FAILS unless both /data and
+          # /etc/letsencrypt are mounts — run the image like the real world does.
+          docker volume create appsmoke-data >/dev/null
+          docker volume create appsmoke-le >/dev/null
+          docker run -d --name appsmoke -p 127.0.0.1:8081:81 \
+            -v appsmoke-data:/data -v appsmoke-le:/etc/letsencrypt \
+            "${IMAGE}:app-build"
+          for i in $(seq 1 90); do curl -fsS http://127.0.0.1:8081/ >/dev/null 2>&1 && break; sleep 2; done
+          curl -fsS http://127.0.0.1:8081/ | grep -q 'Nginx Proxy Manager' \
+            || { echo '::error::UI not reachable / stock frontend not served'; docker logs appsmoke 2>&1 | tail -30; exit 1; }
+          docker exec appsmoke nginx -t
+          docker rm -f appsmoke >/dev/null
+          docker volume rm appsmoke-data appsmoke-le >/dev/null
+          echo "APP SMOKE OK: NPM-equivalent image boots, stock UI on :81, nginx -t clean"
+
+      - name: Build the WAF overlay image
+        run: |
+          set -eu
+          docker build -f overlay/Dockerfile \
+            --build-arg WAF_BASE_IMAGE="${IMAGE}:app-build" \
+            --build-arg NGINX_VERSION \
+            --build-arg MODSEC_VERSION \
+            --build-arg MODSEC_NGINX_VERSION \
+            --build-arg CRS_VERSION \
+            --build-arg VTS_VERSION \
+            --build-arg CACHE_PURGE_VERSION \
+            --build-arg BROTLI_VERSION \
+            --build-arg BROTLI_MODULE_SHA \
+            --build-arg BUILD_JOBS="${WAF_BUILD_JOBS}" \
+            -t "${IMAGE}:waf-build" .
+          echo "[instrument] waf labels:"
+          docker inspect "${IMAGE}:waf-build" --format '{{json .Config.Labels}}'
+
+      - name: WAF smoke (the full 18-check suite)
+        run: |
+          set -eu
+          WAF_IMAGE="${IMAGE}:waf-build" docker compose -f docker-compose.waf-test.yml up -d
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8181/ >/dev/null 2>&1 && break; sleep 2; done
+          bash scripts/waf-smoke.sh
+          docker compose -f docker-compose.waf-test.yml down -v
+
+      - name: Build the product image (the frontend fork on the overlay)
+        run: |
+          set -eu
+          # The overlay is consumed as the LOCAL :waf-build — never published,
+          # never pulled: the two-repo same-tag race is structurally gone.
           docker build -f build/Dockerfile \
-            --build-arg NPM_FRONTEND_REF="$NPM_FRONTEND_REF" \
-            --build-arg OVERLAY_IMAGE="$OVERLAY_IMAGE" \
-            -t "$IMAGE:$TAG" -t "$IMAGE:latest" .
+            --build-arg NPM_FRONTEND_REF="${NPM_FRONTEND_REF}" \
+            --build-arg OVERLAY_IMAGE="${IMAGE}:waf-build" \
+            -t "${IMAGE}:${PRODUCT_TAG}" -t "${IMAGE}:latest" .
+
       - name: Compose UI smoke (layering gate)
         run: |
           set -eu
-          TAG="$OVERLAY_TAG-fe${NPM_FRONTEND_REF#v}"
-          PROXYWARDEN_IMAGE="$IMAGE:$TAG" docker compose -f docker-compose.test.yml up -d
+          PROXYWARDEN_IMAGE="${IMAGE}:${PRODUCT_TAG}" docker compose -f docker-compose.test.yml up -d
           bash scripts/smoke-ui.sh
           docker compose -f docker-compose.test.yml down -v
-      # Branch discipline: phase-b builds + smokes, but ONLY main
-      # publishes (the branch publishes nothing until it merges).
-      - name: Push (only after SMOKE OK)
+
+      # Branch discipline: the branch builds + smokes the WHOLE chain, but
+      # ONLY main publishes (the branch publishes nothing until it merges).
+      - name: Push (only after ALL smokes OK)
         if: github.ref == 'refs/heads/main'
         run: |
           set -eu
-          TAG="$OVERLAY_TAG-fe${NPM_FRONTEND_REF#v}"
-          docker push "$IMAGE:$TAG"
-          docker push "$IMAGE:latest"
+          docker push "${IMAGE}:${PRODUCT_TAG}"
+          docker push "${IMAGE}:latest"
 
   drift-check:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - name: Has upstream NPM moved?
+      - name: Has upstream moved (nginx.org / NPM source)?
         run: |
           set -eu
-          latest="$(git ls-remote --tags --refs --sort=-v:refname \
-            https://github.com/NginxProxyManager/nginx-proxy-manager.git 'v2*' \
-            | head -1 | sed 's|.*refs/tags/||')"
-          echo "upstream latest: $latest | our frontend pin: $NPM_FRONTEND_REF"
-          if [ "$NPM_FRONTEND_REF" != "$latest" ]; then
-            echo "::error::UPSTREAM MOVED ($latest). Pins are a human decision — never auto-rebuild:"
-            echo "bump NPM_FRONTEND_REF (here + build/Dockerfile) AND rebuild the overlay image first"
-            echo "(repo 1) if the NPM version itself changed."
+          # The base is OURS (plain nginx.org source); what still matters:
+          # nginx.org shipping a release newer than our pin, and the NPM
+          # app source moving (the vendored app still tracks it).
+          ngx_latest=$(curl -fsSL https://nginx.org/en/download.html \
+            | grep -oE 'nginx-[0-9]+\.[0-9]+\.[0-9]+' | sort -uV | tail -1 | sed 's/^nginx-//')
+          npm_latest=$(git ls-remote --tags --refs https://github.com/NginxProxyManager/nginx-proxy-manager 'refs/tags/v2*' \
+            | sed 's|.*refs/tags/v||' | sort -V | tail -1)
+          echo "nginx.org latest: ${ngx_latest} | our pin: ${NGINX_VERSION}"
+          echo "NPM source latest: ${npm_latest} | our pin: ${NPM_VERSION}"
+          if [ "$ngx_latest" != "${NGINX_VERSION}" ] || [ "$npm_latest" != "$NPM_VERSION" ]; then
+            echo "::error::UPSTREAM MOVED (nginx ${ngx_latest} / NPM ${npm_latest}). Pins are a human decision — bump in workflow env + build-nginx.sh sha case + parity oracle, rebuild, re-run."
             exit 1
           fi
-          echo "drift-check OK: upstream still matches the frontend pin"
+          echo "no drift — pins current"

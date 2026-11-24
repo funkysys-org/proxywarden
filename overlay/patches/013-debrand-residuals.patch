@@ -1,0 +1,26 @@
+diff --git a/backend/db.js b/backend/db.js
+index 5b18d3a..e026d21 100644
+--- a/backend/db.js
++++ b/backend/db.js
+@@ -6,7 +6,7 @@ let instance = null;
+ const generateDbConfig = () => {
+ 	if (!configHas("database")) {
+ 		throw new Error(
+-			"Database config does not exist! Please read the instructions: https://nginxproxymanager.com/setup/",
++			"Database config does not exist! Check the /data mount and the container logs.",
+ 		);
+ 	}
+ 
+diff --git a/docker/rootfs/etc/nginx/conf.d/production.conf.template b/docker/rootfs/etc/nginx/conf.d/production.conf.template
+index c67f52d..0d83e10 100644
+--- a/docker/rootfs/etc/nginx/conf.d/production.conf.template
++++ b/docker/rootfs/etc/nginx/conf.d/production.conf.template
+@@ -3,7 +3,7 @@ server {
+ 	listen {{NPM_ADMIN_PORT}} default;
+ 	listen [::]:{{NPM_ADMIN_PORT}} default;
+ 
+-	server_name nginxproxymanager;
++	server_name proxywarden;
+ 	root /app/frontend;
+ 	access_log /dev/null;
+ 

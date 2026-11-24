@@ -1,0 +1,38 @@
+diff --git a/base/Dockerfile.certbot b/base/Dockerfile.certbot
+index 731d1b3..829a667 100644
+--- a/base/Dockerfile.certbot
++++ b/base/Dockerfile.certbot
+@@ -43,7 +43,7 @@ FROM base
+ 
+ ARG TARGETPLATFORM
+ 
+-LABEL maintainer="Jamie Curnow <jc@jc21.com>"
++LABEL maintainer="funkysys-org"
+ 
+ RUN echo "Certbot, ${TARGETPLATFORM:-linux/amd64}" >> /built-for-arch
+ 
+@@ -67,4 +67,4 @@ RUN python3 -m venv /opt/certbot/ \
+ 	&& sed -i 's/include-system-site-packages = false/include-system-site-packages = true/g' -i /opt/certbot/pyvenv.cfg \
+ 	&& ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+ 
+-LABEL org.label-schema.cmd="docker run --rm -ti nginxproxymanager/nginx-full:certbot"
++LABEL org.label-schema.cmd="docker run --rm -ti ghcr.io/funkysys-org/nginx-full:certbot"
+diff --git a/base/Dockerfile.certbot-node b/base/Dockerfile.certbot-node
+index 9cf6a75..f72967e 100644
+--- a/base/Dockerfile.certbot-node
++++ b/base/Dockerfile.certbot-node
+@@ -3,7 +3,7 @@ FROM certbot AS final
+ ARG TARGETPLATFORM
+ ARG NODE_MAJOR=26
+ 
+-LABEL maintainer="Jamie Curnow <jc@jc21.com>"
++LABEL maintainer="funkysys-org"
+ 
+ RUN echo "Certbot + Node, ${TARGETPLATFORM:-linux/amd64}" >> /built-for-arch
+ 
+@@ -24,4 +24,4 @@ COPY ./base/files/test.js /tmp/test.js
+ RUN node /tmp/test.js \
+ 	&& rm -f /tmp/test.js
+ 
+-LABEL org.label-schema.cmd="docker run --rm -ti nginxproxymanager/nginx-full:certbot-node"
++LABEL org.label-schema.cmd="docker run --rm -ti ghcr.io/funkysys-org/nginx-full:certbot-node"

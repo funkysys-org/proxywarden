@@ -1,0 +1,252 @@
+diff --git a/backend/internal/metrics.js b/backend/internal/metrics.js
+new file mode 100644
+index 0000000..6066b56
+--- /dev/null
++++ b/backend/internal/metrics.js
+@@ -0,0 +1,117 @@
++import http from "node:http";
++import errs from "../lib/error.js";
++import proxyHostModel, { scopeToOwnerOrAllowed } from "../models/proxy_host.js";
++import redirectionHostModel from "../models/redirection_host.js";
++import deadHostModel from "../models/dead_host.js";
++import staticHostModel from "../models/static_host.js";
++
++const adminPort = Number.parseInt(process.env.NPM_ADMIN_PORT || "81", 10);
++
++/**
++ * Fetches the vts JSON from the admin nginx listener. The location is
++ * 127.0.0.1-only by design (see production.conf.template), so this is a
++ * container-internal hop: no vts data is ever exposed without the JWT gate
++ * of the API route that calls this.
++ *
++ * @returns {Promise<Object>}
++ */
++const fetchVtsJson = () => {
++	return new Promise((resolve, reject) => {
++		const req = http.get(
++			{
++				host: "127.0.0.1",
++				port: adminPort,
++				path: "/vts_status/format/json",
++				timeout: 3000,
++			},
++			(res) => {
++				let body = "";
++				res.on("data", (chunk) => {
++					body += chunk;
++				});
++				res.on("end", () => {
++					if (res.statusCode !== 200) {
++						reject(new errs.ConfigurationError(`vts status returned ${res.statusCode}`));
++						return;
++					}
++					try {
++						resolve(JSON.parse(body));
++					} catch (err) {
++						reject(err);
++					}
++				});
++			},
++		);
++		req.on("timeout", () => {
++			req.destroy();
++			reject(new errs.ConfigurationError("vts status fetch timed out"));
++		});
++		req.on("error", (err) => {
++			reject(err);
++		});
++	});
++};
++
++const internalMetrics = {
++	/**
++	 * GET /reports/metrics
++	 *
++	 * vts per-host traffic stats, scoped by the caller's host visibility:
++	 * admins (and the `all` visibility) get every zone; anyone else gets
++	 * only the zones matching the domain_names of hosts they own or have
++	 * been allowed via the permission meta (proxy_host_ids) — the same
++	 * scoping semantics as the host lists themselves.
++	 *
++	 * @param   {Access}   access
++	 * @returns {Promise}
++	 */
++	getMetricsReport: (access) => {
++		return access.can("reports:hosts", 1).then(async (access_data) => {
++			const userId = access.token.getUserId(1);
++			const isAdmin = access.isAdmin?.() || access_data.permission_visibility === "all";
++
++			let allowedDomains = null; // null = unrestricted (admin / visibility all)
++			if (!isAdmin) {
++				const permissionsMeta = access.getPermissions?.()?.meta;
++
++				const proxyQuery = proxyHostModel.query().where("is_deleted", 0);
++				scopeToOwnerOrAllowed(proxyQuery, userId, permissionsMeta);
++				const redirectionQuery = redirectionHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++				const deadQuery = deadHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++				const staticQuery = staticHostModel.query().where("is_deleted", 0).andWhere("owner_user_id", userId);
++
++				const [proxies, redirections, deads, statics] = await Promise.all([
++					proxyQuery.select("domain_names"),
++					redirectionQuery.select("domain_names"),
++					deadQuery.select("domain_names"),
++					staticQuery.select("domain_names"),
++				]);
++
++				allowedDomains = new Set();
++				[proxies, redirections, deads, statics].forEach((rows) => {
++					rows.forEach((row) => {
++						(row.domain_names || []).forEach((domain) => allowedDomains.add(domain));
++					});
++				});
++			}
++
++			const vts = await fetchVtsJson();
++			const zones = vts?.serverZones || {};
++			const serverZones = {};
++			Object.keys(zones).forEach((zone) => {
++				if (allowedDomains && !allowedDomains.has(zone)) {
++					return;
++				}
++				serverZones[zone] = zones[zone];
++			});
++
++			return {
++				generatedAt: new Date().toISOString(),
++				visibility: isAdmin ? "all" : "user",
++				serverZones,
++			};
++		});
++	},
++};
++
++export default internalMetrics;
+diff --git a/backend/routes/reports.js b/backend/routes/reports.js
+index df9962a..a3ebc17 100644
+--- a/backend/routes/reports.js
++++ b/backend/routes/reports.js
+@@ -1,4 +1,5 @@
+ import express from "express";
++import internalMetrics from "../internal/metrics.js";
+ import internalReport from "../internal/report.js";
+ import jwtdecode from "../lib/express/jwt-decode.js";
+ import { debug, express as logger } from "../logger.js";
+@@ -29,4 +30,26 @@ router
+ 		}
+ 	});
+ 
++router
++	.route("/metrics")
++	.options((_, res) => {
++		res.sendStatus(204);
++	})
++	.all(jwtdecode())
++
++	/**
++	 * GET /reports/metrics
++	 *
++	 * vts per-host traffic stats, scoped by the caller's host visibility
++	 */
++	.get(async (req, res, next) => {
++		try {
++			const data = await internalMetrics.getMetricsReport(res.locals.access);
++			res.status(200).send(data);
++		} catch (err) {
++			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
++			next(err);
++		}
++	});
++
+ export default router;
+diff --git a/backend/schema/paths/reports/metrics/get.json b/backend/schema/paths/reports/metrics/get.json
+new file mode 100644
+index 0000000..ddc13bf
+--- /dev/null
++++ b/backend/schema/paths/reports/metrics/get.json
+@@ -0,0 +1,40 @@
++{
++	"operationId": "getMetricsReport",
++	"summary": "Per-host traffic metrics (vts), scoped by the caller's host visibility",
++	"tags": ["reports"],
++	"security": [
++		{
++			"bearerAuth": ["reports.view"]
++		}
++	],
++	"responses": {
++		"200": {
++			"description": "200 response",
++			"content": {
++				"application/json": {
++					"examples": {
++						"default": {
++							"value": {
++								"generatedAt": "2026-11-18T15:00:00.000Z",
++								"visibility": "all",
++								"serverZones": {
++									"example.com": {
++										"requests": 1234,
++										"responses": {
++											"2xx": 1200,
++											"3xx": 20,
++											"4xx": 10,
++											"5xx": 4
++										},
++										"inBytes": 100000,
++										"outBytes": 900000
++									}
++								}
++							}
++						}
++					}
++				}
++			}
++		}
++	}
++}
+diff --git a/backend/schema/swagger.json b/backend/schema/swagger.json
+index f50b896..ccf5b03 100644
+--- a/backend/schema/swagger.json
++++ b/backend/schema/swagger.json
+@@ -400,6 +400,11 @@
+ 			"post": {
+ 				"$ref": "./paths/nginx/static-hosts/hostID/disable/post.json"
+ 			}
++		},
++		"/reports/metrics": {
++			"get": {
++				"$ref": "./paths/reports/metrics/get.json"
++			}
+ 		}
+ 	}
+ }
+diff --git a/docker/rootfs/etc/nginx/conf.d/production.conf.template b/docker/rootfs/etc/nginx/conf.d/production.conf.template
+index be7aca1..c67f52d 100644
+--- a/docker/rootfs/etc/nginx/conf.d/production.conf.template
++++ b/docker/rootfs/etc/nginx/conf.d/production.conf.template
+@@ -28,6 +28,13 @@ server {
+ 		proxy_send_timeout 15m;
+ 	}
+ 
++	location /vts_status {
++		allow 127.0.0.1;
++		deny all;
++		vhost_traffic_status_display;
++		vhost_traffic_status_display_format json;
++	}
++
+ 	location / {
+ 		index index.html;
+ 		if ($request_uri ~ ^/(.*)\.html$) {
+diff --git a/docker/rootfs/etc/nginx/conf.d/proxywarden-vts-zone.conf b/docker/rootfs/etc/nginx/conf.d/proxywarden-vts-zone.conf
+new file mode 100644
+index 0000000..6ab96e5
+--- /dev/null
++++ b/docker/rootfs/etc/nginx/conf.d/proxywarden-vts-zone.conf
+@@ -0,0 +1,6 @@
++# proxywarden metrics: enable the vts counters at http level.
++# Loaded-but-cheap: the zone directive just starts counting per-server
++# traffic. Nothing is exposed from here — the display lives on the admin
++# server and is 127.0.0.1-only (see production.conf.template); the backend
++# reads it and re-serves it JWT-scoped at GET /api/reports/metrics.
++vhost_traffic_status_zone;

@@ -1,0 +1,45 @@
+diff --git a/backend/internal/nginx.js b/backend/internal/nginx.js
+index 64b5cec..fdf8e44 100644
+--- a/backend/internal/nginx.js
++++ b/backend/internal/nginx.js
+@@ -286,7 +286,16 @@ const internalNginx = {
+ 			// exists when the armer wrote the include (GeoLite2 DB present).
+ 			// Unarmed, hosts with country_deny stay renderable — the
+ 			// template skips the if() lines and the field stays stored.
+-			host.geoip2_enabled = fs.existsSync("/data/geoip/GeoLite2-Country.mmdb");
++			// THE FLAG IS THE WHOLE GATE — it must be false for an empty
++			// country_deny too: an empty JS array is TRUTHY, so the template's
++			// own `and country_deny` can never catch it, and an empty list
++			// renders the regex ^()$ — which matches the EMPTY country code,
++			// 403 for every client the DB cannot resolve (private IPs first).
++			// DB present AND a non-empty list, or nothing renders.
++			host.geoip2_enabled =
++				fs.existsSync("/data/geoip/GeoLite2-Country.mmdb") &&
++				Array.isArray(host.country_deny) &&
++				host.country_deny.length > 0;
+ 
+ 			// For redirection hosts, if the scheme is not http or https, set it to $scheme
+ 			if (
+diff --git a/docker/rootfs/etc/s6-overlay/s6-rc.d/prepare/25-geoblock.sh b/docker/rootfs/etc/s6-overlay/s6-rc.d/prepare/25-geoblock.sh
+new file mode 100755
+index 0000000..02f9720
+--- /dev/null
++++ b/docker/rootfs/etc/s6-overlay/s6-rc.d/prepare/25-geoblock.sh
+@@ -0,0 +1,17 @@
++#!/command/with-contenv sh
++# Proxywarden geoblocking (Wave 5, wave 018): the geoip2 ARMER.
++# The templates reference $geoip2_data_country_code, which only EXISTS
++# once a geoip2 block is parsed — and the geoip2 module (dynamic .so)
++# must be load_module'd first. nginx cannot conditionally include, and
++# a geoip2 block pointing at a missing file fails nginx -t. So the
++# armer runs at EVERY boot: DB deployed → write both files; DB gone →
++# remove both. Idempotent, reactive, no manual steps.
++MMDB=/data/geoip/GeoLite2-Country.mmdb
++LOAD=/etc/nginx/modules/10-geoip2-load.conf
++BLOCK=/etc/nginx/conf.d/geoip2.conf
++if [ -f "$MMDB" ]; then
++  printf 'load_module /usr/lib/nginx/modules/ngx_http_geoip2_module.so;\n' > "$LOAD"
++  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code country_iso_code;\n}\n' "$MMDB" > "$BLOCK"
++else
++  rm -f "$LOAD" "$BLOCK"
++fi
