@@ -39,7 +39,9 @@ index 0000000..02f9720
 +BLOCK=/etc/nginx/conf.d/geoip2.conf
 +if [ -f "$MMDB" ]; then
 +  printf 'load_module /usr/lib/nginx/modules/ngx_http_geoip2_module.so;\n' > "$LOAD"
-+  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code country_iso_code;\n}\n' "$MMDB" > "$BLOCK"
++  # ngx_http_geoip2_module: space-separated lookup path (country iso_code),
++  # not one underscored key — wrong path = empty variable for every lookup.
++  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code country iso_code;\n}\n' "$MMDB" > "$BLOCK"
 +else
 +  rm -f "$LOAD" "$BLOCK"
 +fi

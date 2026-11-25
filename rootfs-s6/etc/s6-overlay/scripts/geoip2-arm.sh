@@ -12,7 +12,10 @@ CONF=/etc/nginx/conf.d/geoip2.conf
 
 if [ -f "$DB" ]; then
   mkdir -p /etc/nginx/conf.d
-  printf 'geoip2 %s {\n    auto_reload 5m;\n    $geoip2_data_country_code country_iso_code;\n}\n' "$DB" > "$CONF"
+  # ngx_http_geoip2_module: the lookup path is SPACE-SEPARATED nesting
+  # ("country iso_code" = the mmdb's country->iso_code), NOT one underscored
+  # key — a wrong path yields an EMPTY variable for every lookup, silently.
+  printf 'geoip2 %s {\n    auto_reload 5m;\n    $geoip2_data_country_code country iso_code;\n}\n' "$DB" > "$CONF"
   echo "geoip2-arm: armed ($DB)"
 else
   rm -f "$CONF"
