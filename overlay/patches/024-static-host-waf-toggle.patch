@@ -244,7 +244,7 @@ index 92a3291..0ef140b 100644
  }
 \ No newline at end of file
 diff --git a/backend/schema/paths/nginx/static-hosts/hostID/get.json b/backend/schema/paths/nginx/static-hosts/hostID/get.json
-index 30aeefd..847a2ee 100644
+index 30aeefd..bf7fe29 100644
 --- a/backend/schema/paths/nginx/static-hosts/hostID/get.json
 +++ b/backend/schema/paths/nginx/static-hosts/hostID/get.json
 @@ -1,10 +1,14 @@
@@ -275,14 +275,7 @@ index 30aeefd..847a2ee 100644
  								"certificate_id": 0,
  								"ssl_forced": false,
  								"advanced_config": "",
-@@ -48,10 +54,10 @@
- 						}
- 					},
- 					"schema": {
--						"$ref": "../../../../components/static-host-object.json"
-+						"$ref": "../../../../../components/static-host-object.json"
- 					}
- 				}
+@@ -54,4 +60,4 @@
  			}
  		}
  	}
@@ -290,55 +283,13 @@ index 30aeefd..847a2ee 100644
 +}
 \ No newline at end of file
 diff --git a/backend/schema/paths/nginx/static-hosts/hostID/put.json b/backend/schema/paths/nginx/static-hosts/hostID/put.json
-index f584fc3..011b651 100644
+index f584fc3..c0a0eda 100644
 --- a/backend/schema/paths/nginx/static-hosts/hostID/put.json
 +++ b/backend/schema/paths/nginx/static-hosts/hostID/put.json
-@@ -35,37 +35,43 @@
- 					"minProperties": 1,
- 					"properties": {
- 						"domain_names": {
--							"$ref": "../../../../components/static-host-object.json#/properties/domain_names"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/domain_names"
- 						},
- 						"country_deny": {
--							"$ref": "../../../../components/static-host-object.json#/properties/country_deny"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/country_deny"
- 						},
- 						"certificate_id": {
--							"$ref": "../../../../components/static-host-object.json#/properties/certificate_id"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/certificate_id"
- 						},
- 						"ssl_forced": {
--							"$ref": "../../../../components/static-host-object.json#/properties/ssl_forced"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/ssl_forced"
- 						},
- 						"hsts_enabled": {
--							"$ref": "../../../../components/static-host-object.json#/properties/hsts_enabled"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/hsts_enabled"
- 						},
- 						"hsts_subdomains": {
--							"$ref": "../../../../components/static-host-object.json#/properties/hsts_subdomains"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/hsts_subdomains"
- 						},
- 						"http2_support": {
--							"$ref": "../../../../components/static-host-object.json#/properties/http2_support"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/http2_support"
- 						},
- 						"advanced_config": {
--							"$ref": "../../../../components/static-host-object.json#/properties/advanced_config"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/advanced_config"
- 						},
- 						"meta": {
--							"$ref": "../../../../components/static-host-object.json#/properties/meta"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/meta"
- 						},
- 						"content": {
--							"$ref": "../../../../components/static-host-object.json#/properties/content"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/content"
+@@ -66,6 +66,12 @@
  						},
  						"document_root": {
--							"$ref": "../../../../components/static-host-object.json#/properties/document_root"
-+							"$ref": "../../../../../components/static-host-object.json#/properties/document_root"
+ 							"$ref": "../../../../components/static-host-object.json#/properties/document_root"
 +						},
 +						"waf_enabled": {
 +							"$ref": "../../../../components/static-host-object.json#/properties/waf_enabled"
@@ -348,14 +299,7 @@ index f584fc3..011b651 100644
  						}
  					}
  				}
-@@ -116,10 +122,10 @@
- 						}
- 					},
- 					"schema": {
--						"$ref": "../../../../components/static-host-object.json"
-+						"$ref": "../../../../../components/static-host-object.json"
- 					}
- 				}
+@@ -122,4 +128,4 @@
  			}
  		}
  	}
