@@ -41,7 +41,7 @@ index 0000000..02f9720
 +  printf 'load_module /usr/lib/nginx/modules/ngx_http_geoip2_module.so;\n' > "$LOAD"
 +  # ngx_http_geoip2_module: space-separated lookup path (country iso_code),
 +  # not one underscored key — wrong path = empty variable for every lookup.
-+  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code country iso_code;\n}\n' "$MMDB" > "$BLOCK"
++  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code default=XX country iso_code;\n}\n' "$MMDB" > "$BLOCK"
 +else
 +  rm -f "$LOAD" "$BLOCK"
 +fi

@@ -196,6 +196,20 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$cm_id" -H "Authorization: Bearer $admin_tok"
   pass "country_list_mode: enum rejects bogus, empty allow-list 400s (fail-closed), allow+list round-trips"
 
+  # 12e) geoip2 armer self-test (027): a dummy DB must arm with the RIGHT
+  #      directive shape — "default=XX country iso_code". The geoip2 module
+  #      is SILENT on a wrong lookup path (empty variable, zero errors) and
+  #      only an operator with a real DB ever sees it — this guards the class
+  #      at CI time. The dummy+include are removed right after (a lingering
+  #      dummy would break the next nginx -t).
+  execsvc 'mkdir -p /data/geoip && touch /data/geoip/GeoLite2-Country.mmdb'
+  execsvc 'sh /etc/s6-overlay/scripts/geoip2-arm.sh' >/dev/null 2>&1
+  ARMED=$(execsvc 'cat /etc/nginx/conf.d/geoip2.conf')
+  echo "$ARMED" | grep -q 'default=XX country iso_code' \
+    || die "geoip2 armer wrote the wrong directive: $ARMED"
+  execsvc 'rm -f /data/geoip/GeoLite2-Country.mmdb /etc/nginx/conf.d/geoip2.conf'
+  pass "geoip2 armer: dummy DB arms as 'default=XX country iso_code' (the silent-wrong-path class, guarded)"
+
   # 9) Metrics endpoint (A6): vts data live through the JWT-gated route
   m_code=$(curl -s -o /dev/null -w '%{http_code}' "$API/reports/metrics" -H "Authorization: Bearer $admin_tok")
   [ "$m_code" = "200" ] || die "GET /api/reports/metrics -> $m_code (want 200)"
