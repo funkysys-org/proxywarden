@@ -158,7 +158,7 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   #      with waf_enabled=false SERVES what the WAF-on host blocks (the
   #      ctl:ruleEngine=Off rule, Host-matched, spike-proven 2026-11-24).
   waf_create=$(curl -s -X POST "$API/nginx/static-hosts" \
-    -H "Authorization: Bearer ***" -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
     -d '{"domain_names":["wafsmoke-off.test"],"content":"<h1>WafOffWorks</h1>","waf_enabled":false}')
   waf_off_id=$(echo "$waf_create" | sed -n 's/^{"id" *: *\([0-9]*\).*/\1/p')
   [ -n "$waf_off_id" ] || die "waf-off static host creation failed: $waf_create"
@@ -167,13 +167,13 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   c_off=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: wafsmoke-off.test' "$atk")
   [ "$c_off" != "403" ] || die "waf_enabled=false still got 403 — the ctl:ruleEngine=Off rule is not firing"
   up_code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$API/nginx/static-hosts/$waf_off_id" \
-    -H "Authorization: Bearer ***" -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
     -d '{"domain_names":["wafsmoke-off.test"],"content":"<h1>WafOffWorks</h1>","waf_enabled":true}')
   [ "$up_code" = "200" ] || die "waf_enabled=true update failed ($up_code)"
   sleep 2   # the rules regeneration reloads again
   c_on=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: wafsmoke-off.test' "$atk")
   [ "$c_on" = "403" ] || die "after waf_enabled=true the attack got $c_on — want 403"
-  curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$waf_off_id" -H "Authorization: Bearer ***"
+  curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$waf_off_id" -H "Authorization: Bearer $admin_tok"
   pass "static-host WAF toggle: off serves the attack ($c_off), on blocks it (403) — inversion proven"
 
   # 9) Metrics endpoint (A6): vts data live through the JWT-gated route
