@@ -1,3 +1,21 @@
+diff --git a/backend/internal/nginx.js b/backend/internal/nginx.js
+index fdf8e44..b286291 100644
+--- a/backend/internal/nginx.js
++++ b/backend/internal/nginx.js
+@@ -130,7 +130,12 @@ const internalNginx = {
+ 	 */
+ 	test: () => {
+ 		debug(logger, "Testing Nginx configuration");
+-		return utils.execFile("/usr/sbin/nginx", ["-t", "-g", "error_log off;"]);
++		return utils.execFile("/usr/sbin/nginx", ["-t", "-g", "error_log off;"]).catch((err) => {
++			// nginx -t writes the offending line to stderr; without this the
++			// 500 hides the reason and CI diagnosis turns into archaeology.
++			logger.error("Nginx -t failed: " + (err.stderr || err.message));
++			throw err;
++		});
+ 	},
+ 
+ 	/**
 diff --git a/backend/internal/static-host.js b/backend/internal/static-host.js
 index 8ecac89..f6e7498 100644
 --- a/backend/internal/static-host.js
