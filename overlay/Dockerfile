@@ -247,6 +247,11 @@ COPY --from=builder /npm-virgin/backend/schema/common.json /app/schema/
 COPY --from=builder /npm-virgin/backend/schema/components/proxy-host-object.json /app/schema/components/
 COPY --from=builder /npm-virgin/backend/schema/paths/nginx/proxy-hosts/ /app/schema/paths/nginx/proxy-hosts/
 COPY --from=builder /npm-virgin/backend/migrations/20261118200000_country_deny.js /app/migrations/
+# 025 — country_list_mode: the migration (a NEW file) and the proxy-host
+# service (FIRST wave touching it — the fail-closed gate must ship for the
+# proxy hosts too, not just the static ones).
+COPY --from=builder /npm-virgin/backend/migrations/20261125120000_country_list_mode.js /app/migrations/
+COPY --from=builder /npm-virgin/backend/internal/proxy-host.js /app/internal/
 # 012 — max_body_size (Wave 6): the migration (schemas + template ride the
 # 011 COPYs — common.json, proxy-host paths, proxy_host.conf are all there)
 COPY --from=builder /npm-virgin/backend/migrations/20261118210000_max_body_size.js /app/migrations/
