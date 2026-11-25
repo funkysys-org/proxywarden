@@ -363,14 +363,21 @@ index 37d66cd..af81f7b 100644
 +}
 \ No newline at end of file
 diff --git a/backend/templates/static_host.conf b/backend/templates/static_host.conf
-index 864c92b..5f6bb21 100644
+index 864c92b..5a3745a 100644
 --- a/backend/templates/static_host.conf
 +++ b/backend/templates/static_host.conf
-@@ -9,6 +9,12 @@ server {
+@@ -9,6 +9,19 @@ server {
  {% include "_certificates.conf" %}
  {% include "_hsts.conf" %}
  {% include "_forced_ssl.conf" %}
 +{% include "_exploits.conf" %}
++
++  # WAF (wave 024): the static host arms the WAF by default — a host that
++  # opts out (waf_enabled=false) is turned off per-request by the
++  # Host-matched ctl:ruleEngine=Off rule the panel manages in the marked
++  # block of rules-before.conf (data, not config).
++  modsecurity on;
++  modsecurity_rules_file /etc/nginx/modsec/main-block.conf;
 +
 +  # Static asset caching — always on: the browser caches the assets
 +  # (expires + immutable), the files are served by nginx itself (no
