@@ -1,0 +1,262 @@
+diff --git a/backend/internal/static-host.js b/backend/internal/static-host.js
+index 8ecac89..f6e7498 100644
+--- a/backend/internal/static-host.js
++++ b/backend/internal/static-host.js
+@@ -8,6 +8,7 @@ import internalAuditLog from "./audit-log.js";
+ import internalCertificate from "./certificate.js";
+ import internalHost from "./host.js";
+ import internalNginx from "./nginx.js";
++import internalStaticWaf from "./static-waf.js";
+ 
+ const omissions = () => {
+ 	return ["is_deleted"];
+@@ -118,6 +119,7 @@ const internalStaticHost = {
+ 
+ 		// Configure nginx
+ 		await internalNginx.configure(staticHostModel, "static_host", freshRow);
++		await internalStaticWaf.syncRules();
+ 
+ 		return freshRow;
+ 	},
+@@ -210,6 +212,7 @@ const internalStaticHost = {
+ 		// Content changed or not, regenerate the derived file — cheap and idempotent
+ 		await internalStaticHost.writeContentFile(thisRow);
+ 
++		await internalStaticWaf.syncRules();
+ 		const newMeta = await internalNginx.configure(staticHostModel, "static_host", thisRow);
+ 		thisRow.meta = newMeta;
+ 		return _.omit(internalHost.cleanRowCertificateMeta(thisRow), omissions());
+@@ -276,6 +279,7 @@ const internalStaticHost = {
+ 		await rm(`/data/nginx/static_host/${row.id}`, { recursive: true, force: true });
+ 
+ 		await internalNginx.reload();
++		await internalStaticWaf.syncRules();
+ 
+ 		// Add to audit log
+ 		await internalAuditLog.add(access, {
+@@ -317,6 +321,7 @@ const internalStaticHost = {
+ 		await internalStaticHost.writeContentFile(row);
+ 
+ 		// Configure nginx
++		await internalStaticWaf.syncRules();
+ 		await internalNginx.configure(staticHostModel, "static_host", row);
+ 
+ 		// Add to audit log
+diff --git a/backend/internal/static-waf.js b/backend/internal/static-waf.js
+new file mode 100644
+index 0000000..45c94aa
+--- /dev/null
++++ b/backend/internal/static-waf.js
+@@ -0,0 +1,103 @@
++import fs from "node:fs/promises";
++import errs from "../lib/error.js";
++import staticHostModel from "../models/static_host.js";
++import internalNginx from "./nginx.js";
++
++/**
++ * Static-host WAF toggle (Wave 024): the per-host WAF OFF mechanism.
++ *
++ * Design notes (spike-proven 2026-11-24 on the real engine + real CRS):
++ * - `SecRuleEngine Off` inline in a server block is ACCEPTED at parse time
++ *   but IGNORED at runtime: the connector fixes the engine mode at init.
++ *   A per-host OFF via the template is therefore impossible.
++ * - The supported mechanism is the transaction-scope control:
++ *   `ctl:ruleEngine=Off` on a phase-1 rule matched on the Host header.
++ *   Zero extra memory (the global engine instance stays single), a true
++ *   OFF (the CRS never evaluates the host's transactions), official
++ *   modsec semantics.
++ *
++ * The panel manages a marked block in rules-before.conf — the same
++ * strip-and-recompose pattern the WAF tuning uses for its PARANOIA block
++ * (disjoint markers, so the two managers coexist in the same file without
++ * ever rewriting each other). Every regeneration is gated: nginx -t runs
++ * before the signal and the prior bytes are restored on failure
++ * (fail-closed AND fail-restored — no frozen nginx).
++ *
++ * Rule ids: 100000 + host id — outside the CRS range (900xxx-999xxx),
++ * deterministic per host, collision-free across regenerations.
++ */
++
++const MODSEC_DIR = "/data/modsec";
++const RULES_BEFORE = `${MODSEC_DIR}/rules-before.conf`;
++const WAF_OFF_BEGIN = "# BEGIN PROXYWARDEN STATIC WAF-OFF";
++const WAF_OFF_END = "# END PROXYWARDEN STATIC WAF-OFF";
++
++const escapeHostForRx = (domain) => domain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
++
++const internalStaticWaf = {
++	/**
++	 * Regenerates the STATIC WAF-OFF marked block in rules-before.conf
++	 * from the current static hosts (waf_enabled = 0), then reloads.
++	 * No-op when the composed content did not change.
++	 */
++	syncRules: async () => {
++		const offHosts = await staticHostModel
++			.query()
++			.where("waf_enabled", 0)
++			.where("is_deleted", 0)
++			.where("enabled", 1)
++			.orderBy("id");
++
++		let prevBefore = null;
++		try {
++			prevBefore = await fs.readFile(RULES_BEFORE, "utf8");
++		} catch {
++			// not seeded yet — the tuning manager seeds it on its first save
++		}
++
++		const lines = [WAF_OFF_BEGIN];
++		for (const host of offHosts) {
++			for (const domain of host.domain_names || []) {
++				// The Host header carries an optional :port — the regex covers
++				// both forms; the domain's dots are escaped.
++				const rx = escapeHostForRx(domain);
++				lines.push(
++					`SecRule REQUEST_HEADERS:Host "@rx ^${rx}(:[0-9]+)?$" "id:${100000 + host.id},phase:1,pass,nolog,ctl:ruleEngine=Off"`,
++				);
++			}
++		}
++		lines.push(WAF_OFF_END);
++		const block = lines.join("\n");
++
++		// Strip-and-recompose: keep everything else (the PARANOIA block, the
++		// hand edits), swap only OUR marked block.
++		const stripRe = new RegExp(`\\n?${WAF_OFF_BEGIN}[\\s\\S]*?${WAF_OFF_END}\\n?`, "g");
++		const body = (prevBefore || "").replace(stripRe, "\n").trim();
++		const composed = [body, block].filter(Boolean).join("\n");
++
++		if (composed === prevBefore) {
++			return; // nothing changed — no save, no reload
++		}
++
++		await fs.writeFile(RULES_BEFORE, `${composed}\n`, "utf8");
++
++		// The gate: the stock reload() runs nginx -t BEFORE the signal; on
++		// failure the prior bytes are restored (fail-closed AND restored).
++		try {
++			await internalNginx.reload();
++		} catch (err) {
++			try {
++				if (prevBefore !== null) {
++					await fs.writeFile(RULES_BEFORE, prevBefore, "utf8");
++				} else {
++					await fs.rm(RULES_BEFORE, { force: true });
++				}
++			} catch {
++				// best-effort restore — the error below is the real one
++			}
++			throw err;
++		}
++	},
++};
++
++export default internalStaticWaf;
+diff --git a/backend/migrations/20261124120000_static_host_waf_toggle.js b/backend/migrations/20261124120000_static_host_waf_toggle.js
+new file mode 100644
+index 0000000..70e466d
+--- /dev/null
++++ b/backend/migrations/20261124120000_static_host_waf_toggle.js
+@@ -0,0 +1,53 @@
++import { migrate as logger } from "../logger.js";
++
++const migrateName = "static_host_waf_toggle";
++
++/**
++ * Migrate
++ *
++ * Adds the per-host WAF and exploit toggles to static hosts:
++ * - waf_enabled (default ON): when OFF, the panel writes a Host-matched
++ *   ctl:ruleEngine=Off rule into the marked block of rules-before.conf
++ *   (the mechanism spike-proven on the real engine: the transaction-scope
++ *   engine toggle, zero extra memory, no template change).
++ * - block_exploits (default OFF, the same default as the proxy hosts):
++ *   the conditional include of the stock block-exploits if-chain.
++ *
++ * @see http://knexjs.org/#Schema
++ *
++ * @param   {Object}  knex
++ * @returns {Promise}
++ */
++const up = (knex) => {
++	logger.info(`[${migrateName}] Migrating Up...`);
++
++	return knex.schema
++		.table("static_host", (static_host) => {
++			static_host.integer("waf_enabled").notNullable().defaultTo(1);
++			static_host.integer("block_exploits").notNullable().defaultTo(0);
++		})
++		.then(() => {
++			logger.info(`[${migrateName}] static_host Table altered`);
++		});
++};
++
++/**
++ * Undo Migrate
++ *
++ * @param   {Object}  knex
++ * @returns {Promise}
++ */
++const down = (knex) => {
++	logger.info(`[${migrateName}] Migrating Down...`);
++
++	return knex.schema
++		.table("static_host", (static_host) => {
++			static_host.dropColumn("waf_enabled");
++			static_host.dropColumn("block_exploits");
++		})
++		.then(() => {
++			logger.info(`[${migrateName}] static_host Table altered`);
++		});
++};
++
++export { up, down };
+diff --git a/backend/models/static_host.js b/backend/models/static_host.js
+index 87398c3..654f784 100644
+--- a/backend/models/static_host.js
++++ b/backend/models/static_host.js
+@@ -10,7 +10,7 @@ import User from "./user.js";
+ 
+ Model.knex(db());
+ 
+-const boolFields = ["is_deleted", "ssl_forced", "http2_support", "enabled", "hsts_enabled", "hsts_subdomains"];
++const boolFields = ["is_deleted", "ssl_forced", "http2_support", "enabled", "hsts_enabled", "hsts_subdomains", "waf_enabled", "block_exploits"];
+ 
+ class StaticHost extends Model {
+ 	$beforeInsert() {
+diff --git a/backend/schema/components/static-host-object.json b/backend/schema/components/static-host-object.json
+index 92a3291..0ef140b 100644
+--- a/backend/schema/components/static-host-object.json
++++ b/backend/schema/components/static-host-object.json
+@@ -88,6 +88,14 @@
+ 		},
+ 		"owner": {
+ 			"$ref": "./user-object.json"
++		},
++		"waf_enabled": {
++			"type": "boolean",
++			"default": true,
++			"description": "WAF (ModSecurity + CRS) protection for this host. Default: ON \u2014 inherits the global engine mode (Block/DetectionOnly per the WAF tuning). When OFF, the panel writes a Host-matched ctl:ruleEngine=Off rule: the CRS never evaluates this host's traffic."
++		},
++		"block_exploits": {
++			"$ref": "../common.json#/properties/block_exploits"
+ 		}
+ 	}
+ }
+\ No newline at end of file
+diff --git a/backend/templates/static_host.conf b/backend/templates/static_host.conf
+index 864c92b..5f6bb21 100644
+--- a/backend/templates/static_host.conf
++++ b/backend/templates/static_host.conf
+@@ -9,6 +9,12 @@ server {
+ {% include "_certificates.conf" %}
+ {% include "_hsts.conf" %}
+ {% include "_forced_ssl.conf" %}
++{% include "_exploits.conf" %}
++
++  # Static asset caching — always on: the browser caches the assets
++  # (expires + immutable), the files are served by nginx itself (no
++  # proxy-cache machinery applies to a static host).
++  include conf.d/include/static-assets.conf;
+ 
+ {% if geoip2_enabled and country_deny %}
+   # Country deny — armed by the geoip2 include (GeoLite2 DB present)
