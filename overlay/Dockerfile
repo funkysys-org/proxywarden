@@ -223,6 +223,13 @@ COPY --from=builder /npm-virgin/backend/models/certificate.js /app/models/
 COPY --from=builder /npm-virgin/backend/internal/static-host.js /app/internal/
 COPY --from=builder /npm-virgin/backend/internal/host.js /app/internal/
 COPY --from=builder /npm-virgin/backend/internal/certificate.js /app/internal/
+# 024 — static-host WAF toggle: the marked-block manager (a NEW file: the
+# whitelist is the ONLY channel a new backend file has to reach /app) +
+# the migration, the schema and the template deltas of the same wave.
+COPY --from=builder /npm-virgin/backend/internal/static-waf.js /app/internal/
+COPY --from=builder /npm-virgin/backend/migrations/20261124120000_static_host_waf_toggle.js /app/migrations/
+COPY --from=builder /npm-virgin/backend/schema/components/static-host-object.json /app/schema/components/
+COPY --from=builder /npm-virgin/backend/templates/static_host.conf /app/templates/
 COPY --from=builder /npm-virgin/backend/internal/report.js /app/internal/
 COPY --from=builder /npm-virgin/backend/internal/metrics.js /app/internal/
 COPY --from=builder /npm-virgin/backend/lib/access.js /app/lib/
