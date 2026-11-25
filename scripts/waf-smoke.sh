@@ -176,6 +176,26 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$waf_off_id" -H "Authorization: Bearer $admin_tok"
   pass "static-host WAF toggle: off serves the attack ($c_off), on blocks it (403) — inversion proven"
 
+  # 12d) country_list_mode (025): enum gate, fail-closed empty whitelist, round-trip
+  cm_bad=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/static-hosts" \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
+    -d '{"domain_names":["cm-bad.test"],"content":"<h1>x</h1>","country_list_mode":"bogus"}')
+  [ "$cm_bad" = "400" ] || die "country_list_mode=bogus accepted: $cm_bad (want 400)"
+  cm_empty=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/static-hosts" \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
+    -d '{"domain_names":["cm-empty.test"],"content":"<h1>x</h1>","country_list_mode":"allow","country_deny":[]}')
+  [ "$cm_empty" = "400" ] || die "empty allow-list accepted: $cm_empty (want 400 — it would block every visitor)"
+  cm_ok=$(curl -s -X POST "$API/nginx/static-hosts" \
+    -H "Authorization: Bearer $admin_tok" -H 'Content-Type: application/json' \
+    -d '{"domain_names":["cm-ok.test"],"content":"<h1>x</h1>","country_list_mode":"allow","country_deny":["IT"]}')
+  cm_id=$(echo "$cm_ok" | sed -n 's/^{"id" *: *\([0-9]*\).*/\1/p')
+  [ -n "$cm_id" ] || die "allow+list host creation failed: $cm_ok"
+  cm_body=$(curl -s "$API/nginx/static-hosts/$cm_id" -H "Authorization: Bearer $admin_tok")
+  echo "$cm_body" | grep -q '"country_list_mode":"allow"' \
+    || die "country_list_mode not stored/returned as allow: $cm_body"
+  curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$cm_id" -H "Authorization: Bearer $admin_tok"
+  pass "country_list_mode: enum rejects bogus, empty allow-list 400s (fail-closed), allow+list round-trips"
+
   # 9) Metrics endpoint (A6): vts data live through the JWT-gated route
   m_code=$(curl -s -o /dev/null -w '%{http_code}' "$API/reports/metrics" -H "Authorization: Bearer $admin_tok")
   [ "$m_code" = "200" ] || die "GET /api/reports/metrics -> $m_code (want 200)"

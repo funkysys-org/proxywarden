@@ -1,0 +1,293 @@
+diff --git a/backend/internal/host.js b/backend/internal/host.js
+index b113029..648a002 100644
+--- a/backend/internal/host.js
++++ b/backend/internal/host.js
+@@ -355,6 +355,27 @@ const internalHost = {
+ 
+ 		return response;
+ 	},
++
++	/**
++	 * Country list coherence gate (wave 025): a whitelist
++	 * (country_list_mode=allow) with an empty list would 403 every visitor
++	 * on an armed host — fail closed at the API instead, before anything is
++	 * stored or rendered. On update, pass the MERGED state (existing row +
++	 * payload overrides) so a mode-only update against a host that already
++	 * carries a list is judged correctly.
++	 * @param   {Object}  mergedData
++	 * @returns {void}     throws ValidationError
++	 */
++	assertCountryListCoherent: (mergedData) => {
++		if (mergedData.country_list_mode === "allow") {
++			const list = mergedData.country_deny;
++			if (!Array.isArray(list) || list.length === 0) {
++				throw new errs.ValidationError(
++					"country_list_mode=allow requires a non-empty country_deny list — an empty allow-list would block every visitor",
++				);
++			}
++		}
++	},
+ };
+ 
+ export default internalHost;
+diff --git a/backend/internal/proxy-host.js b/backend/internal/proxy-host.js
+index 4682a94..85efe4b 100644
+--- a/backend/internal/proxy-host.js
++++ b/backend/internal/proxy-host.js
+@@ -51,6 +51,9 @@ const internalProxyHost = {
+ 				thisData.owner_user_id = access.token.getUserId(1);
+ 				thisData = internalHost.cleanSslHstsData(thisData);
+ 
++				// Wave 025: refuse an effectively-empty whitelist before storing.
++				internalHost.assertCountryListCoherent(thisData);
++
+ 				// Fix for db field not having a default value
+ 				// for this optional field.
+ 				if (typeof thisData.advanced_config === "undefined") {
+@@ -188,6 +191,13 @@ const internalProxyHost = {
+ 
+ 				thisData = internalHost.cleanSslHstsData(thisData, row);
+ 
++				// Wave 025 gate on the MERGED state (see static-host.js).
++				internalHost.assertCountryListCoherent({
++					country_list_mode:
++						typeof data.country_list_mode !== "undefined" ? data.country_list_mode : row.country_list_mode,
++					country_deny: Array.isArray(data.country_deny) ? data.country_deny : row.country_deny,
++				});
++
+ 				return proxyHostModel
+ 					.query()
+ 					.where({ id: thisData.id })
+diff --git a/backend/internal/static-host.js b/backend/internal/static-host.js
+index f6e7498..1a09b48 100644
+--- a/backend/internal/static-host.js
++++ b/backend/internal/static-host.js
+@@ -72,6 +72,10 @@ const internalStaticHost = {
+ 		data.owner_user_id = access.token.getUserId(1);
+ 		const thisData = internalHost.cleanSslHstsData(data);
+ 
++		// Wave 025: a whitelist with an empty list would block every visitor
++		// once geoip2 arms the block — refuse it before anything is stored.
++		internalHost.assertCountryListCoherent(thisData);
++
+ 		// Fix for db field not having a default value
+ 		// for this optional field.
+ 		if (typeof data.advanced_config === "undefined") {
+@@ -187,6 +191,15 @@ const internalStaticHost = {
+ 
+ 		thisData = internalHost.cleanSslHstsData(thisData, row);
+ 
++		// Wave 025 gate on the MERGED state: a mode-only update against a host
++		// that already carries a list must pass; only an effectively-empty
++		// whitelist is refused.
++		internalHost.assertCountryListCoherent({
++			country_list_mode:
++				typeof data.country_list_mode !== "undefined" ? data.country_list_mode : row.country_list_mode,
++			country_deny: Array.isArray(data.country_deny) ? data.country_deny : row.country_deny,
++		});
++
+ 		// do the row update
+ 		await staticHostModel.query().where({ id: data.id }).patch(data);
+ 
+diff --git a/backend/migrations/20261125120000_country_list_mode.js b/backend/migrations/20261125120000_country_list_mode.js
+new file mode 100644
+index 0000000..3a5464e
+--- /dev/null
++++ b/backend/migrations/20261125120000_country_list_mode.js
+@@ -0,0 +1,17 @@
++export async function up(knex) {
++	await knex.schema.alterTable("proxy_host", (table) => {
++		table.text("country_list_mode").notNullable().defaultTo("deny");
++	});
++	await knex.schema.alterTable("static_host", (table) => {
++		table.text("country_list_mode").notNullable().defaultTo("deny");
++	});
++}
++
++export async function down(knex) {
++	await knex.schema.alterTable("proxy_host", (table) => {
++		table.dropColumn("country_list_mode");
++	});
++	await knex.schema.alterTable("static_host", (table) => {
++		table.dropColumn("country_list_mode");
++	});
++}
+diff --git a/backend/schema/common.json b/backend/schema/common.json
+index 1106343..455e678 100644
+--- a/backend/schema/common.json
++++ b/backend/schema/common.json
+@@ -104,6 +104,15 @@
+ 				"RU"
+ 			]
+ 		},
++		"country_list_mode": {
++			"type": "string",
++			"enum": [
++				"deny",
++				"allow"
++			],
++			"default": "deny",
++			"description": "How the country_deny list is interpreted: 'deny' (default) blocks the listed countries; 'allow' treats it as a whitelist \u2014 everyone NOT listed is blocked (needs the GeoLite2 Country DB)"
++		},
+ 		"max_body_size": {
+ 			"type": "string",
+ 			"pattern": "^(?:0|[1-9][0-9]{0,11}[kKmMgG]?)$",
+@@ -267,4 +276,4 @@
+ 			}
+ 		}
+ 	}
+-}
++}
+\ No newline at end of file
+diff --git a/backend/schema/components/proxy-host-object.json b/backend/schema/components/proxy-host-object.json
+index 9d1ad6f..b8a6060 100644
+--- a/backend/schema/components/proxy-host-object.json
++++ b/backend/schema/components/proxy-host-object.json
+@@ -44,6 +44,9 @@
+ 		"country_deny": {
+ 			"$ref": "../common.json#/properties/country_deny"
+ 		},
++		"country_list_mode": {
++			"$ref": "../common.json#/properties/country_list_mode"
++		},
+ 		"max_body_size": {
+ 			"$ref": "../common.json#/properties/max_body_size"
+ 		},
+@@ -199,4 +202,4 @@
+ 			"example": null
+ 		}
+ 	}
+-}
++}
+\ No newline at end of file
+diff --git a/backend/schema/components/static-host-object.json b/backend/schema/components/static-host-object.json
+index 0ef140b..225b377 100644
+--- a/backend/schema/components/static-host-object.json
++++ b/backend/schema/components/static-host-object.json
+@@ -37,6 +37,9 @@
+ 		"country_deny": {
+ 			"$ref": "../common.json#/properties/country_deny"
+ 		},
++		"country_list_mode": {
++			"$ref": "../common.json#/properties/country_list_mode"
++		},
+ 		"certificate_id": {
+ 			"$ref": "../common.json#/properties/certificate_id"
+ 		},
+diff --git a/backend/schema/paths/nginx/proxy-hosts/hostID/put.json b/backend/schema/paths/nginx/proxy-hosts/hostID/put.json
+index 5ed2ec2..5ddbc43 100644
+--- a/backend/schema/paths/nginx/proxy-hosts/hostID/put.json
++++ b/backend/schema/paths/nginx/proxy-hosts/hostID/put.json
+@@ -40,6 +40,9 @@
+ 						"country_deny": {
+ 							"$ref": "../../../../components/proxy-host-object.json#/properties/country_deny"
+ 						},
++						"country_list_mode": {
++							"$ref": "../../../../components/proxy-host-object.json#/properties/country_list_mode"
++						},
+ 						"max_body_size": {
+ 							"$ref": "../../../../components/proxy-host-object.json#/properties/max_body_size"
+ 						},
+@@ -159,4 +162,4 @@
+ 			}
+ 		}
+ 	}
+-}
++}
+\ No newline at end of file
+diff --git a/backend/schema/paths/nginx/proxy-hosts/post.json b/backend/schema/paths/nginx/proxy-hosts/post.json
+index 46fe5cd..9e212ed 100644
+--- a/backend/schema/paths/nginx/proxy-hosts/post.json
++++ b/backend/schema/paths/nginx/proxy-hosts/post.json
+@@ -32,6 +32,9 @@
+ 						"country_deny": {
+ 							"$ref": "../../../components/proxy-host-object.json#/properties/country_deny"
+ 						},
++						"country_list_mode": {
++							"$ref": "../../../components/proxy-host-object.json#/properties/country_list_mode"
++						},
+ 						"max_body_size": {
+ 							"$ref": "../../../components/proxy-host-object.json#/properties/max_body_size"
+ 						},
+@@ -156,4 +159,4 @@
+ 			}
+ 		}
+ 	}
+-}
++}
+\ No newline at end of file
+diff --git a/backend/schema/paths/nginx/static-hosts/hostID/put.json b/backend/schema/paths/nginx/static-hosts/hostID/put.json
+index c0a0eda..6d58fb9 100644
+--- a/backend/schema/paths/nginx/static-hosts/hostID/put.json
++++ b/backend/schema/paths/nginx/static-hosts/hostID/put.json
+@@ -40,6 +40,9 @@
+ 						"country_deny": {
+ 							"$ref": "../../../../components/static-host-object.json#/properties/country_deny"
+ 						},
++						"country_list_mode": {
++							"$ref": "../../../../components/static-host-object.json#/properties/country_list_mode"
++						},
+ 						"certificate_id": {
+ 							"$ref": "../../../../components/static-host-object.json#/properties/certificate_id"
+ 						},
+diff --git a/backend/schema/paths/nginx/static-hosts/post.json b/backend/schema/paths/nginx/static-hosts/post.json
+index af81f7b..7156924 100644
+--- a/backend/schema/paths/nginx/static-hosts/post.json
++++ b/backend/schema/paths/nginx/static-hosts/post.json
+@@ -29,6 +29,9 @@
+ 						"country_deny": {
+ 							"$ref": "../../../components/static-host-object.json#/properties/country_deny"
+ 						},
++						"country_list_mode": {
++							"$ref": "../../../components/static-host-object.json#/properties/country_list_mode"
++						},
+ 						"certificate_id": {
+ 							"$ref": "../../../components/static-host-object.json#/properties/certificate_id"
+ 						},
+diff --git a/backend/templates/proxy_host.conf b/backend/templates/proxy_host.conf
+index db9e87a..4657b02 100644
+--- a/backend/templates/proxy_host.conf
++++ b/backend/templates/proxy_host.conf
+@@ -17,11 +17,19 @@ server {
+ {% include "_forced_ssl.conf" %}
+ 
+ {% if geoip2_enabled and country_deny %}
++{% if country_list_mode == "allow" %}
++  # Country allow-list (whitelist) — a visitor NOT in the list is blocked
++  # (armed by the geoip2 include, GeoLite2 DB present)
++  if ($geoip2_data_country_code !~ ^({{ country_deny | join: "|" }})$) {
++    return 403;
++  }
++{% else %}
+   # Country deny — armed by the geoip2 include (GeoLite2 DB present)
+   if ($geoip2_data_country_code ~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
+ {% endif %}
++{% endif %}
+ {% if max_body_size %}
+   # Upload limit for this host
+   client_max_body_size {{ max_body_size }};
+diff --git a/backend/templates/static_host.conf b/backend/templates/static_host.conf
+index 5a3745a..df6c3d5 100644
+--- a/backend/templates/static_host.conf
++++ b/backend/templates/static_host.conf
+@@ -24,10 +24,18 @@ server {
+   include conf.d/include/static-assets.conf;
+ 
+ {% if geoip2_enabled and country_deny %}
++{% if country_list_mode == "allow" %}
++  # Country allow-list (whitelist) — a visitor NOT in the list is blocked
++  # (armed by the geoip2 include, GeoLite2 DB present)
++  if ($geoip2_data_country_code !~ ^({{ country_deny | join: "|" }})$) {
++    return 403;
++  }
++{% else %}
+   # Country deny — armed by the geoip2 include (GeoLite2 DB present)
+   if ($geoip2_data_country_code ~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
++{% endif %}
+ {% endif %}
+ 
+   access_log /data/logs/static-host-{{ id }}_access.log standard;
