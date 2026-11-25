@@ -203,12 +203,21 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   #      at CI time. The dummy+include are removed right after (a lingering
   #      dummy would break the next nginx -t).
   execsvc 'mkdir -p /data/geoip && touch /data/geoip/GeoLite2-Country.mmdb'
+  execsvc 'rm -f /data/geoip/override-networks.conf'   # force the SEED path
   execsvc 'sh /etc/s6-overlay/scripts/geoip2-arm.sh' >/dev/null 2>&1
   ARMED=$(execsvc 'cat /etc/nginx/conf.d/geoip2.conf')
-  echo "$ARMED" | grep -q 'default=XX country iso_code' \
+  echo "$ARMED" | grep -q 'country iso_code' \
     || die "geoip2 armer wrote the wrong directive: $ARMED"
-  execsvc 'rm -f /data/geoip/GeoLite2-Country.mmdb /etc/nginx/conf.d/geoip2.conf'
-  pass "geoip2 armer: dummy DB arms as 'default=XX country iso_code' (the silent-wrong-path class, guarded)"
+  MERGED=$(execsvc 'cat /etc/nginx/conf.d/geoip2-override.conf')
+  echo "$MERGED" | grep -q 'map \$geoip2_override \$country_code' \
+    || die "geoip2 merge include missing/malformed: $MERGED"
+  echo "$MERGED" | grep -q 'default \$geoip2_override;' \
+    || die "the merge must PASS THROUGH the operator's override code: $MERGED"
+  SEED=$(execsvc 'cat /data/geoip/override-networks.conf')
+  echo "$SEED" | grep -q '<CODE>;' \
+    || die "the override-networks seed is missing its format comment: $SEED"
+  execsvc 'rm -f /data/geoip/GeoLite2-Country.mmdb /etc/nginx/conf.d/geoip2.conf /etc/nginx/conf.d/geoip2-override.conf /data/geoip/override-networks.conf'
+  pass "geoip2 armer: dummy DB arms directive + override merge (pass-through) + seed (the silent-wrong-path class, guarded)"
 
   # 9) Metrics endpoint (A6): vts data live through the JWT-gated route
   m_code=$(curl -s -o /dev/null -w '%{http_code}' "$API/reports/metrics" -H "Authorization: Bearer $admin_tok")

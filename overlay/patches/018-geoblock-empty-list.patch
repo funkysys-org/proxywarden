@@ -25,23 +25,28 @@ new file mode 100755
 index 0000000..02f9720
 --- /dev/null
 +++ b/docker/rootfs/etc/s6-overlay/s6-rc.d/prepare/25-geoblock.sh
-@@ -0,0 +1,17 @@
-+#!/command/with-contenv sh
-+# Proxywarden geoblocking (Wave 5, wave 018): the geoip2 ARMER.
-+# The templates reference $geoip2_data_country_code, which only EXISTS
-+# once a geoip2 block is parsed — and the geoip2 module (dynamic .so)
-+# must be load_module'd first. nginx cannot conditionally include, and
-+# a geoip2 block pointing at a missing file fails nginx -t. So the
-+# armer runs at EVERY boot: DB deployed → write both files; DB gone →
-+# remove both. Idempotent, reactive, no manual steps.
+@@ -0,0 +1,24 @@
++# armer runs at EVERY boot: DB deployed → write all files; DB gone →
++# remove them all. Idempotent, reactive, no manual steps.
 +MMDB=/data/geoip/GeoLite2-Country.mmdb
 +LOAD=/etc/nginx/modules/10-geoip2-load.conf
 +BLOCK=/etc/nginx/conf.d/geoip2.conf
++MERGE=/etc/nginx/conf.d/geoip2-override.conf
++NETWORKS=/data/geoip/override-networks.conf
 +if [ -f "$MMDB" ]; then
 +  printf 'load_module /usr/lib/nginx/modules/ngx_http_geoip2_module.so;\n' > "$LOAD"
 +  # ngx_http_geoip2_module: space-separated lookup path (country iso_code),
 +  # not one underscored key — wrong path = empty variable for every lookup.
-+  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code default=XX country iso_code;\n}\n' "$MMDB" > "$BLOCK"
++  printf 'geoip2 %s {\n  auto_reload 5m;\n  $geoip2_data_country_code country iso_code;\n}\n' "$MMDB" > "$BLOCK"
++  # The operator's override layer: networks mapped to pseudo-countries
++  # (any code: XX, HQ, ...). Seeded ONCE — never clobbered on later boots.
++  if [ ! -f "$NETWORKS" ]; then
++    mkdir -p /data/geoip
++    printf '# proxywarden: your network overrides — these take priority over\n# the geoip2 lookup for the listed addresses.\n# Format: <CIDR or single IP>  <CODE>;\n#10.0.0.0/8        XX;\n#192.168.0.0/16    XX;\n#203.0.113.0/24    HQ;\n' > "$NETWORKS"
++  fi
++  # The merge: the operator's override first, the real geoip for the rest.
++  # Templates read $country_code (the merged variable).
++  printf 'geo $geoip2_override {\n  default "";\n  include %s;\n}\nmap $geoip2_override $country_code {\n  ""      $geoip2_data_country_code;\n  default $geoip2_override;\n}\n' "$NETWORKS" > "$MERGE"
 +else
-+  rm -f "$LOAD" "$BLOCK"
++  rm -f "$LOAD" "$BLOCK" "$MERGE"
 +fi

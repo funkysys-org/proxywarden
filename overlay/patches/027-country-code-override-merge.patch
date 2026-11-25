@@ -1,0 +1,38 @@
+diff --git a/backend/templates/proxy_host.conf b/backend/templates/proxy_host.conf
+index 4657b02..d1103ed 100644
+--- a/backend/templates/proxy_host.conf
++++ b/backend/templates/proxy_host.conf
+@@ -20,12 +20,12 @@ server {
+ {% if country_list_mode == "allow" %}
+   # Country allow-list (whitelist) — a visitor NOT in the list is blocked
+   # (armed by the geoip2 include, GeoLite2 DB present)
+-  if ($geoip2_data_country_code !~ ^({{ country_deny | join: "|" }})$) {
++  if ($country_code !~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
+ {% else %}
+   # Country deny — armed by the geoip2 include (GeoLite2 DB present)
+-  if ($geoip2_data_country_code ~ ^({{ country_deny | join: "|" }})$) {
++  if ($country_code ~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
+ {% endif %}
+diff --git a/backend/templates/static_host.conf b/backend/templates/static_host.conf
+index df6c3d5..0182ae7 100644
+--- a/backend/templates/static_host.conf
++++ b/backend/templates/static_host.conf
+@@ -27,12 +27,12 @@ server {
+ {% if country_list_mode == "allow" %}
+   # Country allow-list (whitelist) — a visitor NOT in the list is blocked
+   # (armed by the geoip2 include, GeoLite2 DB present)
+-  if ($geoip2_data_country_code !~ ^({{ country_deny | join: "|" }})$) {
++  if ($country_code !~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
+ {% else %}
+   # Country deny — armed by the geoip2 include (GeoLite2 DB present)
+-  if ($geoip2_data_country_code ~ ^({{ country_deny | join: "|" }})$) {
++  if ($country_code ~ ^({{ country_deny | join: "|" }})$) {
+     return 403;
+   }
+ {% endif %}

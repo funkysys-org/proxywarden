@@ -1,10 +1,9 @@
 #!/bin/sh
-# default=XX: any address the DB cannot resolve (RFC1918/private, loopback,
-# link-local, or a DB miss) yields the pseudo-code XX — the operator manages
-# it as a NORMAL list entry: XX in an allow-list lets private networks pass,
-# XX in a deny-list blocks them per host. The trade-off is global: every DB
-# miss lands in XX (fail-closed by nature; the geoipupdate sidecar keeps the
-# misses rare).
+# The operator curates the pseudo-countries (XX or any code) in
+# /data/geoip/override-networks.conf — an OVERRIDE layer with priority over
+# the geoip2 lookup for the listed networks. Addresses NOT in that file keep
+# the real geoip resolution (a DB miss stays the empty code: deny passes it,
+# allow blocks it — fail-closed as designed).
 # Arms the geoip2 country lookup when the operator provides a GeoLite2
 # Country DB at /data/geoip/GeoLite2-Country.mmdb (e.g. via the official
 # maxmindinc/geoipupdate sidecar writing to a volume mounted there).
@@ -15,15 +14,28 @@
 # Idempotent: safe at every boot.
 DB=/data/geoip/GeoLite2-Country.mmdb
 CONF=/etc/nginx/conf.d/geoip2.conf
+CONF_MERGE=/etc/nginx/conf.d/geoip2-override.conf
 
 if [ -f "$DB" ]; then
-  mkdir -p /etc/nginx/conf.d
+  mkdir -p /etc/nginx/conf.d /data/geoip
   # ngx_http_geoip2_module: the lookup path is SPACE-SEPARATED nesting
   # ("country iso_code" = the mmdb's country->iso_code), NOT one underscored
   # key — a wrong path yields an EMPTY variable for every lookup, silently.
-  printf 'geoip2 %s {\n    auto_reload 5m;\n    $geoip2_data_country_code default=XX country iso_code;\n}\n' "$DB" > "$CONF"
-  echo "geoip2-arm: armed ($DB)"
+  printf 'geoip2 %s {\n    auto_reload 5m;\n    $geoip2_data_country_code country iso_code;\n}\n' "$DB" > "$CONF"
+
+  # The operator's override layer: networks mapped to pseudo-countries
+  # (any code: XX, HQ, ...). Seeded ONCE — never clobbered on later boots.
+  NETWORKS=/data/geoip/override-networks.conf
+  if [ ! -f "$NETWORKS" ]; then
+    printf '# proxywarden: your network overrides — these take priority over\n# the geoip2 lookup for the listed addresses.\n# Format: <CIDR or single IP>  <CODE>;\n#10.0.0.0/8        XX;\n#192.168.0.0/16    XX;\n#203.0.113.0/24    HQ;\n' > "$NETWORKS"
+    echo "geoip2-arm: seeded $NETWORKS (edit it to map your networks)"
+  fi
+
+  # The merge: your override first, the real geoip for everything else.
+  # Templates read $country_code (the merged variable).
+  printf 'geo $geoip2_override {\n    default "";\n    include %s;\n}\nmap $geoip2_override $country_code {\n    ""      $geoip2_data_country_code;\n    default $geoip2_override;\n}\n' "$NETWORKS" > "$CONF_MERGE"
+  echo "geoip2-arm: armed ($DB) + override layer ($NETWORKS)"
 else
-  rm -f "$CONF"
+  rm -f "$CONF" "$CONF_MERGE"
   echo "geoip2-arm: no GeoLite2 DB at $DB — country rules dormant"
 fi
