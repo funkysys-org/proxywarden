@@ -1,5 +1,5 @@
 diff --git a/backend/internal/nginx.js b/backend/internal/nginx.js
-index fdf8e44..b286291 100644
+index fdf8e44..675a693 100644
 --- a/backend/internal/nginx.js
 +++ b/backend/internal/nginx.js
 @@ -130,7 +130,12 @@ const internalNginx = {
@@ -16,6 +16,20 @@ index fdf8e44..b286291 100644
  	},
  
  	/**
+@@ -139,7 +144,12 @@ const internalNginx = {
+ 	reload: () => {
+ 		return internalNginx.test().then(() => {
+ 			logger.info("Reloading Nginx");
+-			return utils.execFile("/usr/sbin/nginx", ["-s", "reload"]);
++			return utils.execFile("/usr/sbin/nginx", ["-s", "reload"]).catch((err) => {
++				// Same visibility as test(): the signal leg can fail on its own
++				// (pid file, master state) and its stderr never reaches the log.
++				logger.error("Nginx -s reload failed: " + (err.stderr || err.message));
++				throw err;
++			});
+ 		});
+ 	},
+ 
 diff --git a/backend/internal/static-host.js b/backend/internal/static-host.js
 index 8ecac89..f6e7498 100644
 --- a/backend/internal/static-host.js
