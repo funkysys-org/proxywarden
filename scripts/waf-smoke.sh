@@ -15,8 +15,10 @@ pass() { echo "[smoke] ok: $*"; }
 diagnose() {
   echo "--- diagnostics: compose ps ---"
   docker compose -f "$COMPOSE_FILE" ps 2>&1
-  echo "--- diagnostics: $SVC last 40 log lines ---"
-  docker compose -f "$COMPOSE_FILE" logs --tail 40 "$SVC" 2>&1
+  echo "--- diagnostics: $SVC error lines (any age) ---"
+  docker compose -f "$COMPOSE_FILE" logs "$SVC" 2>&1 | grep -iE 'error|emerg|fatal|exception|ENOENT' | tail -25
+  echo "--- diagnostics: $SVC last 100 log lines ---"
+  docker compose -f "$COMPOSE_FILE" logs --tail 100 "$SVC" 2>&1
 }
 die() { echo "[smoke] FAIL: $*" >&2; diagnose; exit 1; }
 
