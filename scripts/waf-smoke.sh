@@ -271,7 +271,7 @@ if [ "$setup_code" = "200" ] || [ "$setup_code" = "201" ]; then
   echo "$wafr" | grep -q '"flagged"' || die "GET /api/waf/report has no counters: $wafr"
   wafr_n=$(echo "$wafr" | sed -n 's/.*"flagged" *: *\([0-9]*\).*/\1/p')
   [ "${wafr_n:-0}" -gt 0 ] || die "WAF report flagged=0 — the audit events from the attack checks did not aggregate: $wafr"
-  echo "$wafr" | grep -q '"perRule"' || die "WAF report has no perRule"
+  echo "$wafr" | grep -q '"perRule":\[{' || die "WAF report has no perRule ENTRIES — the rule-id extraction is broken: $wafr"
   pass "WAF activity report live (audit events aggregated, scoped)"
 
   # 15) Geoblocking (Wave 5): dormant without the GeoLite2 DB, armer idempotent

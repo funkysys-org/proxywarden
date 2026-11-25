@@ -1,0 +1,58 @@
+diff --git a/backend/internal/waf.js b/backend/internal/waf.js
+index c0c3d54..ff45e95 100644
+--- a/backend/internal/waf.js
++++ b/backend/internal/waf.js
+@@ -272,13 +272,34 @@ const internalWaf = {
+ 			const host = String(ev.request?.headers?.Host || ev.request?.headers?.host || "").toLowerCase();
+ 			if (allowedDomains && !allowedDomains.has(host)) continue;
+ 
+-			const status = Number(ev.response?.status) || 0;
+-			const messages = [...(ev.audit_data?.messages || []), ...(ev.audit_data?.error_messages || [])];
++			// libmodsecurity v3's JSON audit (SecAuditLogFormat JSON) is
++			// response.http_code (NOT status) and messages[] at TOP level,
++			// each an object whose rule id lives in details.ruleId — not the
++			// [id "N"] string form. The legacy shapes stay as fallbacks.
++			const status = Number(ev.response?.status ?? ev.response?.http_code) || 0;
++			const messages = [
++				...(ev.audit_data?.messages || []),
++				...(ev.audit_data?.error_messages || []),
++				...(Array.isArray(ev.messages) ? ev.messages : []),
++			];
+ 			const ruleIds = [];
+ 			for (const m of messages) {
+-				for (const match of String(m).matchAll(/\[id "(\d+)"\]/g)) {
+-					const id = match[1];
+-					if (!ruleIds.includes(id)) ruleIds.push(id);
++				if (m && typeof m === "object") {
++					const rid = m?.details?.ruleId || m?.details?.id;
++					if (rid) {
++						const id = String(rid);
++						if (!ruleIds.includes(id)) ruleIds.push(id);
++					}
++					// belt: the human-readable text may still carry [id "N"]
++					for (const match of String(m.message || "").matchAll(/\[id "(\d+)"\]/g)) {
++						const id = match[1];
++						if (!ruleIds.includes(id)) ruleIds.push(id);
++					}
++				} else {
++					for (const match of String(m).matchAll(/\[id "(\d+)"\]/g)) {
++						const id = match[1];
++						if (!ruleIds.includes(id)) ruleIds.push(id);
++					}
+ 				}
+ 			}
+ 
+@@ -293,11 +314,11 @@ const internalWaf = {
+ 			for (const id of ruleIds) {
+ 				perRule[id] = (perRule[id] || 0) + 1;
+ 			}
+-			const src = ev.transaction?.remote_address;
++			const src = ev.transaction?.remote_address || ev.transaction?.client_ip;
+ 			if (src) {
+ 				perSource[src] = (perSource[src] || 0) + 1;
+ 			}
+-			const time = ev.transaction?.time;
++			const time = ev.transaction?.time || ev.transaction?.time_stamp;
+ 			if (time) lastEvent = time;
+ 		}
+ 
