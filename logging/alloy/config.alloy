@@ -3,8 +3,12 @@
 //  1. Container stdout (docker socket): nginx access/error + the app logs of
 //     the proxywarden compose project, discovered via docker_sd and kept to
 //     this project only.
-//  2. WAF audit log (/data/modsec/audit.log, JSON lines): the same stream the
+//  2. WAF audit log (/data/logs/modsec_audit.log, JSON lines): the same stream the
 //     in-app WAF report reads; here it gets structured labels per event.
+//
+//  3. Per-host nginx access/error logs (/data/logs/*_access.log,
+//     *_error.log): the host label is extracted from the filename
+//     (static-host-1_access.log -> host="static-host-1").
 //
 // Everything pushes to Loki on the compose network. The Alloy UI is not
 // exposed (no ports on the service).
@@ -58,7 +62,7 @@ loki.source.docker "containers" {
 
 local.file_match "waf_audit" {
   path_targets = [{
-    __path__ = "/data/modsec/audit.log",
+    __path__ = "/data/logs/modsec_audit.log",
     job      = "waf-audit",
   }]
 }
@@ -84,6 +88,41 @@ loki.process "waf_audit" {
     values = {
       client_ip = "",
       rule_id   = "",
+    }
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+// ── 3) Per-host nginx access/error logs ────────────────────────────────────
+
+local.file_match "nginx_host_logs" {
+  path_targets = [
+    {
+      __path__ = "/data/logs/*_access.log",
+      job      = "nginx-access",
+    },
+    {
+      __path__ = "/data/logs/*_error.log",
+      job      = "nginx-error",
+    },
+  ]
+}
+
+loki.source.file "nginx_host_logs" {
+  targets    = local.file_match.nginx_host_logs.targets
+  forward_to = [loki.process.nginx_host_logs.receiver]
+}
+
+loki.process "nginx_host_logs" {
+  // The file source labels each line with its filename; pull the host name
+  // out of it so the dashboards can group cleanly.
+  stage.regex {
+    expression = "/data/logs/(?P<host>[a-zA-Z0-9_-]+)_(access|error)\.log"
+    source     = "filename"
+  }
+  stage.labels {
+    values = {
+      host = "",
     }
   }
   forward_to = [loki.write.local.receiver]

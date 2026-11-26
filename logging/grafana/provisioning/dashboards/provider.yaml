@@ -1,0 +1,13 @@
+# Dashboard provisioning: the JSONs in logging/grafana/dashboards ship with
+# the compose (read-only mount) and appear in Grafana at first boot.
+apiVersion: 1
+
+providers:
+  - name: proxywarden
+    folder: Proxywarden
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

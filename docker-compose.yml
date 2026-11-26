@@ -91,6 +91,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./logging/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./logging/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       # Loopback only — tunnel in like :81:
       #   ssh -L 3000:127.0.0.1:3000 <host>
