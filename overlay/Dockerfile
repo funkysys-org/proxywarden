@@ -251,6 +251,12 @@ COPY --from=builder /npm-virgin/backend/migrations/20261118200000_country_deny.j
 # service (FIRST wave touching it — the fail-closed gate must ship for the
 # proxy hosts too, not just the static ones).
 COPY --from=builder /npm-virgin/backend/migrations/20261125120000_country_list_mode.js /app/migrations/
+# The assembly gate (scripts/check-assembly.py) flagged these two as
+# touched-but-unshipped orphans of later refactors (023 retired the import,
+# 022 inlined the schema). The house rule is "a patch-touched file ships,
+# period" — dead or alive, the question never comes back.
+COPY --from=builder /npm-virgin/backend/internal/remote-version.js /app/internal/
+COPY --from=builder /npm-virgin/backend/schema/paths/logs/ /app/schema/paths/logs/
 COPY --from=builder /npm-virgin/backend/internal/proxy-host.js /app/internal/
 # 012 — max_body_size (Wave 6): the migration (schemas + template ride the
 # 011 COPYs — common.json, proxy-host paths, proxy_host.conf are all there)

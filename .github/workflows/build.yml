@@ -181,6 +181,15 @@ jobs:
           docker volume rm appsmoke-data appsmoke-le >/dev/null
           echo "APP SMOKE OK: NPM-equivalent image boots, stock UI on :81, nginx -t clean"
 
+      - name: Assembly whitelist gate (patch-touched files must all ship)
+        # The 024/025 class: a patch adds/touches a file, the per-file COPY
+        # list misses it, the build is GREEN and the image silently lacks it
+        # (a module ERR_MODULE_NOT_FOUND, a migration that never runs and a
+        # column that never exists). Fail BEFORE cooking anything.
+        run: |
+          set -eu
+          python3 scripts/check-assembly.py
+
       - name: Build the WAF overlay image
         run: |
           set -eu

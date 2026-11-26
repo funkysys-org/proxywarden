@@ -145,5 +145,40 @@ else
   say "skip: non-admin flow (first-boot user creation returned $setup_code — volume not fresh)"
 fi
 
+# 9) certificate path (the SSL class guard): a cert'd host renders
+#    _certificates.conf (which carries the ssl-cache include) — a duplicate
+#    shared-zone directive is only parseable at THIS point. The boot-time -t
+#    never renders it; the operator would find out on the first real cert
+#    (proven the hard way: shared:SSL declared twice, image dead on reload).
+API="$UI/api"
+admin_email="admin@proxywarden.local"; admin_secret='SmokeAdmin-123'
+cert_tok=$(curl -s -X POST "$API/tokens" -H 'Content-Type: application/json' \
+  -d "{\"identity\":\"$admin_email\",\"secret\":\"$admin_secret\"}" \
+  | sed -n 's/.*"token" *: *"\([^"]*\)".*/\1/p')
+[ -n "$cert_tok" ] || die "admin token for the cert-path step failed"
+openssl req -x509 -nodes -newkey rsa:2048 -days 2 -subj '/CN=certsmoke.test' \
+  -keyout /tmp/certsmoke.key -out /tmp/certsmoke.crt >/dev/null 2>&1 \
+  || die "openssl self-signed generation failed"
+cert_res=$(curl -s -X POST "$API/nginx/certificates" \
+  -H "Authorization: Bearer $cert_tok" -H 'Content-Type: application/json' \
+  -d '{"provider":"custom","nice_name":"certsmoke"}')
+cert_id=$(echo "$cert_res" | grep -o '"id": *[0-9]*' | head -1 | tr -dc '0-9')
+[ -n "$cert_id" ] || die "custom certificate create failed: $cert_res"
+up_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificates/$cert_id/upload" \
+  -H "Authorization: Bearer $cert_tok" \
+  -F "certificate=@/tmp/certsmoke.crt" -F "key=@/tmp/certsmoke.key")
+[ "$up_code" = "200" ] || die "certificate upload failed ($up_code)"
+sh_res=$(curl -s -X POST "$API/nginx/static-hosts" \
+  -H "Authorization: Bearer $cert_tok" -H 'Content-Type: application/json' \
+  -d '{"domain_names":["certsmoke.test"],"content":"<h1>x</h1>","certificate_id":'"$cert_id"'}')
+sh_id=$(echo "$sh_res" | grep -o '"id": *[0-9]*' | head -1 | tr -dc '0-9')
+[ -n "$sh_id" ] || die "cert'd static host create failed: $sh_res"
+execsvc 'nginx -t' >/dev/null 2>&1 \
+  || die "nginx -t FAILED with a cert'd host rendered — the SSL duplicate-directive class is back"
+curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$sh_id" -H "Authorization: Bearer $cert_tok"
+curl -s -o /dev/null -X DELETE "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok"
+rm -f /tmp/certsmoke.key /tmp/certsmoke.crt
+pass "certificate path: custom cert + cert'd host render, nginx -t clean (the SSL class, guarded)"
+
 echo
 echo "UI SMOKE OK: our frontend served, API alive, overlay layer intact (module + seed + WAF blocking), hardening + access control verified"
