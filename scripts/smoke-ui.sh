@@ -171,6 +171,27 @@ up_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificate
   -H "Authorization: Bearer $cert_tok" \
   -F "certificate=@/tmp/certsmoke.crt" -F "certificate_key=@/tmp/certsmoke.key")
 [ "$up_code" = "200" ] || die "certificate upload failed ($up_code): $up_res"
+# 9b) custom certificate UPDATE round-trip: re-uploading renewed files onto
+#     the SAME custom cert is the operator's "Update" flow (FE wave 024).
+#     The stock's upload endpoint refreshes expires_on from the new cert —
+#     assert it actually moved.
+openssl req -x509 -nodes -newkey rsa:2048 -days 30 -subj '/CN=certsmoke2.test' \
+  -keyout /tmp/certsmoke2.key -out /tmp/certsmoke2.crt >/dev/null 2>&1 \
+  || die "openssl second self-signed generation failed"
+exp1=$(curl -s "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok" \
+  | grep -o '"expires_on": "[^"]*"' | head -1)
+up2_res=$(curl -s -X POST "$API/nginx/certificates/$cert_id/upload" \
+  -H "Authorization: Bearer $cert_tok" \
+  -F "certificate=@/tmp/certsmoke2.crt" -F "certificate_key=@/tmp/certsmoke2.key")
+up2_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificates/$cert_id/upload" \
+  -H "Authorization: Bearer $cert_tok" \
+  -F "certificate=@/tmp/certsmoke2.crt" -F "certificate_key=@/tmp/certsmoke2.key")
+[ "$up2_code" = "200" ] || die "custom certificate UPDATE failed ($up2_code): $up2_res"
+exp2=$(curl -s "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok" \
+  | grep -o '"expires_on": "[^"]*"' | head -1)
+[ -n "$exp1" ] && [ -n "$exp2" ] && [ "$exp1" != "$exp2" ] \
+  || die "certificate UPDATE did not refresh expires_on (before: ${exp1:-none}, after: ${exp2:-none})"
+rm -f /tmp/certsmoke2.key /tmp/certsmoke2.crt
 sh_res=$(curl -s -X POST "$API/nginx/static-hosts" \
   -H "Authorization: Bearer $cert_tok" -H 'Content-Type: application/json' \
   -d '{"domain_names":["certsmoke.test"],"content":"<h1>x</h1>","certificate_id":'"$cert_id"'}')
@@ -181,7 +202,7 @@ execsvc 'nginx -t' >/dev/null 2>&1 \
 curl -s -o /dev/null -X DELETE "$API/nginx/static-hosts/$sh_id" -H "Authorization: Bearer $cert_tok"
 curl -s -o /dev/null -X DELETE "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok"
 rm -f /tmp/certsmoke.key /tmp/certsmoke.crt
-pass "certificate path: custom cert + cert'd host render, nginx -t clean (the SSL class, guarded)"
+pass "certificate path: custom cert, UPDATE round-trip (expires_on moved), cert'd host render, nginx -t clean"
 
 echo
 echo "UI SMOKE OK: our frontend served, API alive, overlay layer intact (module + seed + WAF blocking), hardening + access control verified"
