@@ -1,0 +1,19 @@
+diff --git a/backend/internal/nginx.js b/backend/internal/nginx.js
+index 675a693..a15f4f6 100644
+--- a/backend/internal/nginx.js
++++ b/backend/internal/nginx.js
+@@ -301,9 +301,13 @@ const internalNginx = {
+ 			// own `and country_deny` can never catch it, and an empty list
+ 			// renders the regex ^()$ — which matches the EMPTY country code,
+ 			// 403 for every client the DB cannot resolve (private IPs first).
+-			// DB present AND a non-empty list, or nothing renders.
++			// DB present AND the override file (which the armer seeds; its
++			// absence means the merge include was skipped — and without
++			// it $country_code does not exist, an unknown-variable [emerg]
++			// at reload) AND a non-empty list, or nothing renders.
+ 			host.geoip2_enabled =
+ 				fs.existsSync("/data/geoip/GeoLite2-Country.mmdb") &&
++				fs.existsSync("/data/geoip/override-networks.conf") &&
+ 				Array.isArray(host.country_deny) &&
+ 				host.country_deny.length > 0;
+ 
