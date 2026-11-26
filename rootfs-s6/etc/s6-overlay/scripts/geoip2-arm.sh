@@ -31,9 +31,16 @@ if [ -f "$DB" ]; then
     echo "geoip2-arm: seeded $NETWORKS (edit it to map your networks)"
   fi
 
-  # The merge: your override first, the real geoip for everything else.
-  # Templates read $country_code (the merged variable).
-  printf 'geo $geoip2_override {\n    default "";\n    include %s;\n}\nmap $geoip2_override $country_code {\n    ""      $geoip2_data_country_code;\n    default $geoip2_override;\n}\n' "$NETWORKS" > "$CONF_MERGE"
+  # The merge include ships ONLY when the override file is actually
+  # readable — a seed that failed silently (ro volume, perms) must NEVER
+  # take nginx down with an unresolvable include. The override layer is
+  # skippable by design: without it, $country_code stays pure geoip2.
+  if [ -f "$NETWORKS" ]; then
+    printf 'geo $geoip2_override {\n    default "";\n    include %s;\n}\nmap $geoip2_override $country_code {\n    ""      $geoip2_data_country_code;\n    default $geoip2_override;\n}\n' "$NETWORKS" > "$CONF_MERGE"
+  else
+    rm -f "$CONF_MERGE"
+    echo "geoip2-arm: WARNING — $NETWORKS missing and unseedable, override layer SKIPPED (nginx stays clean, pure geoip2)"
+  fi
   echo "geoip2-arm: armed ($DB) + override layer ($NETWORKS)"
 else
   rm -f "$CONF" "$CONF_MERGE"
