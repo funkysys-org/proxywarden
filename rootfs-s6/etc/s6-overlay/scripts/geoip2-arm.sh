@@ -1,6 +1,6 @@
 #!/bin/sh
 # The operator curates the pseudo-countries (XX or any code) in
-# /data/geoip/override-networks.conf — an OVERRIDE layer with priority over
+# /data/nginx/override-networks.conf — an OVERRIDE layer with priority over
 # the geoip2 lookup for the listed networks. Addresses NOT in that file keep
 # the real geoip resolution (a DB miss stays the empty code: deny passes it,
 # allow blocks it — fail-closed as designed).
@@ -17,7 +17,7 @@ CONF=/etc/nginx/conf.d/geoip2.conf
 CONF_MERGE=/etc/nginx/conf.d/geoip2-override.conf
 
 if [ -f "$DB" ]; then
-  mkdir -p /etc/nginx/conf.d /data/geoip
+  mkdir -p /etc/nginx/conf.d /data/nginx
   # ngx_http_geoip2_module: the lookup path is SPACE-SEPARATED nesting
   # ("country iso_code" = the mmdb's country->iso_code), NOT one underscored
   # key — a wrong path yields an EMPTY variable for every lookup, silently.
@@ -25,7 +25,7 @@ if [ -f "$DB" ]; then
 
   # The operator's override layer: networks mapped to pseudo-countries
   # (any code: XX, HQ, ...). Seeded ONCE — never clobbered on later boots.
-  NETWORKS=/data/geoip/override-networks.conf
+  NETWORKS=/data/nginx/override-networks.conf
   if [ ! -f "$NETWORKS" ]; then
     printf '# proxywarden: your network overrides — these take priority over\n# the geoip2 lookup for the listed addresses.\n# Format: <CIDR or single IP>  <CODE>;\n#10.0.0.0/8        XX;\n#192.168.0.0/16    XX;\n#203.0.113.0/24    HQ;\n' > "$NETWORKS"
     echo "geoip2-arm: seeded $NETWORKS (edit it to map your networks)"

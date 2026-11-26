@@ -32,7 +32,7 @@ index 0000000..02f9720
 +LOAD=/etc/nginx/modules/10-geoip2-load.conf
 +BLOCK=/etc/nginx/conf.d/geoip2.conf
 +MERGE=/etc/nginx/conf.d/geoip2-override.conf
-+NETWORKS=/data/geoip/override-networks.conf
++NETWORKS=/data/nginx/override-networks.conf
 +if [ -f "$MMDB" ]; then
 +  printf 'load_module /usr/lib/nginx/modules/ngx_http_geoip2_module.so;\n' > "$LOAD"
 +  # ngx_http_geoip2_module: space-separated lookup path (country iso_code),
@@ -41,7 +41,7 @@ index 0000000..02f9720
 +  # The operator's override layer: networks mapped to pseudo-countries
 +  # (any code: XX, HQ, ...). Seeded ONCE — never clobbered on later boots.
 +  if [ ! -f "$NETWORKS" ]; then
-+    mkdir -p /data/geoip
++    mkdir -p /data/nginx
 +    printf '# proxywarden: your network overrides — these take priority over\n# the geoip2 lookup for the listed addresses.\n# Format: <CIDR or single IP>  <CODE>;\n#10.0.0.0/8        XX;\n#192.168.0.0/16    XX;\n#203.0.113.0/24    HQ;\n' > "$NETWORKS"
 +  fi
 +  # The merge include ships ONLY when the override file exists — a failed
