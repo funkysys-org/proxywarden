@@ -117,7 +117,7 @@ loki.process "nginx_host_logs" {
   // The file source labels each line with its filename; pull the host name
   // out of it so the dashboards can group cleanly.
   stage.regex {
-    expression = "/data/logs/(?P<host>[a-zA-Z0-9_-]+)_(access|error)\.log"
+    expression = "/data/logs/(?P<host>[a-zA-Z0-9_-]+)_(access|error)\\.log"
     source     = "filename"
   }
   stage.labels {
