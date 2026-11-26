@@ -179,7 +179,7 @@ openssl req -x509 -nodes -newkey rsa:2048 -days 30 -subj '/CN=certsmoke2.test' \
   -keyout /tmp/certsmoke2.key -out /tmp/certsmoke2.crt >/dev/null 2>&1 \
   || die "openssl second self-signed generation failed"
 exp1=$(curl -s "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok" \
-  | grep -o '"expires_on": "[^"]*"' | head -1)
+  | grep -o '"expires_on":[^,]*' | head -1)
 up2_res=$(curl -s -X POST "$API/nginx/certificates/$cert_id/upload" \
   -H "Authorization: Bearer $cert_tok" \
   -F "certificate=@/tmp/certsmoke2.crt" -F "certificate_key=@/tmp/certsmoke2.key")
@@ -188,7 +188,7 @@ up2_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificat
   -F "certificate=@/tmp/certsmoke2.crt" -F "certificate_key=@/tmp/certsmoke2.key")
 [ "$up2_code" = "200" ] || die "custom certificate UPDATE failed ($up2_code): $up2_res"
 exp2=$(curl -s "$API/nginx/certificates/$cert_id" -H "Authorization: Bearer $cert_tok" \
-  | grep -o '"expires_on": "[^"]*"' | head -1)
+  | grep -o '"expires_on":[^,]*' | head -1)
 [ -n "$exp1" ] && [ -n "$exp2" ] && [ "$exp1" != "$exp2" ] \
   || die "certificate UPDATE did not refresh expires_on (before: ${exp1:-none}, after: ${exp2:-none})"
 rm -f /tmp/certsmoke2.key /tmp/certsmoke2.crt
