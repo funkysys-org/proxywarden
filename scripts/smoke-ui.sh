@@ -164,10 +164,13 @@ cert_res=$(curl -s -X POST "$API/nginx/certificates" \
   -d '{"provider":"other","nice_name":"certsmoke"}')
 cert_id=$(echo "$cert_res" | grep -o '"id": *[0-9]*' | head -1 | tr -dc '0-9')
 [ -n "$cert_id" ] || die "custom certificate create failed: $cert_res"
+up_res=$(curl -s -X POST "$API/nginx/certificates/$cert_id/upload" \
+  -H "Authorization: Bearer $cert_tok" \
+  -F "certificate=@/tmp/certsmoke.crt" -F "certificate_key=@/tmp/certsmoke.key")
 up_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificates/$cert_id/upload" \
   -H "Authorization: Bearer $cert_tok" \
-  -F "certificate=@/tmp/certsmoke.crt" -F "key=@/tmp/certsmoke.key")
-[ "$up_code" = "200" ] || die "certificate upload failed ($up_code)"
+  -F "certificate=@/tmp/certsmoke.crt" -F "certificate_key=@/tmp/certsmoke.key")
+[ "$up_code" = "200" ] || die "certificate upload failed ($up_code): $up_res"
 sh_res=$(curl -s -X POST "$API/nginx/static-hosts" \
   -H "Authorization: Bearer $cert_tok" -H 'Content-Type: application/json' \
   -d '{"domain_names":["certsmoke.test"],"content":"<h1>x</h1>","certificate_id":'"$cert_id"'}')
