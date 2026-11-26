@@ -161,7 +161,7 @@ openssl req -x509 -nodes -newkey rsa:2048 -days 2 -subj '/CN=certsmoke.test' \
   || die "openssl self-signed generation failed"
 cert_res=$(curl -s -X POST "$API/nginx/certificates" \
   -H "Authorization: Bearer $cert_tok" -H 'Content-Type: application/json' \
-  -d '{"provider":"custom","nice_name":"certsmoke"}')
+  -d '{"provider":"other","nice_name":"certsmoke"}')
 cert_id=$(echo "$cert_res" | grep -o '"id": *[0-9]*' | head -1 | tr -dc '0-9')
 [ -n "$cert_id" ] || die "custom certificate create failed: $cert_res"
 up_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/nginx/certificates/$cert_id/upload" \
