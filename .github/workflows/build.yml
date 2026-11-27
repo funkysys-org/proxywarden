@@ -2,15 +2,13 @@ name: build
 
 on:
   push:
-    branches: [main, phase-c/single-repo]
+    branches: [main, phase-c/single-repo, detach-v1]
     paths:
       - 'base/**'
       - 'app/**'
       - 'overlay/**'
       - 'modsec/**'
       - 'parity/**'
-      - 'vendor/**'
-      - 'patches/**'
       - 'scripts/**'
       - 'rootfs/**'
       - 'rootfs-s6/**'
@@ -29,11 +27,9 @@ env:
   # base/scripts/build-nginx.sh IS the base provenance)
   NGINX_VERSION: '1.31.10'
   NODE_MAJOR: '26'
-  # app layer (vendored NPM source: vendor/npm/)
+  # app layer (D1: app/backend + app/frontend are OUR source — the origin
+  # pins live in ABSORPTION.md; NPM_VERSION stays as the version identity)
   NPM_VERSION: '2.17.0'
-  NPM_COMMIT: '5c8aec9bdeca0a2fb6a71e060ec598aa6eddd186'
-  # frontend (vendor/npm-frontend/)
-  NPM_FRONTEND_REF: v2.17.0
   # WAF layer (Phase A2b, merged with the product in Phase C)
   MODSEC_VERSION: '3.0.17'
   MODSEC_NGINX_VERSION: '1.0.4'
@@ -63,14 +59,9 @@ jobs:
           # Phase C: ONE repo, ONE pinsync — base + app + frontend + WAF.
           df=$(sed -n 's/^ARG NPM_VERSION=//p' app/Dockerfile)
           [ "$NPM_VERSION" = "$df" ] || { echo "::error::PIN MISMATCH NPM_VERSION: workflow='${NPM_VERSION}' app/Dockerfile='${df}'"; exit 1; }
-          df_ref="$(sed -n 's/^ARG NPM_FRONTEND_REF=//p' build/Dockerfile)"
-          [ "$NPM_FRONTEND_REF" = "$df_ref" ] || { echo "::error::NPM_FRONTEND_REF drift: workflow '${NPM_FRONTEND_REF}' vs build/Dockerfile '${df_ref}'"; exit 1; }
-          [ "${NPM_FRONTEND_REF#v}" = "$NPM_VERSION" ] \
-            || { echo "::error::frontend v${NPM_FRONTEND_REF#v} vs backend ${NPM_VERSION} — never ship a frontend against a different backend version"; exit 1; }
-          prov_sha=$(sed -n 's/^| Commit | \(.*\) |$/\1/p' vendor/npm/PROVENANCE.md | tr -d ' ')
-          [ "$NPM_COMMIT" = "$prov_sha" ] || { echo "::error::PROVENANCE MISMATCH (vendor/npm): workflow '${NPM_COMMIT}' vendored '${prov_sha}' — re-vendor or fix the pin"; exit 1; }
-          prov_sha=$(sed -n 's/^| Commit | \(.*\) |$/\1/p' vendor/npm-frontend/PROVENANCE.md | tr -d ' ')
-          [ "$NPM_COMMIT" = "$prov_sha" ] || { echo "::error::PROVENANCE MISMATCH (vendor/npm-frontend): workflow '${NPM_COMMIT}' vendored '${prov_sha}' — re-vendor or fix the pin"; exit 1; }
+          # (D1: the NPM_FRONTEND_REF/PROVENANCE pin checks retired with the
+          # vendor trees — app/ is our source; the origin of record is
+          # ABSORPTION.md. NPM_VERSION still gates the app/Dockerfile ARG.)
           # NGINX_VERSION is WORKFLOW-AUTHORITATIVE: the bake receives it
           # via --var; the overlay's args stage asserts the built binary's
           # banner against it, and the parity gate re-checks the line.
@@ -108,7 +99,7 @@ jobs:
           # The tag names every later step reads (the pins compose them —
           # no pinned tag STRINGS to drift, unlike the two-repo era).
           WAF_TAG="${NPM_VERSION}-nginx${NGINX_VERSION}-modsec${MODSEC_VERSION}-crs${CRS_VERSION#v}-vts${VTS_VERSION#v}-purge${CACHE_PURGE_VERSION}-brotli${BROTLI_VERSION#v}"
-          PRODUCT_TAG="${WAF_TAG}-fe${NPM_FRONTEND_REF#v}"
+          PRODUCT_TAG="${WAF_TAG}-fe${NPM_VERSION}"
           echo "WAF_TAG=${WAF_TAG}" >> "$GITHUB_ENV"
           echo "PRODUCT_TAG=${PRODUCT_TAG}" >> "$GITHUB_ENV"
           # Base debrand: labels only, build-time, ROOT-RELATIVE paths
@@ -181,14 +172,16 @@ jobs:
           docker volume rm appsmoke-data appsmoke-le >/dev/null
           echo "APP SMOKE OK: NPM-equivalent image boots, stock UI on :81, nginx -t clean"
 
-      - name: Assembly whitelist gate (patch-touched files must all ship)
-        # The 024/025 class: a patch adds/touches a file, the per-file COPY
-        # list misses it, the build is GREEN and the image silently lacks it
-        # (a module ERR_MODULE_NOT_FOUND, a migration that never runs and a
-        # column that never exists). Fail BEFORE cooking anything.
+      - name: Backend source lint (schema $ref integrity + permission schemas)
+        # The D1 successor of the in-Dockerfile gates: the source is OURS
+        # now, so its health is a CI concern, not a packaging one. The
+        # backend dereferences every schema $ref at BOOT (a ref to a
+        # missing component crash-loops it) and access.can() loads the
+        # permission schema at REQUEST time (a missing file 500s every
+        # call). Fail BEFORE cooking anything.
         run: |
           set -eu
-          python3 scripts/check-assembly.py
+          python3 scripts/backend-lint.py
 
       - name: Build the WAF overlay image
         run: |
@@ -222,7 +215,6 @@ jobs:
           # The overlay is consumed as the LOCAL :waf-build — never published,
           # never pulled: the two-repo same-tag race is structurally gone.
           docker build -f build/Dockerfile \
-            --build-arg NPM_FRONTEND_REF="${NPM_FRONTEND_REF}" \
             --build-arg OVERLAY_IMAGE="${IMAGE}:waf-build" \
             -t "${IMAGE}:${PRODUCT_TAG}" -t "${IMAGE}:latest" .
 

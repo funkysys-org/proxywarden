@@ -33,7 +33,7 @@ official-image comparison retired with the reference; the self-oracle
 (`parity/our-configure-args.txt`) is the gate. The build-time debrand patch
 now covers the certbot/certbot-node images only — this Dockerfile carries
 funkysys-org labels from line one. The upstream-sync rules below apply to
-the parts that still track upstream (the app tree via vendor/npm), NOT to
+the parts that still track upstream (nginx.org itself), NOT to
 the base build.
 
 One bundle module SURVIVES, deliberately: **headers-more-nginx-module v0.42**

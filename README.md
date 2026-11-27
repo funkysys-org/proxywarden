@@ -23,10 +23,12 @@ base/      THE ENGINE — plain nginx.org source (Phase B):
              jc21 docker-nginx-full tree (the openresty bundle retired
              2026-11-24 — nothing in this chain ever executed Lua).
 
-app/       THE BACKEND — vendor/npm/ (the vendored nginx-proxy-manager
-           2.17.0 source, PROVENANCE-gated) + overlay/patches/ 001→022
-           (the WAF, static hosts, metrics, LDAP, the log viewer, the
-           geoblocking, the parity self-oracle era fixes).
+app/       OUR SOURCE, ABSORBED (D1) — app/backend = the former
+           vendor/npm with the BE patch stack 001-029 dissolved into
+           it; app/frontend = the former vendor/npm-frontend with the
+           FE stack 001-028. The origin of record: ABSORPTION.md. A
+           feature is a COMMIT here now, not a patch against a
+           foreign base; the patch files live in git history.
 
 overlay/   THE WAF LAYER — libmodsecurity + connector + OWASP CRS +
            vts + cache-purge + brotli + headers-more, compiled as
@@ -35,11 +37,11 @@ overlay/   THE WAF LAYER — libmodsecurity + connector + OWASP CRS +
            banner against the pin), loaded by the build-time printf
            chain — the build dies if any module fails to load.
 
-build/     THE PRODUCT — our frontend (vendor/npm-frontend/ + the
-           patches/frontend/ 001→021) forked on the LOCAL WAF stage
-           (:waf-build — never published; the two-repo same-tag race
-           is dead by construction) + rootfs/ (the hardening: the
-           Server header erased, nosniff, the modsec and vts confs).
+build/     THE PRODUCT — OUR frontend (app/frontend) built on the
+           LOCAL WAF stage (:waf-build — never published; the
+           two-repo same-tag race is dead by construction) + rootfs/
+           (the hardening: the Server header erased, nosniff, the
+           modsec and vts confs).
 
 SMOKES     scripts/waf-smoke.sh — the 18-check WAF suite: the attack
            payload matrix → 403, the CRS audit evidence, the tuning
@@ -65,9 +67,7 @@ WATCHDOG   nginx-1.31.10-watch (cron): nginx.org/download monitored
 | Pin | Value | Governed files |
 |---|---|---|
 | `NGINX_VERSION` | `1.31.10` | base bake `--var`; the banner asserted by the overlay args stage + the parity gate |
-| `NPM_VERSION` | `2.17.0` | `app/Dockerfile` ARG; `vendor/npm/PROVENANCE.md` |
-| `NPM_FRONTEND_REF` | `v2.17.0` | `build/Dockerfile` ARG |
-| `NPM_COMMIT` | `5c8aec9…` | both `vendor/*/PROVENANCE.md` sha rows |
+| `NPM_VERSION` | `2.17.0` | `app/Dockerfile` ARG; the version identity (the origin sha: ABSORPTION.md) |
 | WAF modules | modsec 3.0.17, connector 1.0.4, CRS v4.30.0, vts v0.2.7, purge 3.0.4, brotli v1.2.1 (+module sha) | `overlay/Dockerfile` ARGs |
 
 Invariants enforced by the `pins-sync` job: the frontend version must
