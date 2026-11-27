@@ -144,11 +144,13 @@ jobs:
           # ":app-build" is NEVER PUBLISHED: BuildKit resolves a FROM-tag from
           # the REGISTRY whenever the tag exists there — a never-published tag
           # can only resolve locally (the same-tag race, closed by contract).
+          # D1: the build commit label is OUR source commit now — the
+          # upstream origin sha lives in ABSORPTION.md, not in the label.
+          # (Comments must live OUTSIDE the \\-continuation block: a # inside
+          # it swallows the rest of the command, context included.)
           docker build \
             --build-arg BASE_IMAGE="${IMAGE}:certbot-node" \
             --build-arg NPM_VERSION="${NPM_VERSION}" \
-            # D1: the build commit label is OUR source commit now — the
-            # upstream origin sha lives in ABSORPTION.md, not in the label
             --build-arg BUILD_COMMIT="${GITHUB_SHA}" \
             --build-arg BUILD_DATE="$(date '+%Y-%m-%d %T %Z')" \
             -t "${IMAGE}:app-build" \
