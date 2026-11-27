@@ -1,0 +1,68 @@
+{
+	"type": "object",
+	"minProperties": 1,
+	"additionalProperties": false,
+	"properties": {
+		"visibility": {
+			"type": "string",
+			"description": "Visibility Type",
+			"enum": ["all", "user"],
+			"example": "all"
+		},
+		"access_lists": {
+			"type": "string",
+			"description": "Access Lists Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "view"
+		},
+		"dead_hosts": {
+			"type": "string",
+			"description": "404 Hosts Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "manage"
+		},
+		"proxy_hosts": {
+			"type": "string",
+			"description": "Proxy Hosts Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "hidden"
+		},
+		"redirection_hosts": {
+			"type": "string",
+			"description": "Redirection Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "view"
+		},
+		"streams": {
+			"type": "string",
+			"description": "Streams Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "manage"
+		},
+		"certificates": {
+			"type": "string",
+			"description": "Certificates Permissions",
+			"enum": ["hidden", "view", "manage"],
+			"example": "hidden"
+		},
+		"meta": {
+			"type": "object",
+			"description": "Permission metadata",
+			"example": {
+				"proxy_host_ids": [1]
+			},
+			"properties": {
+				"proxy_host_ids": {
+					"type": "array",
+					"description": "Allowed Proxy Host IDs",
+					"example": [1],
+					"items": {
+						"type": "integer",
+						"description": "Proxy Host ID",
+						"example": 1
+					}
+				}
+			}
+		}
+	}
+}

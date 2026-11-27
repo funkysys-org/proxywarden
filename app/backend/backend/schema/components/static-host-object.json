@@ -1,0 +1,104 @@
+{
+	"type": "object",
+	"description": "Static Host object",
+	"required": [
+		"id",
+		"created_on",
+		"modified_on",
+		"owner_user_id",
+		"domain_names",
+		"certificate_id",
+		"ssl_forced",
+		"hsts_enabled",
+		"hsts_subdomains",
+		"http2_support",
+		"advanced_config",
+		"enabled",
+		"meta",
+		"content"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"$ref": "../common.json#/properties/id"
+		},
+		"created_on": {
+			"$ref": "../common.json#/properties/created_on"
+		},
+		"modified_on": {
+			"$ref": "../common.json#/properties/modified_on"
+		},
+		"owner_user_id": {
+			"$ref": "../common.json#/properties/user_id"
+		},
+		"domain_names": {
+			"$ref": "../common.json#/properties/domain_names"
+		},
+		"country_deny": {
+			"$ref": "../common.json#/properties/country_deny"
+		},
+		"country_list_mode": {
+			"$ref": "../common.json#/properties/country_list_mode"
+		},
+		"certificate_id": {
+			"$ref": "../common.json#/properties/certificate_id"
+		},
+		"ssl_forced": {
+			"$ref": "../common.json#/properties/ssl_forced"
+		},
+		"hsts_enabled": {
+			"$ref": "../common.json#/properties/hsts_enabled"
+		},
+		"hsts_subdomains": {
+			"$ref": "../common.json#/properties/hsts_subdomains"
+		},
+		"http2_support": {
+			"$ref": "../common.json#/properties/http2_support"
+		},
+		"advanced_config": {
+			"type": "string",
+			"example": ""
+		},
+		"enabled": {
+			"$ref": "../common.json#/properties/enabled"
+		},
+		"meta": {
+			"type": "object",
+			"example": {}
+		},
+		"content": {
+			"type": "string",
+			"example": "<h1>Hello from Proxywarden</h1>"
+		},
+		"document_root": {
+			"type": "string",
+			"pattern": "^/(?:(?!\\.\\.?(?:/|$))[A-Za-z0-9._-]+/)*(?!\\.\\.?(?:/|$))[A-Za-z0-9._-]+/?$",
+			"description": "Optional absolute filesystem path to serve (a mounted tree). When set, this takes precedence over the inline content.",
+			"example": "/data/static-sites/example.com",
+			"nullable": true
+		},
+		"certificate": {
+			"oneOf": [
+				{
+					"type": "null",
+					"example": null
+				},
+				{
+					"$ref": "./certificate-object.json"
+				}
+			],
+			"example": null
+		},
+		"owner": {
+			"$ref": "./user-object.json"
+		},
+		"waf_enabled": {
+			"type": "boolean",
+			"default": true,
+			"description": "WAF (ModSecurity + CRS) protection for this host. Default: ON \u2014 inherits the global engine mode (Block/DetectionOnly per the WAF tuning). When OFF, the panel writes a Host-matched ctl:ruleEngine=Off rule: the CRS never evaluates this host's traffic."
+		},
+		"block_exploits": {
+			"$ref": "../common.json#/properties/block_exploits"
+		}
+	}
+}

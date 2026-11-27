@@ -1,0 +1,167 @@
+import { changeLocale, formatDateTime, getFlagCodeForLocale, getLocale, loadMessages } from "src/locale";
+import { getHelpFile } from "src/locale/src/HelpDoc";
+import * as zhTwHelp from "src/locale/src/HelpDoc/zh-tw";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+describe("DateFormatter", () => {
+	// Keep a reference to the real Intl to restore later
+	const RealIntl = global.Intl;
+	const desiredTimeZone = "Europe/London";
+	const desiredLocale = "en-GB";
+
+	beforeAll(() => {
+		// Ensure Node-based libs using TZ behave deterministically
+		try {
+			process.env.TZ = desiredTimeZone;
+		} catch {
+			// ignore if not available
+		}
+
+		// Mock Intl.DateTimeFormat so formatting is stable regardless of host
+		const MockedDateTimeFormat = class extends RealIntl.DateTimeFormat {
+			constructor(_locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
+				super(desiredLocale, {
+					...options,
+					timeZone: desiredTimeZone,
+				});
+			}
+		} as unknown as typeof Intl.DateTimeFormat;
+
+		global.Intl = {
+			...RealIntl,
+			DateTimeFormat: MockedDateTimeFormat,
+		};
+	});
+
+	afterAll(() => {
+		// Restore original Intl after tests
+		global.Intl = RealIntl;
+	});
+
+	it("format date from iso date", () => {
+		const value = "2024-01-01T00:00:00.000Z";
+		const text = formatDateTime(value);
+		expect(text).toBe("1 Jan 2024, 12:00:00 am");
+	});
+
+	it("format date from unix timestamp number", () => {
+		const value = 1762476112;
+		const text = formatDateTime(value);
+		expect(text).toBe("7 Nov 2025, 12:41:52 am");
+	});
+
+	it("format date from unix timestamp string", () => {
+		const value = "1762476112";
+		const text = formatDateTime(value);
+		expect(text).toBe("7 Nov 2025, 12:41:52 am");
+	});
+
+	it("catch bad format from string", () => {
+		const value = "this is not a good date";
+		const text = formatDateTime(value);
+		expect(text).toBe("this is not a good date");
+	});
+
+	it("catch bad format from number", () => {
+		const value = -100;
+		const text = formatDateTime(value);
+		expect(text).toBe("-100");
+	});
+
+	it("catch bad format from number as string", () => {
+		const value = "-100";
+		const text = formatDateTime(value);
+		expect(text).toBe("-100");
+	});
+});
+
+describe("getFlagCodeForLocale", () => {
+	it("returns correct flag code for standard locales", () => {
+		expect(getFlagCodeForLocale("en-US")).toBe("EN");
+		expect(getFlagCodeForLocale("de-DE")).toBe("DE");
+		expect(getFlagCodeForLocale("fr-FR")).toBe("FR");
+	});
+
+	it("returns correct flag code for special-case locales", () => {
+		expect(getFlagCodeForLocale("ja-JP")).toBe("JP");
+		expect(getFlagCodeForLocale("zh-CN")).toBe("CN");
+		expect(getFlagCodeForLocale("zh")).toBe("CN");
+		expect(getFlagCodeForLocale("zh-TW")).toBe("TW");
+		expect(getFlagCodeForLocale("ZH-tw")).toBe("TW");
+		expect(getFlagCodeForLocale("vi-VN")).toBe("VN");
+		expect(getFlagCodeForLocale("ko-KR")).toBe("KR");
+		expect(getFlagCodeForLocale("cs-CZ")).toBe("CZ");
+	});
+
+	it("returns IE (Ireland) for Irish locale, not GA (Gabon)", () => {
+		expect(getFlagCodeForLocale("ga-IE")).toBe("IE");
+	});
+
+	it("returns EE (Estonia) for Estonian locale, not ET (Ethiopia)", () => {
+		expect(getFlagCodeForLocale("et")).toBe("EE");
+		expect(getFlagCodeForLocale("et-EE")).toBe("EE");
+	});
+
+	it("falls back to EN when no locale is provided", () => {
+		expect(getFlagCodeForLocale()).toBe("EN");
+		expect(getFlagCodeForLocale(undefined)).toBe("EN");
+	});
+});
+
+describe("formatDateTime Estonian locale", () => {
+	it("uses 24-hour clock for et and et-EE", () => {
+		const value = "2024-06-15T15:30:00.000Z";
+		for (const locale of ["et", "et-EE"]) {
+			const text = formatDateTime(value, locale);
+			expect(text.toLowerCase()).not.toMatch(/\b(am|pm)\b/);
+		}
+	});
+});
+
+describe("formatDateTime Vietnamese locale", () => {
+	it("uses 24-hour clock for vi and vi-VN", () => {
+		const value = "2024-06-15T15:30:00.000Z";
+		for (const locale of ["vi", "vi-VN"]) {
+			const text = formatDateTime(value, locale);
+			// Vietnamese 12-hour output marks the period with SA (sáng) / CH (chiều)
+			expect(text).not.toMatch(/\b(SA|CH)\b/);
+		}
+	});
+});
+
+describe("Chinese locale variants", () => {
+	it("loads Traditional Chinese by full locale before falling back to Simplified Chinese", () => {
+		expect(loadMessages("ZH-tw")).toEqual(loadMessages("zh-TW"));
+		expect(loadMessages("zh-TW").save).toBe("儲存");
+		expect(loadMessages("zh").save).toBe("保存");
+		expect(loadMessages("zh-CN")).toEqual(loadMessages("zh"));
+		expect(loadMessages("zh-HK")).toEqual(loadMessages("zh"));
+	});
+
+	it("preserves the full locale and resets RTL layout when switching to Traditional Chinese", () => {
+		const originalLocale = getLocale();
+		const savedLocale = window.localStorage.getItem("locale");
+		try {
+			changeLocale("fa-IR");
+			expect(document.documentElement.dir).toBe("rtl");
+			changeLocale("zh-TW");
+			expect(getLocale()).toBe("zh-TW");
+			expect(window.localStorage.getItem("locale")).toBe("zh-TW");
+			expect(document.documentElement.lang).toBe("zh-TW");
+			expect(document.documentElement.dir).toBe("ltr");
+		} finally {
+			changeLocale(originalLocale);
+			if (savedLocale === null) {
+				window.localStorage.removeItem("locale");
+			} else {
+				window.localStorage.setItem("locale", savedLocale);
+			}
+		}
+	});
+
+	it("selects HelpDocs by full locale before falling back to the language code", () => {
+		expect(getHelpFile("ZH-tw", "AccessLists")).toBe(getHelpFile("zh-TW", "AccessLists"));
+		expect(getHelpFile("zh-TW", "AccessLists")).toBe(zhTwHelp.AccessLists.default);
+		expect(getHelpFile("zh-CN", "AccessLists")).toBe(getHelpFile("zh", "AccessLists"));
+	});
+});

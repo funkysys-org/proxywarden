@@ -1,0 +1,91 @@
+{
+	"operationId": "getWafReport",
+	"summary": "Recent WAF activity",
+	"description": "Aggregated recent audit-log activity: flagged/blocked totals, per-host, top rules, per-source. Scoped by host visibility like the metrics report.",
+	"tags": [
+		"reports"
+	],
+	"security": [
+		{
+			"bearerAuth": [
+				"user"
+			]
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "WAF activity report",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"flagged",
+							"blocked",
+							"perHost",
+							"perRule",
+							"perSource",
+							"lastEvent"
+						],
+						"properties": {
+							"flagged": {
+								"type": "integer",
+								"example": 42
+							},
+							"blocked": {
+								"type": "integer",
+								"example": 7
+							},
+							"perHost": {
+								"type": "object",
+								"description": "host -> {flagged, blocked} (from the last 512 KB of audit events)",
+								"additionalProperties": {
+									"type": "object",
+									"properties": {
+										"flagged": {
+											"type": "integer"
+										},
+										"blocked": {
+											"type": "integer"
+										}
+									}
+								}
+							},
+							"perRule": {
+								"type": "array",
+								"description": "top 10 rules by hits",
+								"items": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "integer",
+											"example": 942100
+										},
+										"count": {
+											"type": "integer"
+										}
+									}
+								}
+							},
+							"perSource": {
+								"type": "object",
+								"description": "client IP -> event count",
+								"additionalProperties": {
+									"type": "integer"
+								}
+							},
+							"lastEvent": {
+								"type": [
+									"string",
+									"null"
+								],
+								"example": "18/Nov/2026:18:56:53.123456"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

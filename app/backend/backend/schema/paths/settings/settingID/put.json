@@ -1,0 +1,213 @@
+{
+	"operationId": "updateSetting",
+	"summary": "Update a setting",
+	"tags": [
+		"settings"
+	],
+	"security": [
+		{
+			"bearerAuth": [
+				"admin"
+			]
+		}
+	],
+	"parameters": [
+		{
+			"in": "path",
+			"name": "settingID",
+			"schema": {
+				"type": "string",
+				"minLength": 1,
+				"enum": [
+					"default-site",
+					"ldap-auth",
+					"2fa-policy"
+				]
+			},
+			"required": true,
+			"description": "Setting ID",
+			"example": "default-site"
+		}
+	],
+	"requestBody": {
+		"description": "Setting Payload",
+		"required": true,
+		"content": {
+			"application/json": {
+				"schema": {
+					"anyOf": [
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"minProperties": 1,
+							"properties": {
+								"value": {
+									"type": "string",
+									"minLength": 1,
+									"enum": [
+										"congratulations",
+										"404",
+										"444",
+										"redirect",
+										"html"
+									],
+									"example": "html"
+								},
+								"meta": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"redirect": {
+											"type": "string"
+										},
+										"html": {
+											"type": "string"
+										}
+									},
+									"example": {
+										"html": "<p>hello world</p>"
+									}
+								}
+							}
+						},
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"minProperties": 1,
+							"properties": {
+								"value": {
+									"type": "string",
+									"enum": [
+										"enabled",
+										"disabled"
+									],
+									"example": "disabled"
+								},
+								"meta": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"enabled": {
+											"type": "boolean",
+											"example": false
+										},
+										"url": {
+											"type": "string",
+											"example": "ldap://ldap.example.com:389"
+										},
+										"bind_dn": {
+											"type": "string",
+											"example": "cn=proxywarden,ou=services,dc=example,dc=com"
+										},
+										"bind_password": {
+											"type": "string",
+											"example": ""
+										},
+										"base_dn": {
+											"type": "string",
+											"example": "ou=users,dc=example,dc=com"
+										},
+										"filter": {
+											"type": "string",
+											"example": "(uid={username})"
+										},
+										"starttls": {
+											"type": "boolean",
+											"example": false
+										},
+										"provision_on_login": {
+											"type": "boolean",
+											"example": true
+										},
+										"default_visibility": {
+											"type": "string",
+											"enum": [
+												"all",
+												"user"
+											],
+											"example": "user"
+										}
+									},
+									"example": {
+										"enabled": false,
+										"url": "ldap://ldap.example.com:389",
+										"bind_dn": "",
+										"bind_password": "",
+										"base_dn": "",
+										"filter": "(uid={username})",
+										"starttls": false,
+										"provision_on_login": true,
+										"default_visibility": "user"
+									}
+								}
+							},
+							"example": {
+								"value": "disabled",
+								"meta": {}
+							}
+						},
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"minProperties": 1,
+							"properties": {
+								"value": {
+									"type": "string",
+									"enum": [
+										"enabled",
+										"disabled"
+									],
+									"example": "disabled"
+								},
+								"meta": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"enabled": {
+											"type": "boolean",
+											"example": false
+										}
+									},
+									"example": {
+										"enabled": false
+									}
+								}
+							},
+							"example": {
+								"value": "disabled",
+								"meta": {}
+							}
+						}
+					]
+				},
+				"example": {
+					"value": "congratulations",
+					"meta": {}
+				}
+			}
+		}
+	},
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"examples": {
+						"default": {
+							"value": {
+								"id": "default-site",
+								"name": "Default Site",
+								"description": "What to show when Nginx is hit with an unknown Host",
+								"value": "congratulations",
+								"meta": {}
+							}
+						}
+					},
+					"schema": {
+						"$ref": "../../../components/setting-object.json"
+					}
+				}
+			}
+		}
+	}
+}
