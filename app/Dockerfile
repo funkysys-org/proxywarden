@@ -57,8 +57,11 @@ RUN yarn install \
 
 # Remove the frontend service (dev-only) and the dev nginx config,
 # exactly like upstream's release assembly.
+# (D1: the logrotate file is OUR tree's — the debrand patches renamed it
+# from the stock 'nginx-proxy-manager' to 'proxywarden' long before the
+# absorption; the chmod follows the source, not the upstream's memory.)
 RUN rm -rf /etc/s6-overlay/s6-rc.d/user/contents.d/frontend /etc/nginx/conf.d/dev.conf \
-    && chmod 644 /etc/logrotate.d/nginx-proxy-manager
+    && chmod 644 /etc/logrotate.d/proxywarden
 
 VOLUME [ "/data" ]
 ENTRYPOINT [ "/init" ]
