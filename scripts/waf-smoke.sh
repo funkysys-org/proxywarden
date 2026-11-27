@@ -35,16 +35,22 @@ if [ -z "$(docker compose -f "$COMPOSE_FILE" ps -q --status running "$SVC" 2>/de
   die "no running '$SVC' container — did 'docker compose up -d' succeed? see compose output above"
 fi
 
-# 1) wait for the NPM admin UI (first boot runs DB migrations, can take ~60 s)
-say "waiting for admin UI on $UI/ ..."
+# 1) wait for the admin API (first boot runs DB migrations, can take ~60 s).
+# D1: the WAF image carries NO frontend filesystem anymore (the product
+# stage owns the UI) — the static / on :81 is a 500 by design now. The
+# readiness signal is the API's schema endpoint: 200 there = backend
+# alive, schema compiled, the admin's proxy_pass working — a strictly
+# STRONGER gate than the old static-UI 200, which could answer with the
+# API already dead.
+say "waiting for admin API on $UI/api/schema ..."
 ui=""
 for i in $(seq 1 45); do
-  ui=$(code "$UI/")
+  ui=$(code "$UI/api/schema")
   if [ "$ui" = "200" ] || [ "$ui" = "302" ]; then break; fi
   sleep 2
 done
 [ "$ui" = "200" ] || [ "$ui" = "302" ] \
-  || die "admin UI not ready after 90s (last HTTP code: '${ui:-none/transport-error}')"
+  || die "admin API not ready after 90s (last HTTP code: '${ui:-none/transport-error}')"
 
 # 2) stock nginx config valid with the module loaded (real container, real boot)
 out=$(execsvc 'nginx -t 2>&1') || die "could not run nginx -t inside container"
