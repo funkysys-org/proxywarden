@@ -1,12 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="pwg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#14b8a6"/>
-      <stop offset="1" stop-color="#0f766e"/>
-    </linearGradient>
-  </defs>
-  <path d="M32 4l24 8v20c0 14-10 24-24 28C18 56 8 46 8 32V12z" fill="url(#pwg)"/>
-  <circle cx="32" cy="27" r="6" fill="#fff"/>
-  <path d="M29 31h6l3 14H26z" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Logo Web Proxy Panel">
+  <rect width="512" height="512" rx="112" fill="#0E1B2C"/>
+  <!-- instradamento: un ingresso, tre destinazioni -->
+  <g fill="none" stroke="#F4F7FA" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M118 256H256"/>
+    <path d="M256 256H378"/>
+    <path d="M256 256V164Q256 136 284 136H378"/>
+    <path d="M256 256V348Q256 376 284 376H378"/>
+  </g>
+  <!-- scudo: nodo proxy (il bordo scuro lo stacca dalle linee) -->
+  <path fill="#2EE6A6" stroke="#0E1B2C" stroke-width="14" stroke-linejoin="round" d="M256 182L326 208V258C326 298 299 316 256 332C213 316 186 298 186 258V208Z"/>
+  <g fill="#F4F7FA">
+    <circle cx="106" cy="256" r="34"/>
+    <circle cx="398" cy="136" r="34"/>
+    <circle cx="398" cy="256" r="34"/>
+    <circle cx="398" cy="376" r="34"/>
+  </g>
 </svg>
