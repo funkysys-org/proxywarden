@@ -32,9 +32,9 @@ const Dashboard = () => {
 			</h2>
 			<div className="row row-deck row-cards">
 				<div className="col-12 my-4">
-					<div className="row row-cards">
+					<div className="row row-cards row-cols-2 row-cols-md-5">
 						<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-3">
+							<div className="col">
 								<a
 									href="/nginx/proxy"
 									className="card card-sm card-link card-link-pop"
@@ -61,7 +61,7 @@ const Dashboard = () => {
 							</div>
 						</HasPermission>
 						<HasPermission section={REDIRECTION_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-3">
+							<div className="col">
 								<a
 									href="/nginx/redirection"
 									className="card card-sm card-link card-link-pop"
@@ -89,7 +89,7 @@ const Dashboard = () => {
 							</div>
 						</HasPermission>
 						<HasPermission section={STREAMS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-3">
+							<div className="col">
 								<a
 									href="/nginx/stream"
 									className="card card-sm card-link card-link-pop"
@@ -114,7 +114,7 @@ const Dashboard = () => {
 							</div>
 						</HasPermission>
 						<HasPermission section={DEAD_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-3">
+							<div className="col">
 								<a
 									href="/nginx/404"
 									className="card card-sm card-link card-link-pop"
@@ -139,7 +139,7 @@ const Dashboard = () => {
 							</div>
 						</HasPermission>
 						<HasPermission section={STATIC_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-3">
+							<div className="col">
 								<a
 									href="/nginx/static"
 									className="card card-sm card-link card-link-pop"
