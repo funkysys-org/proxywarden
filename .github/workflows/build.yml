@@ -158,23 +158,14 @@ jobs:
           echo "[instrument] app labels:"
           docker inspect "${IMAGE}:app-build" --format '{{json .Config.Labels}}'
 
-      - name: App smoke (boots, stock UI served, nginx -t)
-        run: |
-          set -eu
-          # The stock prepare service HARD-FAILS unless both /data and
-          # /etc/letsencrypt are mounts — run the image like the real world does.
-          docker volume create appsmoke-data >/dev/null
-          docker volume create appsmoke-le >/dev/null
-          docker run -d --name appsmoke -p 127.0.0.1:8081:81 \
-            -v appsmoke-data:/data -v appsmoke-le:/etc/letsencrypt \
-            "${IMAGE}:app-build"
-          for i in $(seq 1 90); do curl -fsS http://127.0.0.1:8081/ >/dev/null 2>&1 && break; sleep 2; done
-          curl -fsS http://127.0.0.1:8081/ | grep -q 'Nginx Proxy Manager' \
-            || { echo '::error::UI not reachable / stock frontend not served'; docker logs appsmoke 2>&1 | tail -30; exit 1; }
-          docker exec appsmoke nginx -t
-          docker rm -f appsmoke >/dev/null
-          docker volume rm appsmoke-data appsmoke-le >/dev/null
-          echo "APP SMOKE OK: NPM-equivalent image boots, stock UI on :81, nginx -t clean"
+      # (D1: the App smoke RETIRED. It proved the 'NPM-equivalent' image
+      # booted STANDALONE — a design promise the absorption broke on
+      # purpose: the app image now carries OUR nginx.conf and OUR admin
+      # template (vts/modsec-aware), which only boot with the overlay's
+      # modules, and it has no frontend at all (the product owns it).
+      # A standalone-bootable intermediate would mean shipping a STOCK
+      # conf layer in OUR tree — the thing we just deleted. The gates
+      # that matter remain: the product's waf-smoke and ui-smoke.)
 
       - name: Backend source lint (schema $ref integrity + permission schemas)
         # The D1 successor of the in-Dockerfile gates: the source is OURS
