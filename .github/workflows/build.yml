@@ -147,7 +147,9 @@ jobs:
           docker build \
             --build-arg BASE_IMAGE="${IMAGE}:certbot-node" \
             --build-arg NPM_VERSION="${NPM_VERSION}" \
-            --build-arg BUILD_COMMIT="${NPM_COMMIT}" \
+            # D1: the build commit label is OUR source commit now — the
+            # upstream origin sha lives in ABSORPTION.md, not in the label
+            --build-arg BUILD_COMMIT="${GITHUB_SHA}" \
             --build-arg BUILD_DATE="$(date '+%Y-%m-%d %T %Z')" \
             -t "${IMAGE}:app-build" \
             -f app/Dockerfile .
