@@ -121,58 +121,9 @@ RUN set -eu; \
        objs/ngx_http_brotli_filter_module.so \
        objs/ngx_http_brotli_static_module.so /tmp/out/
 
-# Backend patch layer (Phase A4 — the F4 WAF-audit log source, moved here
-# from proxywarden; Phase A5 — Static Hosts, the first full-stack feature):
-# apply on the vendored virgin tree; the patched files overlay /app in the
-# final stage (same assembly upstream uses for backend). 004 also patches
-# the stock main nginx.conf (one include line) — the whole vendored tree is
-# copied here so backend/ and docker/ paths both resolve.
-COPY vendor/npm/ /npm-virgin/
-COPY overlay/patches/ /tmp/patches/
-RUN set -eu; cd /npm-virgin; \
-    for p in /tmp/patches/*.patch; do git apply --check "$p" && git apply "$p"; done; \
-    # Schema $ref integrity gate: the backend dereferences the schema at BOOT
-    # (getCompiledSchema) — a ref to a missing component crash-loops it. This
-    # walks every relative $ref in the patched tree and fails the build instead.
-    python3 - <<'PYEOF'
-import json, os, glob
-missing = []
-for f in glob.glob('/npm-virgin/backend/schema/**/*.json', recursive=True):
-    try:
-        d = json.load(open(f))
-    except Exception as e:
-        missing.append(('INVALID JSON: ' + str(e), f)); continue
-    stack = [d]
-    while stack:
-        o = stack.pop()
-        if isinstance(o, dict):
-            for k, v in o.items():
-                if k == '$ref' and isinstance(v, str) and v.startswith('.'):
-                    target = os.path.normpath(os.path.join(os.path.dirname(f), v.split('#')[0]))
-                    if not os.path.isfile(target):
-                        missing.append((v, f))
-                else:
-                    stack.append(v)
-        elif isinstance(o, list):
-            stack.extend(o)
-for ref, src in missing:
-    print('MISSING $ref: ' + ref + '  (from ' + src + ')')
-# Permission-schema gate: access.can("x:y") loads lib/access/x-y.json at
-# request time — a missing file 500s every call with that permission. Every
-# statically-used permission string in the patched backend must resolve.
-import re
-perm_missing = []
-for f in glob.glob('/npm-virgin/backend/internal/**/*.js', recursive=True) + glob.glob('/npm-virgin/backend/routes/**/*.js', recursive=True):
-    text = open(f, encoding='utf-8').read()
-    for m in re.finditer(r'\.can\(\s*["\']([a-z0-9_-]+:[a-z0-9_-]+)["\']', text):
-        perm = m.group(1)
-        schema = '/npm-virgin/backend/lib/access/' + perm.replace(':', '-') + '.json'
-        if not os.path.isfile(schema):
-            perm_missing.append((perm, f))
-for perm, src in perm_missing:
-    print('MISSING permission schema: ' + perm + '  (used in ' + src + ')')
-raise SystemExit(1 if missing or perm_missing else 0)
-PYEOF
+# (D1: the backend patch layer is GONE — app/backend is our source,
+# carried by the app image's /app. The $ref-integrity and permission
+# gates still run, as workflow lint steps on app/backend at CI time.)
 
 # --- stage 3: overlay onto our app image ------------------------------------
 FROM ${WAF_BASE_IMAGE}
@@ -202,97 +153,13 @@ COPY --from=builder /tmp/crs /usr/local/modsecurity/crs
 # engine config: paths match the /data/modsec layout seeded on first run
 COPY modsec/ /etc/nginx/modsec/
 
-# Backend overlay: the files touched by overlay/patches/ — same assembly as
-# upstream's `COPY backend /app` (the patched files overlay these paths).
-# Extend this list when a patch touches new files (001: log-viewer, logs;
-# 002: main, docs; 003: schema/swagger.json; 004: the Static Hosts stack).
-COPY --from=builder /npm-virgin/backend/internal/log-viewer.js /app/internal/
-COPY --from=builder /npm-virgin/backend/routes/logs.js /app/routes/
-COPY --from=builder /npm-virgin/backend/routes/main.js /app/routes/
-# 009 — WAF tuning API (Wave 3): the panel-side canary runbook
-COPY --from=builder /npm-virgin/backend/routes/waf.js /app/routes/
-COPY --from=builder /npm-virgin/backend/internal/waf.js /app/internal/
-COPY --from=builder /npm-virgin/backend/schema/paths/waf/ /app/schema/paths/waf/
-# 013 — debrand residuals: db.js (error string) rides the overlay; the
-# swagger.json and production.conf.template edits land via the existing COPYs
-COPY --from=builder /npm-virgin/backend/db.js /app/
-COPY --from=builder /npm-virgin/backend/routes/docs.js /app/routes/
-COPY --from=builder /npm-virgin/backend/schema/swagger.json /app/schema/swagger.json
-COPY --from=builder /npm-virgin/backend/models/static_host.js /app/models/
-COPY --from=builder /npm-virgin/backend/models/certificate.js /app/models/
-COPY --from=builder /npm-virgin/backend/internal/static-host.js /app/internal/
-COPY --from=builder /npm-virgin/backend/internal/host.js /app/internal/
-COPY --from=builder /npm-virgin/backend/internal/certificate.js /app/internal/
-# 024 — static-host WAF toggle: the marked-block manager (a NEW file: the
-# whitelist is the ONLY channel a new backend file has to reach /app) +
-# the migration, the schema and the template deltas of the same wave.
-COPY --from=builder /npm-virgin/backend/internal/static-waf.js /app/internal/
-COPY --from=builder /npm-virgin/backend/migrations/20261124120000_static_host_waf_toggle.js /app/migrations/
-COPY --from=builder /npm-virgin/backend/schema/components/static-host-object.json /app/schema/components/
-COPY --from=builder /npm-virgin/backend/templates/static_host.conf /app/templates/
-COPY --from=builder /npm-virgin/backend/internal/report.js /app/internal/
-COPY --from=builder /npm-virgin/backend/internal/metrics.js /app/internal/
-COPY --from=builder /npm-virgin/backend/lib/access.js /app/lib/
-COPY --from=builder /npm-virgin/backend/lib/access/static_hosts-*.json /app/lib/access/
-COPY --from=builder /npm-virgin/backend/routes/nginx/static_hosts.js /app/routes/nginx/
-COPY --from=builder /npm-virgin/backend/routes/reports.js /app/routes/
-COPY --from=builder /npm-virgin/backend/templates/static_host.conf /app/templates/
-COPY --from=builder /npm-virgin/backend/templates/proxy_host.conf /app/templates/
-COPY --from=builder /npm-virgin/backend/migrations/20261118120000_static_host.js /app/migrations/
-# 011 — geoblocking (Wave 5): the country_deny plumbing (models, render
-# gate, shared schema prop, proxy-host schemas/migration)
-COPY --from=builder /npm-virgin/backend/models/proxy_host.js /app/models/
-COPY --from=builder /npm-virgin/backend/internal/nginx.js /app/internal/
-COPY --from=builder /npm-virgin/backend/schema/common.json /app/schema/
-COPY --from=builder /npm-virgin/backend/schema/components/proxy-host-object.json /app/schema/components/
-COPY --from=builder /npm-virgin/backend/schema/paths/nginx/proxy-hosts/ /app/schema/paths/nginx/proxy-hosts/
-COPY --from=builder /npm-virgin/backend/migrations/20261118200000_country_deny.js /app/migrations/
-# 025 — country_list_mode: the migration (a NEW file) and the proxy-host
-# service (FIRST wave touching it — the fail-closed gate must ship for the
-# proxy hosts too, not just the static ones).
-COPY --from=builder /npm-virgin/backend/migrations/20261125120000_country_list_mode.js /app/migrations/
-# The assembly gate (scripts/check-assembly.py) flagged these two as
-# touched-but-unshipped orphans of later refactors (023 retired the import,
-# 022 inlined the schema). The house rule is "a patch-touched file ships,
-# period" — dead or alive, the question never comes back.
-COPY --from=builder /npm-virgin/backend/internal/remote-version.js /app/internal/
-COPY --from=builder /npm-virgin/backend/schema/paths/logs/ /app/schema/paths/logs/
-COPY --from=builder /npm-virgin/backend/internal/proxy-host.js /app/internal/
-# 012 — max_body_size (Wave 6): the migration (schemas + template ride the
-# 011 COPYs — common.json, proxy-host paths, proxy_host.conf are all there)
-COPY --from=builder /npm-virgin/backend/migrations/20261118210000_max_body_size.js /app/migrations/
-COPY --from=builder /npm-virgin/backend/schema/components/static-host-object.json /app/schema/components/
-COPY --from=builder /npm-virgin/backend/schema/components/static-host-list.json /app/schema/components/
-COPY --from=builder /npm-virgin/backend/schema/paths/nginx/static-hosts/ /app/schema/paths/nginx/static-hosts/
-COPY --from=builder /npm-virgin/backend/schema/paths/reports/hosts/get.json /app/schema/paths/reports/hosts/
-COPY --from=builder /npm-virgin/backend/schema/paths/reports/metrics/get.json /app/schema/paths/reports/metrics/
-COPY --from=builder /npm-virgin/backend/schema/paths/settings/settingID/ /app/schema/paths/settings/settingID/
-# 008 — document_root (Wave 2): the value-validation lib (render-time gate),
-# the migration, and the already-copied template/service/schemas carry the
-# conditional root + the documentRoot pattern.
-COPY --from=builder /npm-virgin/backend/lib/nginx-values.js /app/lib/
-COPY --from=builder /npm-virgin/backend/migrations/20261118191000_static_host_document_root.js /app/migrations/
-# 006 — LDAP auth: the new backend files...
-COPY --from=builder /npm-virgin/backend/internal/ldap.js /app/internal/
-COPY --from=builder /npm-virgin/backend/internal/token.js /app/internal/
-COPY --from=builder /npm-virgin/backend/internal/user.js /app/internal/
-COPY --from=builder /npm-virgin/backend/setup.js /app/setup.js
-# 006 — ...and the FIRST runtime dependency added by the patch layer: the
-# app image stays stock (its identity is the NPM-equivalent reference), so
-# ldapts lands HERE — patched package.json+yarn.lock, then a frozen-lockfile
-# reconcile of /app/node_modules (yarn adds only the delta).
-COPY --from=builder /npm-virgin/backend/package.json /app/package.json
-COPY --from=builder /npm-virgin/backend/yarn.lock /app/yarn.lock
-RUN set -eu; \
-    npm i -g yarn@1.22.22 >/dev/null 2>&1; \
-    yarn install --frozen-lockfile; \
-    npm rm -g yarn >/dev/null 2>&1 || true
-# 005 also ships the vts zone conf (http-level counters ON) and the patched
-# admin template (the 127.0.0.1-only /vts_status display location):
-COPY --from=builder /npm-virgin/docker/rootfs/etc/nginx/conf.d/proxywarden-vts-zone.conf /etc/nginx/conf.d/
-COPY --from=builder /npm-virgin/docker/rootfs/etc/nginx/conf.d/production.conf.template /etc/nginx/conf.d/production.conf.template
-# 004 also ships the stock main nginx.conf with ONE added include line:
-COPY --from=builder /npm-virgin/docker/rootfs/etc/nginx/nginx.conf /etc/nginx/nginx.conf
+# (D1: the 50-line assembly whitelist is GONE — /app already IS our
+# backend. Only the patched stock confs still need to land: the main
+# nginx.conf (004's include line), the vts zone (005) and the admin
+# template — now straight from the absorbed source in the context.)
+COPY app/backend/docker/rootfs/etc/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY app/backend/docker/rootfs/etc/nginx/conf.d/proxywarden-vts-zone.conf /etc/nginx/conf.d/
+COPY app/backend/docker/rootfs/etc/nginx/conf.d/production.conf.template /etc/nginx/conf.d/production.conf.template
 
 # s6 oneshot that seeds /data/modsec tunables on first run.
 # (up files are EXECLINE; shell logic lives in scripts/modsec-seed.sh)

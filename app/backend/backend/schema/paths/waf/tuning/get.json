@@ -1,0 +1,57 @@
+{
+	"operationId": "getWafTuning",
+	"summary": "Retrieve the WAF tuning state",
+	"description": "Exclusions (SecRuleRemoveById) currently active and the CRS paranoia level",
+	"tags": [
+		"settings"
+	],
+	"security": [
+		{
+			"bearerAuth": [
+				"admin"
+			]
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "Tuning state",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"exclusions",
+							"paranoia_level"
+						],
+						"properties": {
+							"exclusions": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"id": {
+											"type": "integer",
+											"example": 942100
+										},
+										"note": {
+											"type": "string",
+											"example": "false positive on the contact form"
+										}
+									}
+								}
+							},
+							"paranoia_level": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 4,
+								"example": 1
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,26 @@
+/* The vertical sidebar: fixed width, sticky, scrollable when long.
+   Below md the collapse takes over (the header's toggler still targets
+   #navbar-menu) and the sidebar becomes a full-width band under the
+   header — the Tabler convention for small screens. */
+.sidebar {
+	width: 16rem;
+	flex-shrink: 0;
+	border-right: var(--tblr-border-width) solid var(--tblr-border-color);
+	padding: 1rem 0.75rem;
+	position: sticky;
+	top: 0;
+	align-self: flex-start;
+	max-height: 100vh;
+	overflow-y: auto;
+}
+
+@media (max-width: 767.98px) {
+	.sidebar {
+		width: 100%;
+		border-right: none;
+		border-bottom: var(--tblr-border-width) solid var(--tblr-border-color);
+		position: static;
+		max-height: none;
+		padding: 0.5rem 0.75rem;
+	}
+}

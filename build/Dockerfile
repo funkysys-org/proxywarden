@@ -2,20 +2,16 @@
 #
 # proxywarden = validated WAF overlay image + our frontend build.
 #
-# Stage 1 (fe-builder): the VENDORED NPM frontend source (Phase A4:
-#   vendor/npm-frontend/, PROVENANCE-gated — no build-time clone of jc21),
-#   our frontend patch set (zero patches = stock build), `yarn build`.
-# Stage 2 (product):   FROM the WAF image (its backend already carries our
-#   WAF-audit patch from nginx-full since Phase A4), replace /app/frontend
-#   with our dist. Modsec layer, s6 seed, backend: untouched here.
+# D1 (the absorption): stage 1 builds OUR source from app/frontend/ —
+#   the former vendored tree with the patch stack 001-028 dissolved
+#   into it. Stage 2 (product): FROM the WAF overlay image, replace
+#   /app/frontend with our dist. Modsec layer, s6 seed, backend:
+#   untouched here — the backend IS the app image's /app now.
 #
 # Pins (mirrored in .github/workflows/build.yml — pins-sync enforces):
-#   NPM_FRONTEND_REF : upstream tag the vendored frontend is from
-#   NPM_COMMIT       : upstream sha — must equal vendor/npm-frontend/PROVENANCE.md
 #   OVERLAY_IMAGE    : base image (local tag for local builds; CI passes the
 #                      GHCR path — location-dependent, checked by pins-sync
-#                      only for the REPLACE-ME placeholder and the version
-#                      invariant vs NPM_FRONTEND_REF)
+#                      only for the REPLACE-ME placeholder)
 
 # Global ARGs — ONLY these are visible to FROM lines (stage 2 consumes
 # OVERLAY_IMAGE; an ARG declared inside a stage is invisible to FROM).
@@ -24,26 +20,11 @@
 ARG OVERLAY_IMAGE=ghcr.io/funkysys-org/nginx-full:2.17.0-nginx1.31.9-modsec3.0.17-crs4.30.0-vts0.2.7-purge3.0.4-brotli1.2.1
 
 # ---- stage 1: frontend builder -------------------------------------------
-# Frontend base = the vendored pinned source (Phase A4). git stays installed
-# (node:26 ships it): `git apply` runs the patch set.
+# D1 (the absorption): app/frontend IS our source — the former vendored
+# tree with the FE patch stack 001-028 dissolved into it. No patch step.
 FROM node:26 AS fe-builder
 
-# Provenance tag pin (the vendored tree is the actual build input; pins-sync
-# checks this value against vendor/npm-frontend/PROVENANCE.md via NPM_COMMIT).
-ARG NPM_FRONTEND_REF=v2.17.0
-
-COPY vendor/npm-frontend/ /build/npm/
-COPY patches/ /patches/
-# Apply our FRONTEND patch set in lexical order; empty set = stock build.
-# (Backend patches live in funkysys-org/nginx-full since Phase A4.)
-RUN set -eu; cd /build/npm; \
-    found=0; \
-    for p in /patches/frontend/*.patch; do \
-      [ -e "$p" ] || continue; \
-      found=1; echo "applying $(basename "$p")"; \
-      git apply --check "$p" && git apply "$p"; \
-    done; \
-    if [ "$found" = 1 ]; then echo "PATCH SET APPLIED"; else echo "STOCK BUILD (no patches)"; fi
+COPY app/frontend/ /build/npm/frontend/
 
 # Upstream CI chain (scripts/ci/frontend-build) is:
 #   yarn install && yarn lint && yarn locale-compile && yarn vitest run && yarn build

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pwg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4l24 8v20c0 14-10 24-24 28C18 56 8 46 8 32V12z" fill="url(#pwg)"/>
+  <circle cx="32" cy="27" r="6" fill="#fff"/>
+  <path d="M29 31h6l3 14H26z" fill="#fff"/>
+</svg>

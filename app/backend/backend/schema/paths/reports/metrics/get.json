@@ -1,0 +1,40 @@
+{
+	"operationId": "getMetricsReport",
+	"summary": "Per-host traffic metrics (vts), scoped by the caller's host visibility",
+	"tags": ["reports"],
+	"security": [
+		{
+			"bearerAuth": ["reports.view"]
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"examples": {
+						"default": {
+							"value": {
+								"generatedAt": "2026-11-18T15:00:00.000Z",
+								"visibility": "all",
+								"serverZones": {
+									"example.com": {
+										"requests": 1234,
+										"responses": {
+											"2xx": 1200,
+											"3xx": 20,
+											"4xx": 10,
+											"5xx": 4
+										},
+										"inBytes": 100000,
+										"outBytes": 900000
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,31 +1,22 @@
-# NPM-equivalent app image on OUR base (Phase A1; Phase A4: source vendored).
-# Assembles the NPM application from the VENDORED pinned source tree
-# (vendor/npm/ — see its PROVENANCE.md) exactly like upstream's
-# docker/Dockerfile — but on OUR nginx-full base, with the frontend built
-# inside the image (our proven chain). No build-time clone of jc21's repo.
+# syntax=docker/dockerfile:1
 #
-# Deliberate, documented deviations from upstream's assembly:
-#   - frontend built in stage `npmsrc` (upstream builds it outside the image
-#     via scripts/ci/frontend-build)
-#   - the `testca` root CA is NOT included: it exists for upstream's own
-#     HTTPS test harness, not for production function
+# proxywarden app image — OUR backend, on OUR base.
+#
+# D1 (the absorption): app/backend IS our source now — the vendored NPM
+# tree with the former patch stack 001-029 dissolved into it. No patch
+# stages, no foreign base: what you see in app/backend is what ships.
+# The stock frontend is NOT built here anymore — the product image
+# (build/Dockerfile) assembles OUR frontend from app/frontend.
+#
+# Historical note (the origin of record): the tree descends from
+# Nginx Proxy Manager v2.17.0 (see app/backend/PROVENANCE.md); the
+# divergence was expressed as 29 numbered backend patches until this
+# commit — the patch files live in git history from here on.
 
-# Global ARGs — ONLY these are visible to FROM lines (stage 2 consumes
-# BASE_IMAGE; an ARG declared inside a stage is invisible to FROM).
+# Global ARGs — ONLY these are visible to FROM lines.
 ARG NPM_VERSION=2.17.0
 ARG BASE_IMAGE=ghcr.io/funkysys-org/nginx-full:certbot-node
 
-# ---- stage 1: vendored NPM source (pinned tag) + frontend build ------------
-FROM node:26 AS npmsrc
-COPY vendor/npm/ /npm/
-RUN set -eu; cd /npm/frontend; \
-    npm i -g yarn@1.22.22; \
-    yarn install --frozen-lockfile; \
-    yarn locale-compile; \
-    yarn build; \
-    test -f dist/index.html
-
-# ---- stage 2: assemble on our base -----------------------------------------
 FROM ${BASE_IMAGE}
 ARG NPM_VERSION
 ARG TARGETPLATFORM
@@ -50,15 +41,15 @@ RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# s6 overlay (installer vendored from the NPM source at the pinned tag)
-COPY --from=npmsrc /npm/docker/scripts/install-s6 /tmp/install-s6
+# s6 overlay (installer vendored from the absorbed tree at its origin tag)
+COPY app/backend/docker/scripts/install-s6 /tmp/install-s6
 RUN /tmp/install-s6 "${TARGETPLATFORM}" && rm -f /tmp/install-s6
 
 EXPOSE 80 81 443
 
-COPY --from=npmsrc /npm/backend       /app
-COPY --from=npmsrc /npm/frontend/dist /app/frontend
-COPY --from=npmsrc /npm/docker/rootfs /
+# OUR backend — the whole /app, straight from the absorbed source.
+COPY app/backend/backend /app
+COPY app/backend/docker/rootfs /
 
 WORKDIR /app
 RUN yarn install \
@@ -66,8 +57,11 @@ RUN yarn install \
 
 # Remove the frontend service (dev-only) and the dev nginx config,
 # exactly like upstream's release assembly.
+# (D1: the logrotate file is OUR tree's — the debrand patches renamed it
+# from the stock 'nginx-proxy-manager' to 'proxywarden' long before the
+# absorption; the chmod follows the source, not the upstream's memory.)
 RUN rm -rf /etc/s6-overlay/s6-rc.d/user/contents.d/frontend /etc/nginx/conf.d/dev.conf \
-    && chmod 644 /etc/logrotate.d/nginx-proxy-manager
+    && chmod 644 /etc/logrotate.d/proxywarden
 
 VOLUME [ "/data" ]
 ENTRYPOINT [ "/init" ]
